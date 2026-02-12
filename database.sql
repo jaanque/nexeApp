@@ -5,9 +5,6 @@ CREATE TABLE IF NOT EXISTS restaurants (
   image_url TEXT,
   rating DECIMAL(2,1),
   cuisine_type TEXT,
-  delivery_time_min INT,
-  delivery_time_max INT,
-  delivery_fee DECIMAL(5,2),
   address TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -20,11 +17,11 @@ CREATE POLICY "Public restaurants are viewable by everyone." ON restaurants
   FOR SELECT USING (true);
 
 -- Insert sample data
-INSERT INTO restaurants (name, image_url, rating, cuisine_type, delivery_time_min, delivery_time_max, delivery_fee, address)
+INSERT INTO restaurants (name, image_url, rating, cuisine_type, address)
 VALUES
-  ('Burger King', 'https://images.unsplash.com/photo-1571091718767-18b5b1457add?w=800&q=80', 4.5, 'American • Burgers', 20, 30, 1.99, '123 Main St'),
-  ('Sushi Master', 'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=800&q=80', 4.8, 'Japanese • Sushi', 30, 45, 2.49, '456 Elm St'),
-  ('Pizza Hut', 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=800&q=80', 4.2, 'Italian • Pizza', 25, 40, 0.00, '789 Oak St'),
-  ('Taco Bell', 'https://images.unsplash.com/photo-1565299585323-38d6b0865b47?w=800&q=80', 4.0, 'Mexican • Tacos', 15, 25, 1.49, '101 Pine St'),
-  ('Indian Spice', 'https://images.unsplash.com/photo-1585937421612-70a008356f36?w=800&q=80', 4.7, 'Indian • Curry', 35, 50, 2.99, '202 Maple St'),
-  ('Healthy Greens', 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=800&q=80', 4.6, 'Healthy • Salads', 20, 35, 1.99, '303 Birch St');
+  ('Burger King', 'https://images.unsplash.com/photo-1571091718767-18b5b1457add?w=800&q=80', 4.5, 'American • Burgers', '123 Main St'),
+  ('Sushi Master', 'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=800&q=80', 4.8, 'Japanese • Sushi', '456 Elm St'),
+  ('Pizza Hut', 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=800&q=80', 4.2, 'Italian • Pizza', '789 Oak St'),
+  ('Taco Bell', 'https://images.unsplash.com/photo-1565299585323-38d6b0865b47?w=800&q=80', 4.0, 'Mexican • Tacos', '101 Pine St'),
+  ('Indian Spice', 'https://images.unsplash.com/photo-1585937421612-70a008356f36?w=800&q=80', 4.7, 'Indian • Curry', '202 Maple St'),
+  ('Healthy Greens', 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=800&q=80', 4.6, 'Healthy • Salads', '303 Birch St');
