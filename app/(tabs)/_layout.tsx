@@ -1,5 +1,6 @@
 import { Tabs } from 'expo-router';
 import React from 'react';
+import { Text } from 'react-native';
 
 import { HapticTab } from '@/components/haptic-tab';
 import { IconSymbol } from '@/components/ui/icon-symbol';
@@ -20,7 +21,7 @@ export default function TabLayout() {
         name="index"
         options={{
           title: 'Inicio',
-          tabBarLabel: ({ focused }) => (focused ? 'Inicio' : ''),
+          tabBarLabel: ({ focused, color }) => (focused ? <Text style={{ color, fontSize: 10 }}>Inicio</Text> : null),
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
         }}
       />
@@ -28,7 +29,7 @@ export default function TabLayout() {
         name="explore"
         options={{
           title: 'Explorar',
-          tabBarLabel: ({ focused }) => (focused ? 'Explorar' : ''),
+          tabBarLabel: ({ focused, color }) => (focused ? <Text style={{ color, fontSize: 10 }}>Explorar</Text> : null),
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="safari.fill" color={color} />,
         }}
       />
@@ -36,7 +37,7 @@ export default function TabLayout() {
         name="scan"
         options={{
           title: 'Escanear',
-          tabBarLabel: ({ focused }) => (focused ? 'Escanear' : ''),
+          tabBarLabel: ({ focused, color }) => (focused ? <Text style={{ color, fontSize: 10 }}>Escanear</Text> : null),
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="qrcode.viewfinder" color={color} />,
         }}
       />
@@ -44,7 +45,7 @@ export default function TabLayout() {
         name="wallet"
         options={{
           title: 'Cartera',
-          tabBarLabel: ({ focused }) => (focused ? 'Cartera' : ''),
+          tabBarLabel: ({ focused, color }) => (focused ? <Text style={{ color, fontSize: 10 }}>Cartera</Text> : null),
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="creditcard.fill" color={color} />,
         }}
       />
@@ -52,7 +53,7 @@ export default function TabLayout() {
         name="profile"
         options={{
           title: 'Perfil',
-          tabBarLabel: ({ focused }) => (focused ? 'Perfil' : ''),
+          tabBarLabel: ({ focused, color }) => (focused ? <Text style={{ color, fontSize: 10 }}>Perfil</Text> : null),
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="person.fill" color={color} />,
         }}
       />
