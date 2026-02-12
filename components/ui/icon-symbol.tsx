@@ -22,6 +22,7 @@ const MAPPING = {
   'qrcode.viewfinder': 'qr-code-scanner',
   'creditcard.fill': 'account-balance-wallet',
   'person.fill': 'person',
+  'bell.fill': 'notifications',
 } as IconMapping;
 
 /**
