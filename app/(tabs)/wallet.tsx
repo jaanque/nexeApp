@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { LineChart } from 'react-native-chart-kit';
 import { Ionicons } from '@expo/vector-icons';
+import { RealtimeChannel } from '@supabase/supabase-js';
 
 export default function WalletScreen() {
   const [points, setPoints] = useState<number>(0);
@@ -11,37 +12,64 @@ export default function WalletScreen() {
   const [activePeriod, setActivePeriod] = useState("ALL");
 
   useEffect(() => {
-    fetchPoints();
-  }, []);
+    let channel: RealtimeChannel;
 
-  async function fetchPoints() {
-    try {
-      setLoading(true);
-      const { data: { session } } = await supabase.auth.getSession();
+    async function setupWallet() {
+      try {
+        setLoading(true);
+        const { data: { session } } = await supabase.auth.getSession();
 
-      if (session?.user) {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('points')
-          .eq('id', session.user.id)
-          .single();
+        if (session?.user) {
+          // 1. Initial Fetch
+          const { data, error } = await supabase
+            .from('profiles')
+            .select('points')
+            .eq('id', session.user.id)
+            .single();
 
-        if (error) {
-          console.error('Error fetching points:', error);
+          if (error) {
+            console.error('Error fetching points:', error);
+            setPoints(0);
+          } else if (data) {
+            setPoints(data.points || 0);
+          }
+
+          // 2. Real-time Subscription
+          channel = supabase
+            .channel(`public:profiles:${session.user.id}`)
+            .on(
+              'postgres_changes',
+              {
+                event: 'UPDATE',
+                schema: 'public',
+                table: 'profiles',
+                filter: `id=eq.${session.user.id}`,
+              },
+              (payload) => {
+                if (payload.new && typeof payload.new.points === 'number') {
+                  setPoints(payload.new.points);
+                }
+              }
+            )
+            .subscribe();
+        } else {
           setPoints(0);
-        } else if (data) {
-          setPoints(data.points || 0);
         }
-      } else {
-        // Handle no session case
-        setPoints(0);
+      } catch (error) {
+        console.error('Unexpected error:', error);
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error('Unexpected error:', error);
-    } finally {
-      setLoading(false);
     }
-  }
+
+    setupWallet();
+
+    return () => {
+      if (channel) {
+        supabase.removeChannel(channel);
+      }
+    };
+  }, []);
 
   // Generate chart data based on current points to mimic history
   // Since we only have one value (current points), we simulate a growth curve
