@@ -2,6 +2,7 @@ import { View, StyleSheet, Text, FlatList, TouchableOpacity, ListRenderItem } fr
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
+import { SafeAreaView } from 'react-native-safe-area-context';
 // import { useEffect } from 'react';
 // import { supabase } from '../../lib/supabase';
 
@@ -99,14 +100,14 @@ const RestaurantCard = ({ restaurant }: { restaurant: Restaurant }) => {
       />
       <View style={styles.infoContainer}>
         <View style={styles.headerRow}>
-          <Text style={styles.name}>{restaurant.name}</Text>
+          <Text style={styles.name} numberOfLines={1}>{restaurant.name}</Text>
           <View style={styles.ratingContainer}>
             <Ionicons name="star" size={16} color="#FFD700" />
             <Text style={styles.ratingText}>{restaurant.rating}</Text>
           </View>
         </View>
 
-        <Text style={styles.cuisine}>{restaurant.cuisine_type}</Text>
+        <Text style={styles.cuisine} numberOfLines={1}>{restaurant.cuisine_type}</Text>
 
         <View style={styles.detailsRow}>
           <View style={styles.detailItem}>
@@ -159,7 +160,7 @@ export default function ExploreScreen() {
   );
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top']}>
       <Text style={styles.headerTitle}>Restaurantes</Text>
       <FlatList
         data={restaurants}
@@ -168,7 +169,7 @@ export default function ExploreScreen() {
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
       />
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -176,29 +177,31 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f8f9fa',
-    paddingTop: 10,
   },
   headerTitle: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: 'bold',
     paddingHorizontal: 16,
-    marginBottom: 10,
+    marginBottom: 16,
+    marginTop: 8,
     color: '#333',
   },
   listContent: {
     paddingHorizontal: 16,
-    paddingBottom: 20,
+    paddingBottom: 100, // Extra padding to clear the bottom tab bar
   },
   card: {
     backgroundColor: 'white',
-    borderRadius: 12,
-    marginBottom: 16,
+    borderRadius: 16, // Slightly more rounded
+    marginBottom: 20, // More spacing between cards
     overflow: 'hidden',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: 4 }, // Deeper shadow
     shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowRadius: 8,
+    elevation: 4,
+    borderWidth: 1,
+    borderColor: '#f0f0f0', // Subtle border
   },
   image: {
     width: '100%',
@@ -206,37 +209,39 @@ const styles = StyleSheet.create({
     backgroundColor: '#eee',
   },
   infoContainer: {
-    padding: 12,
+    padding: 16,
   },
   headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 4,
+    marginBottom: 6,
   },
   name: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
+    fontWeight: '700',
+    color: '#1a1a1a',
+    flex: 1,
+    marginRight: 8,
   },
   ratingContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#fff8e1',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
   },
   ratingText: {
     marginLeft: 4,
-    fontWeight: '600',
+    fontWeight: '700',
     color: '#333',
     fontSize: 14,
   },
   cuisine: {
     color: '#666',
     fontSize: 14,
-    marginBottom: 8,
+    marginBottom: 12,
   },
   detailsRow: {
     flexDirection: 'row',
@@ -245,11 +250,12 @@ const styles = StyleSheet.create({
   detailItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginRight: 16,
+    marginRight: 20,
   },
   detailText: {
-    marginLeft: 4,
-    color: '#666',
+    marginLeft: 6,
+    color: '#444',
     fontSize: 14,
+    fontWeight: '500',
   },
 });
