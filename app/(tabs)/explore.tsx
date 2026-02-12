@@ -1,10 +1,9 @@
 import { View, StyleSheet, Text, FlatList, TouchableOpacity, ListRenderItem } from 'react-native';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
-// import { useEffect } from 'react';
-// import { supabase } from '../../lib/supabase';
+import { supabase } from '../../lib/supabase';
 
 // Interface matching the database schema
 interface Restaurant {
@@ -16,7 +15,7 @@ interface Restaurant {
   address: string;
 }
 
-// Mock data matching the SQL inserts
+// Mock data matching the SQL inserts (Fallback)
 const mockRestaurants: Restaurant[] = [
   {
     id: 1,
@@ -87,18 +86,14 @@ const RestaurantCard = ({ restaurant }: { restaurant: Restaurant }) => {
         </View>
 
         <Text style={styles.cuisine} numberOfLines={1}>{restaurant.cuisine_type}</Text>
-
-        {/* Delivery details removed */}
       </View>
     </TouchableOpacity>
   );
 };
 
 export default function ExploreScreen() {
-  const [restaurants] = useState<Restaurant[]>(mockRestaurants);
+  const [restaurants, setRestaurants] = useState<Restaurant[]>(mockRestaurants);
 
-  // Example of how to fetch data from Supabase:
-  /*
   useEffect(() => {
     fetchRestaurants();
   }, []);
@@ -112,14 +107,14 @@ export default function ExploreScreen() {
 
       if (error) {
         console.error('Error fetching restaurants:', error);
-      } else if (data) {
+        // Fallback to mock data is already set initially
+      } else if (data && data.length > 0) {
         setRestaurants(data);
       }
     } catch (error) {
       console.error('Unexpected error:', error);
     }
   }
-  */
 
   const renderItem: ListRenderItem<Restaurant> = ({ item }) => (
     <RestaurantCard restaurant={item} />
