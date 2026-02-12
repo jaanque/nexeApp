@@ -1,9 +1,9 @@
 import { View, StyleSheet, Text } from 'react-native';
 
-export default function ExploreScreen() {
+export default function ScanScreen() {
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Explorar</Text>
+      <Text style={styles.title}>Escanear</Text>
     </View>
   );
 }
