@@ -1,4 +1,4 @@
-import { View, StyleSheet, Button, Text, Modal, Pressable, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, Button, Text } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
@@ -8,8 +8,6 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 export default function HomeScreen() {
   const router = useRouter();
   const [session, setSession] = useState<Session | null>(null);
-  const [modalVisible, setModalVisible] = useState(false);
-  const [points, setPoints] = useState(150); // Mock points
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -39,13 +37,7 @@ export default function HomeScreen() {
             <Text style={styles.welcomeText}>Bienvenido, {username}</Text>
           </View>
           <View style={styles.content}>
-            <TouchableOpacity
-              style={styles.walletButton}
-              onPress={() => setModalVisible(true)}
-            >
-              <IconSymbol size={24} name="creditcard.fill" color="white" />
-              <Text style={styles.walletButtonText}>Ver Monedero</Text>
-            </TouchableOpacity>
+            <Text style={styles.subtitle}>Explora los mejores restaurantes</Text>
           </View>
         </>
       ) : (
@@ -53,31 +45,6 @@ export default function HomeScreen() {
             <Text style={styles.welcomeText}>Welcome to NexeApp</Text>
         </View>
       )}
-
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={modalVisible}
-        onRequestClose={() => {
-          setModalVisible(!modalVisible);
-        }}
-      >
-        <View style={styles.centeredView}>
-          <View style={styles.modalView}>
-            <Text style={styles.modalTitle}>Monedero</Text>
-            <View style={styles.pointsContainer}>
-              <IconSymbol size={40} name="star.fill" color="#FFD700" />
-              <Text style={styles.pointsText}>{points} Puntos</Text>
-            </View>
-            <Pressable
-              style={[styles.button, styles.buttonClose]}
-              onPress={() => setModalVisible(!modalVisible)}
-            >
-              <Text style={styles.textStyle}>Cerrar</Text>
-            </Pressable>
-          </View>
-        </View>
-      </Modal>
     </View>
   );
 }
@@ -107,87 +74,12 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   welcomeText: {
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
-  walletButton: {
-    backgroundColor: '#007AFF',
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 25,
-    marginTop: 20,
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-  },
-  walletButtonText: {
-    color: 'white',
-    fontWeight: 'bold',
-    fontSize: 16,
-    marginLeft: 10,
-  },
-  centeredView: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 22,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-  },
-  modalView: {
-    margin: 20,
-    backgroundColor: 'white',
-    borderRadius: 20,
-    padding: 35,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
-    width: '80%',
-  },
-  modalTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    marginBottom: 20,
-    color: '#333',
+    marginBottom: 10,
   },
-  pointsContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 30,
-    backgroundColor: '#fff8e1',
-    padding: 15,
-    borderRadius: 15,
-    width: '100%',
-    justifyContent: 'center',
-  },
-  pointsText: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    marginLeft: 10,
-    color: '#333',
-  },
-  button: {
-    borderRadius: 20,
-    padding: 10,
-    elevation: 2,
-    minWidth: 100,
-  },
-  buttonClose: {
-    backgroundColor: '#2196F3',
-  },
-  textStyle: {
-    color: 'white',
-    fontWeight: 'bold',
-    textAlign: 'center',
+  subtitle: {
     fontSize: 16,
+    color: '#666',
   },
 });
