@@ -13,9 +13,6 @@ interface Restaurant {
   image_url: string;
   rating: number;
   cuisine_type: string;
-  delivery_time_min: number;
-  delivery_time_max: number;
-  delivery_fee: number;
   address: string;
 }
 
@@ -27,9 +24,6 @@ const mockRestaurants: Restaurant[] = [
     image_url: 'https://images.unsplash.com/photo-1571091718767-18b5b1457add?w=800&q=80',
     rating: 4.5,
     cuisine_type: 'American • Burgers',
-    delivery_time_min: 20,
-    delivery_time_max: 30,
-    delivery_fee: 1.99,
     address: '123 Main St',
   },
   {
@@ -38,9 +32,6 @@ const mockRestaurants: Restaurant[] = [
     image_url: 'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=800&q=80',
     rating: 4.8,
     cuisine_type: 'Japanese • Sushi',
-    delivery_time_min: 30,
-    delivery_time_max: 45,
-    delivery_fee: 2.49,
     address: '456 Elm St',
   },
   {
@@ -49,9 +40,6 @@ const mockRestaurants: Restaurant[] = [
     image_url: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=800&q=80',
     rating: 4.2,
     cuisine_type: 'Italian • Pizza',
-    delivery_time_min: 25,
-    delivery_time_max: 40,
-    delivery_fee: 0.00,
     address: '789 Oak St',
   },
   {
@@ -60,9 +48,6 @@ const mockRestaurants: Restaurant[] = [
     image_url: 'https://images.unsplash.com/photo-1565299585323-38d6b0865b47?w=800&q=80',
     rating: 4.0,
     cuisine_type: 'Mexican • Tacos',
-    delivery_time_min: 15,
-    delivery_time_max: 25,
-    delivery_fee: 1.49,
     address: '101 Pine St',
   },
   {
@@ -71,9 +56,6 @@ const mockRestaurants: Restaurant[] = [
     image_url: 'https://images.unsplash.com/photo-1585937421612-70a008356f36?w=800&q=80',
     rating: 4.7,
     cuisine_type: 'Indian • Curry',
-    delivery_time_min: 35,
-    delivery_time_max: 50,
-    delivery_fee: 2.99,
     address: '202 Maple St',
   },
   {
@@ -82,9 +64,6 @@ const mockRestaurants: Restaurant[] = [
     image_url: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=800&q=80',
     rating: 4.6,
     cuisine_type: 'Healthy • Salads',
-    delivery_time_min: 20,
-    delivery_time_max: 35,
-    delivery_fee: 1.99,
     address: '303 Birch St',
   },
 ];
@@ -109,20 +88,7 @@ const RestaurantCard = ({ restaurant }: { restaurant: Restaurant }) => {
 
         <Text style={styles.cuisine} numberOfLines={1}>{restaurant.cuisine_type}</Text>
 
-        <View style={styles.detailsRow}>
-          <View style={styles.detailItem}>
-            <Ionicons name="time-outline" size={16} color="#666" />
-            <Text style={styles.detailText}>
-              {restaurant.delivery_time_min}-{restaurant.delivery_time_max} min
-            </Text>
-          </View>
-          <View style={styles.detailItem}>
-            <Ionicons name="bicycle-outline" size={16} color="#666" />
-            <Text style={styles.detailText}>
-              {restaurant.delivery_fee === 0 ? 'Free' : `$${restaurant.delivery_fee.toFixed(2)}`}
-            </Text>
-          </View>
-        </View>
+        {/* Delivery details removed */}
       </View>
     </TouchableOpacity>
   );
@@ -241,21 +207,6 @@ const styles = StyleSheet.create({
   cuisine: {
     color: '#666',
     fontSize: 14,
-    marginBottom: 12,
-  },
-  detailsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  detailItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginRight: 20,
-  },
-  detailText: {
-    marginLeft: 6,
-    color: '#444',
-    fontSize: 14,
-    fontWeight: '500',
+    marginBottom: 0, // Reduced margin since delivery info is removed
   },
 });
