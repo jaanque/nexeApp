@@ -22,15 +22,21 @@ export default function HomeScreen() {
     await supabase.auth.signOut();
   }
 
+  const username = session?.user?.user_metadata?.username || session?.user?.email;
+
   return (
     <View style={styles.container}>
       {session && session.user ? (
-        <View style={styles.welcomeContainer}>
-          <Text style={styles.welcomeText}>Bienvenido!</Text>
-          <View style={styles.buttonContainer}>
-            <Button title="Cerrar Sesión" onPress={() => signOut()} />
+        <>
+          <View style={styles.header}>
+            <Text style={styles.welcomeText}>Bienvenido, {username}</Text>
           </View>
-        </View>
+          <View style={styles.content}>
+            <View style={styles.buttonContainer}>
+              <Button title="Cerrar Sesión" onPress={() => signOut()} />
+            </View>
+          </View>
+        </>
       ) : (
         <View style={styles.authContainer}>
           <View style={styles.buttonContainer}>
@@ -52,7 +58,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 20,
   },
-  welcomeContainer: {
+  header: {
+    position: 'absolute',
+    top: 50,
+    left: 20,
+  },
+  content: {
+    flex: 1,
+    justifyContent: 'center',
     alignItems: 'center',
     width: '100%',
   },
@@ -63,7 +76,6 @@ const styles = StyleSheet.create({
   welcomeText: {
     fontSize: 20,
     fontWeight: 'bold',
-    marginBottom: 20,
   },
   buttonContainer: {
     marginVertical: 10,
