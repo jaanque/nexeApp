@@ -6,6 +6,7 @@ import { useRouter } from 'expo-router';
 export default function RegisterScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [username, setUsername] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
@@ -17,6 +18,11 @@ export default function RegisterScreen() {
     } = await supabase.auth.signUp({
       email: email,
       password: password,
+      options: {
+        data: {
+          username: username,
+        },
+      },
     });
 
     if (error) {
@@ -36,6 +42,13 @@ export default function RegisterScreen() {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Register</Text>
+      <TextInput
+        style={styles.input}
+        placeholder="Username"
+        onChangeText={(text) => setUsername(text)}
+        value={username}
+        autoCapitalize="none"
+      />
       <TextInput
         style={styles.input}
         placeholder="Email"
