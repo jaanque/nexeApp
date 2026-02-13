@@ -8,7 +8,7 @@ import * as Haptics from 'expo-haptics';
 export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
   const colorScheme = useColorScheme();
-  const activeColor = Colors[colorScheme ?? 'light'].tint;
+  const activeColor = '#000000';
   const inactiveColor = Colors[colorScheme ?? 'light'].tabIconDefault;
 
   return (
@@ -75,14 +75,14 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
             {options.tabBarIcon?.({
                 focused: isFocused,
                 color: isFocused ? activeColor : inactiveColor,
-                size: 24,
+                size: 22,
             })}
             {isExplore && (
                 <Text style={{
                     color: isFocused ? activeColor : inactiveColor,
                     marginLeft: 8,
                     fontWeight: '600',
-                    fontSize: 16
+                    fontSize: 14
                 }}>
                   {typeof label === 'string' ? label : 'Explorar'}
                 </Text>
@@ -103,21 +103,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     width: '100%',
     backgroundColor: 'transparent',
-    gap: 20, // Increased gap for floating look
+    gap: 10, // Decreased gap
   },
   tabItem: {
     justifyContent: 'center',
     alignItems: 'center',
   },
   tabItemCircle: {
-    width: 60, // Slightly larger circle
-    height: 60,
-    borderRadius: 30,
+    width: 50, // Smaller size
+    height: 50,
+    borderRadius: 25,
   },
   tabItemExplore: {
-    height: 60,
-    paddingHorizontal: 24,
-    borderRadius: 30,
+    height: 50, // Smaller size
+    paddingHorizontal: 20,
+    borderRadius: 25,
     flexDirection: 'row',
   },
 });
