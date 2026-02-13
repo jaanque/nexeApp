@@ -1,12 +1,12 @@
 import { View, StyleSheet, Text, Dimensions, ActivityIndicator, TouchableOpacity, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useEffect, useState } from 'react';
-import { supabase } from '../../lib/supabase';
+import { supabase } from '@/lib/supabase';
 import { LineChart } from 'react-native-chart-kit';
 import { Ionicons } from '@expo/vector-icons';
 import { RealtimeChannel } from '@supabase/supabase-js';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Colors } from '../../constants/theme';
+import { Colors } from '@/constants/theme';
 
 // Mock data for transactions since backend table is not available
 const TRANSACTIONS = [

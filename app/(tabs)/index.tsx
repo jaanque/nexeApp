@@ -24,6 +24,8 @@ export default function HomeScreen() {
   const [popularRestaurants, setPopularRestaurants] = useState<Restaurant[]>([]);
   const [loadingRestaurants, setLoadingRestaurants] = useState(true);
 
+  const router = useRouter();
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
@@ -99,9 +101,14 @@ export default function HomeScreen() {
                 <View>
                     <Text style={styles.greetingText}>Hola, {username}</Text>
                 </View>
-                <View style={styles.pointsPill}>
-                    <Text style={styles.pointsText}>{points} pts</Text>
-                    <IconSymbol size={16} name="star.fill" color="#FFD700" />
+                <View style={styles.rightHeader}>
+                    <TouchableOpacity onPress={() => router.push('/wallet')} style={styles.pointsPill}>
+                        <Text style={styles.pointsText}>{points} pts</Text>
+                        <IconSymbol size={16} name="star.fill" color="#FFD700" />
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={() => router.push('/profile')} style={styles.profileButton}>
+                        <Ionicons name="person-circle-outline" size={32} color="#333" />
+                    </TouchableOpacity>
                 </View>
             </View>
 
@@ -225,6 +232,10 @@ const styles = StyleSheet.create({
       alignItems: 'center',
       marginBottom: 20,
   },
+  rightHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+  },
   greetingText: {
     fontSize: 24,
     fontWeight: 'bold',
@@ -239,6 +250,10 @@ const styles = StyleSheet.create({
       borderRadius: 20,
       borderWidth: 1,
       borderColor: '#eee',
+      marginRight: 10,
+  },
+  profileButton: {
+      padding: 4,
   },
   pointsText: {
       fontSize: 14,
