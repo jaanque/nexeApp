@@ -251,18 +251,15 @@ export default function HomeScreen() {
                 </View>
 
                 <View style={styles.rightHeader}>
-                    {/* Replaced Points Pill with Bell Icon per "Menu style" request, but user said "Copy style, not elements".
-                        However, usually headers have notification icons. The user asked to copy the style of the provided image.
-                        I will keep the points pill but style it to fit the purple background (maybe transparent).
-                    */}
-                    <TouchableOpacity onPress={() => router.push('/wallet')} style={[styles.pointsPill, { backgroundColor: 'rgba(255,255,255,0.2)', borderWidth: 0 }]}>
+                    {/* Points Pill (Same height/style as search) */}
+                    <TouchableOpacity onPress={() => router.push('/wallet')} style={styles.pointsPill}>
                         <Text style={[styles.pointsText, { color: '#fff' }]}>{points} pts</Text>
                         <IconSymbol size={16} name="star.fill" color="#FFD700" />
                     </TouchableOpacity>
+
+                    {/* Profile Button (Same height/style as search/points) */}
                     <TouchableOpacity onPress={() => router.push('/profile')} style={styles.profileButton}>
-                         {/* Using a bell icon if I strictly follow the image style, but sticking to profile per "not elements". */}
-                        <Ionicons name="notifications-outline" size={28} color="#fff" style={{marginRight: 10}} />
-                        <Ionicons name="person-circle" size={36} color="#fff" />
+                        <Ionicons name="person-circle" size={40} color="#fff" />
                     </TouchableOpacity>
                 </View>
             </View>
@@ -517,14 +514,17 @@ const styles = StyleSheet.create({
       alignItems: 'center',
       backgroundColor: 'rgba(255,255,255,0.2)',
       paddingHorizontal: 10,
-      paddingVertical: 6,
-      borderRadius: 20,
+      borderRadius: 12, // Match search bar radius
       marginRight: 10,
+      height: 40, // Match search bar height
   },
   profileButton: {
       flexDirection: 'row',
       alignItems: 'center',
       padding: 0,
+      height: 40, // Match search bar height
+      width: 40, // Square/Circular aspect
+      justifyContent: 'center',
   },
   pointsText: {
       fontSize: 13,
@@ -539,13 +539,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#fff',
-    borderRadius: 30, // More pill-shaped
+    borderRadius: 12, // Less circular, more squared-rounded
     paddingHorizontal: 12,
-    paddingVertical: 8,
+    height: 40, // Fixed height for alignment
     // shadowColor: '#000', // Removed shadow for flat look in header
   },
   searchIcon: {
-      marginRight: 12,
+      marginRight: 8,
   },
   searchInput: {
       flex: 1,
