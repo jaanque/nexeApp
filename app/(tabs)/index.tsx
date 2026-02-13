@@ -8,34 +8,58 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 export default function HomeScreen() {
   const router = useRouter();
   const [session, setSession] = useState<Session | null>(null);
+  const [points, setPoints] = useState<number>(0);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
+      if (session?.user) {
+        fetchPoints(session.user.id);
+      }
     });
 
     supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
+      if (session?.user) {
+        fetchPoints(session.user.id);
+      }
     });
   }, []);
 
-  async function signOut() {
-    await supabase.auth.signOut();
+  async function fetchPoints(userId: string) {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('points')
+        .eq('id', userId)
+        .single();
+
+      if (error) {
+        console.error('Error fetching points:', error);
+      } else if (data) {
+        setPoints(data.points || 0);
+      }
+    } catch (error) {
+      console.error('Unexpected error:', error);
+    }
   }
 
-  const username = session?.user?.user_metadata?.username || session?.user?.email;
+  const username = session?.user?.user_metadata?.username || session?.user?.email?.split('@')[0] || "Usuario";
 
   return (
     <View style={styles.container}>
-      <View style={styles.notificationIcon}>
-          <IconSymbol size={28} name="bell.fill" color="#000" />
-      </View>
-
       {session && session.user ? (
         <>
-          <View style={styles.header}>
-            <Text style={styles.welcomeText}>Bienvenido, {username}</Text>
+          <View style={styles.topBar}>
+            <View>
+                <Text style={styles.greetingText}>Hola, {username}</Text>
+            </View>
+            <View style={styles.pointsPill}>
+                 <Text style={styles.pointsText}>{points} pts</Text>
+                 <IconSymbol size={16} name="star.fill" color="#FFD700" />
+            </View>
           </View>
+
           <View style={styles.content}>
             <Text style={styles.subtitle}>Explora los mejores restaurantes</Text>
           </View>
@@ -52,26 +76,41 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
+    paddingTop: 60, // Safe area padding replacement
+    paddingHorizontal: 20,
     backgroundColor: '#fff',
   },
-  header: {
-    position: 'absolute',
-    top: 50,
-    left: 20,
+  topBar: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: 20,
   },
-  notificationIcon: {
-    position: 'absolute',
-    top: 50,
-    right: 20,
+  greetingText: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  pointsPill: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: '#f8f9fa',
+      paddingHorizontal: 12,
+      paddingVertical: 8,
+      borderRadius: 20,
+      borderWidth: 1,
+      borderColor: '#eee',
+  },
+  pointsText: {
+      fontSize: 14,
+      fontWeight: '600',
+      color: '#333',
+      marginRight: 6,
   },
   content: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    width: '100%',
   },
   welcomeText: {
     fontSize: 24,
