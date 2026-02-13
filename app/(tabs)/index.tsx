@@ -228,8 +228,7 @@ export default function HomeScreen() {
 
   return (
     <View style={styles.container}>
-      {session && session.user ? (
-        <ScrollView style={styles.scrollContainer} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
+      <ScrollView style={styles.scrollContainer} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
           {/* Header & Promo Wrapper */}
           <View style={[styles.purpleHeader, { paddingTop: insets.top + 10 }]}>
             <View style={styles.topBar}>
@@ -252,20 +251,26 @@ export default function HomeScreen() {
 
                 <View style={styles.rightHeader}>
                     {/* Points Pill (Same height/style as search) */}
-                    <TouchableOpacity onPress={() => router.push('/wallet')} style={styles.pointsPill}>
+                    <TouchableOpacity
+                        onPress={() => session?.user ? router.push('/wallet') : router.push('/login')}
+                        style={styles.pointsPill}
+                    >
                         <Text style={[styles.pointsText, { color: '#fff' }]}>{points} pts</Text>
                         <IconSymbol size={16} name="star.fill" color="#FFD700" />
                     </TouchableOpacity>
 
                     {/* Profile Button (Same height/style as search/points) */}
-                    <TouchableOpacity onPress={() => router.push('/profile')} style={styles.profileButton}>
+                    <TouchableOpacity
+                        onPress={() => session?.user ? router.push('/profile') : router.push('/login')}
+                        style={styles.profileButton}
+                    >
                         <Ionicons name="person-circle" size={40} color="#fff" />
                     </TouchableOpacity>
                 </View>
             </View>
 
             {/* Welcome Gift Banner (Moved UP) */}
-             {!isSearching && !checkingClaim && !hasClaimedWelcome && (
+             {!isSearching && !checkingClaim && !hasClaimedWelcome && session?.user && (
                  <View style={styles.promoContainer}>
                     <View style={styles.promoContent}>
                         <Text style={styles.promoTitle}>Regalo de Bienvenida</Text>
@@ -379,11 +384,6 @@ export default function HomeScreen() {
           )}
 
         </ScrollView>
-      ) : (
-        <View style={styles.centerContent}>
-            <Text style={styles.welcomeText}>Welcome to NexeApp</Text>
-        </View>
-      )}
     </View>
   );
 }
