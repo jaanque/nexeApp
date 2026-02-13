@@ -1,4 +1,4 @@
-import { View, StyleSheet, Button, Text, TextInput, ScrollView, TouchableOpacity, FlatList, ListRenderItem, ActivityIndicator } from 'react-native';
+import { View, StyleSheet, Text, TextInput, ScrollView, TouchableOpacity, FlatList, ListRenderItem, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
@@ -6,6 +6,7 @@ import { Session } from '@supabase/supabase-js';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
+import { RewardsCard } from '@/components/RewardsCard';
 
 // Interface matching the database schema
 interface Restaurant {
@@ -18,7 +19,6 @@ interface Restaurant {
 }
 
 export default function HomeScreen() {
-  const router = useRouter();
   const [session, setSession] = useState<Session | null>(null);
   const [points, setPoints] = useState<number>(0);
   const [popularRestaurants, setPopularRestaurants] = useState<Restaurant[]>([]);
@@ -127,6 +127,8 @@ export default function HomeScreen() {
                 </ScrollView>
             </View>
           </View>
+
+          <RewardsCard currentPoints={points} />
 
           {/* Popular Restaurants Carousel */}
           <View style={styles.sectionContainer}>
