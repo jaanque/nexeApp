@@ -18,15 +18,35 @@ interface Restaurant {
   address: string;
 }
 
+// Interface for MenuItem search results
+interface MenuItemResult {
+    id: number;
+    name: string;
+    description: string;
+    price: number;
+    image_url: string;
+    restaurant_id: number;
+    restaurants?: {
+        name: string;
+    };
+}
+
 export default function HomeScreen() {
   const [session, setSession] = useState<Session | null>(null);
   const [points, setPoints] = useState<number>(0);
   const [popularRestaurants, setPopularRestaurants] = useState<Restaurant[]>([]);
   const [loadingRestaurants, setLoadingRestaurants] = useState(true);
   const [locationText, setLocationText] = useState<string>("Cargando ubicación...");
-  const [hasClaimedWelcome, setHasClaimedWelcome] = useState<boolean>(true); // Default true to hide until check confirms false
+  const [hasClaimedWelcome, setHasClaimedWelcome] = useState<boolean>(true);
   const [claiming, setClaiming] = useState<boolean>(false);
   const [checkingClaim, setCheckingClaim] = useState<boolean>(true);
+
+  // Search State
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [searchResultsRestaurants, setSearchResultsRestaurants] = useState<Restaurant[]>([]);
+  const [searchResultsDishes, setSearchResultsDishes] = useState<MenuItemResult[]>([]);
+  const [isSearching, setIsSearching] = useState<boolean>(false);
+  const [searching, setSearching] = useState<boolean>(false);
 
   const router = useRouter();
 
@@ -55,6 +75,48 @@ export default function HomeScreen() {
     fetchLocation();
   }, []);
 
+  async function handleSearch(query: string) {
+      setSearchQuery(query);
+      if (query.length < 3) {
+          setIsSearching(false);
+          setSearchResultsRestaurants([]);
+          setSearchResultsDishes([]);
+          return;
+      }
+
+      setIsSearching(true);
+      setSearching(true);
+
+      try {
+          // Search Restaurants
+          const { data: restData } = await supabase
+            .from('restaurants')
+            .select('*')
+            .ilike('name', `%${query}%`)
+            .limit(5);
+
+          if (restData) {
+              setSearchResultsRestaurants(restData);
+          }
+
+          // Search Menu Items
+          const { data: menuData } = await supabase
+            .from('menu_items')
+            .select('*, restaurants(name)')
+            .ilike('name', `%${query}%`)
+            .limit(10);
+
+          if (menuData) {
+              setSearchResultsDishes(menuData as any);
+          }
+
+      } catch (error) {
+          console.error("Search error:", error);
+      } finally {
+          setSearching(false);
+      }
+  }
+
   async function fetchLocation() {
     try {
       let { status } = await Location.requestForegroundPermissionsAsync();
@@ -71,12 +133,10 @@ export default function HomeScreen() {
 
       if (address && address.length > 0) {
         const item = address[0];
-        // Construct string: City, Subregion (Comarca), Region (Comunidad)
-        // Note: Field availability depends on provider.
         const parts = [
             item.city,
-            item.subregion, // Often maps to county/district
-            item.region // Often maps to state/province/community
+            item.subregion,
+            item.region
         ].filter(Boolean);
 
         if (parts.length > 0) {
@@ -112,8 +172,6 @@ export default function HomeScreen() {
   async function checkWelcomeClaim(userId: string) {
     try {
       setCheckingClaim(true);
-      // Check if user exists in welcome_gift_claims table
-      // Since user_id is PK, checking existence is enough
       const { data, error } = await supabase
         .from('welcome_gift_claims')
         .select('user_id')
@@ -122,10 +180,8 @@ export default function HomeScreen() {
 
       if (error) {
          console.error('Error checking welcome claim:', error);
-         // If error (e.g., table missing), default to claimed to avoid showing broken UI
          setHasClaimedWelcome(true);
       } else {
-         // If data exists, they claimed it. If null, they haven't.
          setHasClaimedWelcome(!!data);
       }
     } catch (error) {
@@ -143,7 +199,6 @@ export default function HomeScreen() {
         setClaiming(true);
         const userId = session.user.id;
 
-        // 1. Insert claim record
         const { error: claimError } = await supabase
             .from('welcome_gift_claims')
             .insert({ user_id: userId });
@@ -155,7 +210,6 @@ export default function HomeScreen() {
             return;
         }
 
-        // 2. Update points
         const newPoints = points + 5;
         const { error: updateError } = await supabase
             .from('profiles')
@@ -165,10 +219,10 @@ export default function HomeScreen() {
         if (updateError) {
             console.error('Error updating points:', updateError);
              Alert.alert('Atención', 'Regalo registrado pero hubo un error actualizando los puntos.');
-             setHasClaimedWelcome(true); // Hide anyway since claim is recorded
+             setHasClaimedWelcome(true);
         } else {
             setPoints(newPoints);
-            setHasClaimedWelcome(true); // Hide section immediately
+            setHasClaimedWelcome(true);
             Alert.alert('¡Felicidades!', 'Has recibido tu regalo de bienvenida de 5 puntos.');
         }
     } catch (error) {
@@ -185,9 +239,9 @@ export default function HomeScreen() {
       const { data, error } = await supabase
         .from('restaurants')
         .select('*')
-        .gte('rating', 4.5) // Example filter for popular
+        .gte('rating', 4.5)
         .order('rating', { ascending: false })
-        .limit(10); // Fetch more for vertical list
+        .limit(10);
 
       if (error) {
         console.error('Error fetching restaurants:', error);
@@ -220,7 +274,6 @@ export default function HomeScreen() {
                     </View>
                 </TouchableOpacity>
                 <View style={styles.rightHeader}>
-                    {/* Points Pill removed or styled differently? Keeping it as pill for now but black/white */}
                     <TouchableOpacity onPress={() => router.push('/wallet')} style={styles.pointsPill}>
                         <Text style={styles.pointsText}>{points} pts</Text>
                         <IconSymbol size={16} name="star.fill" color="#000" />
@@ -235,26 +288,48 @@ export default function HomeScreen() {
             <View style={styles.searchContainer}>
                 <Ionicons name="search" size={20} color="#111" style={styles.searchIcon} />
                 <TextInput
-                placeholder="Comida, restaurantes, bebidas..."
-                placeholderTextColor="#666"
-                style={styles.searchInput}
+                    placeholder="Restaurantes, platos..."
+                    placeholderTextColor="#666"
+                    style={styles.searchInput}
+                    value={searchQuery}
+                    onChangeText={handleSearch}
                 />
+                {isSearching && (
+                    <TouchableOpacity onPress={() => handleSearch("")}>
+                        <Ionicons name="close-circle" size={20} color="#666" />
+                    </TouchableOpacity>
+                )}
             </View>
 
             {/* Categories */}
-            <View style={styles.categoryContainer}>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categoryContent}>
-                    <CategoryItem label="Hamburguesas" icon="fast-food" color="#FFF3E0" iconColor="#FF9800" />
-                    <CategoryItem label="Pizza" icon="pizza" color="#FFEBEE" iconColor="#F44336" />
-                    <CategoryItem label="Asiática" icon="restaurant" color="#E8F5E9" iconColor="#4CAF50" />
-                    <CategoryItem label="Postres" icon="ice-cream" color="#E3F2FD" iconColor="#2196F3" />
-                    <CategoryItem label="Bebidas" icon="wine" color="#F3E5F5" iconColor="#9C27B0" />
-                    <CategoryItem label="Envíos" icon="bicycle" color="#FAFAFA" iconColor="#666" />
-                </ScrollView>
-            </View>
+            {!isSearching && (
+                <View style={styles.categoryContainer}>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categoryContent}>
+                        <CategoryItem label="Hamburguesas" icon="fast-food" color="#FFF3E0" iconColor="#FF9800" />
+                        <CategoryItem label="Pizza" icon="pizza" color="#FFEBEE" iconColor="#F44336" />
+                        <CategoryItem label="Asiática" icon="restaurant" color="#E8F5E9" iconColor="#4CAF50" />
+                        <CategoryItem label="Postres" icon="ice-cream" color="#E3F2FD" iconColor="#2196F3" />
+                        <CategoryItem label="Bebidas" icon="wine" color="#F3E5F5" iconColor="#9C27B0" />
+                        <CategoryItem label="Envíos" icon="bicycle" color="#FAFAFA" iconColor="#666" />
+                    </ScrollView>
+                </View>
+            )}
 
-             {/* Welcome Gift Banner - Only show if not claimed */}
-             {!checkingClaim && !hasClaimedWelcome && (
+            {/* Filter Pills Row - Only show when not searching */}
+            {!isSearching && (
+                <View style={styles.filterRowContainer}>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterRowContent}>
+                        <FilterPill label="Ordenar" icon="chevron-down" />
+                        <FilterPill label="Ofertas" icon="pricetag-outline" />
+                        <FilterPill label="Valoración" icon="star-outline" />
+                        <FilterPill label="Precio" icon="cash-outline" />
+                        <FilterPill label="Dietética" icon="leaf-outline" />
+                    </ScrollView>
+                </View>
+            )}
+
+             {/* Welcome Gift Banner */}
+             {!isSearching && !checkingClaim && !hasClaimedWelcome && (
                  <View style={styles.promoContainer}>
                     <View style={styles.promoContent}>
                         <Text style={styles.promoTitle}>Regalo de Bienvenida</Text>
@@ -276,44 +351,82 @@ export default function HomeScreen() {
              )}
           </View>
 
+          {/* Search Results */}
+          {isSearching ? (
+              <View style={styles.sectionContainer}>
+                  {searching ? (
+                      <ActivityIndicator size="large" color="#000" style={{marginTop: 20}} />
+                  ) : (
+                      <>
+                        <Text style={styles.sectionTitle}>Resultados</Text>
 
-          {/* Popular Restaurants Horizontal */}
-          <View style={styles.sectionContainer}>
-              <View style={styles.sectionHeader}>
-                <Text style={styles.sectionTitle}>Favoritos cerca de ti</Text>
-                <TouchableOpacity>
-                    <IconSymbol name="chevron.right" size={20} color="#000" />
-                </TouchableOpacity>
+                        {/* Restaurants Matches */}
+                        {searchResultsRestaurants.length > 0 && (
+                            <View style={{marginBottom: 20}}>
+                                <Text style={[styles.sectionTitle, {fontSize: 16, marginBottom: 10}]}>Restaurantes</Text>
+                                {searchResultsRestaurants.map(item => (
+                                    <VerticalRestaurantCard key={`rest-${item.id}`} restaurant={item} />
+                                ))}
+                            </View>
+                        )}
+
+                        {/* Dish Matches */}
+                        {searchResultsDishes.length > 0 && (
+                            <View>
+                                <Text style={[styles.sectionTitle, {fontSize: 16, marginBottom: 10}]}>Platos</Text>
+                                {searchResultsDishes.map(item => (
+                                    <DishResultCard key={`dish-${item.id}`} item={item} />
+                                ))}
+                            </View>
+                        )}
+
+                        {searchResultsRestaurants.length === 0 && searchResultsDishes.length === 0 && (
+                            <Text style={{textAlign: 'center', marginTop: 20, color: '#666'}}>No se encontraron resultados.</Text>
+                        )}
+                      </>
+                  )}
               </View>
-              {loadingRestaurants ? (
-                  <ActivityIndicator size="large" color="#000" style={{ marginTop: 20 }} />
-              ) : popularRestaurants.length > 0 ? (
-                  <FlatList
-                      data={popularRestaurants}
-                      renderItem={renderHorizontalRestaurantItem}
-                      keyExtractor={(item) => item.id.toString()}
-                      horizontal
-                      showsHorizontalScrollIndicator={false}
-                      contentContainerStyle={styles.carouselContent}
-                  />
-              ) : (
-                  <Text style={{ marginLeft: 20, color: '#666' }}>No hay restaurantes populares.</Text>
-              )}
-          </View>
+          ) : (
+              <>
+                {/* Popular Restaurants Horizontal */}
+                <View style={styles.sectionContainer}>
+                    <View style={styles.sectionHeader}>
+                        <Text style={styles.sectionTitle}>Favoritos cerca de ti</Text>
+                        <TouchableOpacity>
+                            <IconSymbol name="chevron.right" size={20} color="#000" />
+                        </TouchableOpacity>
+                    </View>
+                    {loadingRestaurants ? (
+                        <ActivityIndicator size="large" color="#000" style={{ marginTop: 20 }} />
+                    ) : popularRestaurants.length > 0 ? (
+                        <FlatList
+                            data={popularRestaurants}
+                            renderItem={renderHorizontalRestaurantItem}
+                            keyExtractor={(item) => item.id.toString()}
+                            horizontal
+                            showsHorizontalScrollIndicator={false}
+                            contentContainerStyle={styles.carouselContent}
+                        />
+                    ) : (
+                        <Text style={{ marginLeft: 20, color: '#666' }}>No hay restaurantes populares.</Text>
+                    )}
+                </View>
 
-          {/* All Restaurants Vertical */}
-          <View style={styles.sectionContainer}>
-              <Text style={styles.sectionTitle}>Todos los restaurantes</Text>
-               {loadingRestaurants ? (
-                  <ActivityIndicator size="large" color="#000" />
-              ) : popularRestaurants.length > 0 ? (
-                  <View style={styles.verticalList}>
-                      {popularRestaurants.map((restaurant) => (
-                          <VerticalRestaurantCard key={restaurant.id} restaurant={restaurant} />
-                      ))}
-                  </View>
-              ) : null}
-          </View>
+                {/* All Restaurants Vertical */}
+                <View style={styles.sectionContainer}>
+                    <Text style={styles.sectionTitle}>Todos los restaurantes</Text>
+                    {loadingRestaurants ? (
+                        <ActivityIndicator size="large" color="#000" />
+                    ) : popularRestaurants.length > 0 ? (
+                        <View style={styles.verticalList}>
+                            {popularRestaurants.map((restaurant) => (
+                                <VerticalRestaurantCard key={restaurant.id} restaurant={restaurant} />
+                            ))}
+                        </View>
+                    ) : null}
+                </View>
+              </>
+          )}
 
         </ScrollView>
       ) : (
@@ -325,6 +438,15 @@ export default function HomeScreen() {
   );
 }
 
+function FilterPill({ label, icon }: { label: string, icon: any }) {
+    return (
+        <TouchableOpacity style={styles.filterPill}>
+            <Text style={styles.filterPillText}>{label}</Text>
+            <Ionicons name={icon} size={16} color="#000" style={{marginLeft: 4}} />
+        </TouchableOpacity>
+    );
+}
+
 function CategoryItem({ label, icon, color, iconColor }: { label: string, icon: any, color: string, iconColor: string }) {
     return (
         <TouchableOpacity style={styles.categoryItem}>
@@ -332,6 +454,23 @@ function CategoryItem({ label, icon, color, iconColor }: { label: string, icon: 
                 <IconSymbol name={icon} size={28} color={iconColor} />
             </View>
             <Text style={styles.categoryText}>{label}</Text>
+        </TouchableOpacity>
+    );
+}
+
+function DishResultCard({ item }: { item: MenuItemResult }) {
+    const router = useRouter();
+    return (
+        <TouchableOpacity
+            style={styles.dishCard}
+            onPress={() => router.push(`/restaurant/${item.restaurant_id}`)}
+        >
+            <Image source={{ uri: item.image_url }} style={styles.dishImage} contentFit="cover" />
+            <View style={{flex: 1}}>
+                <Text style={styles.dishName}>{item.name}</Text>
+                <Text style={styles.dishRestName}>{item.restaurants?.name}</Text>
+                <Text style={styles.dishPrice}>${item.price}</Text>
+            </View>
         </TouchableOpacity>
     );
 }
@@ -476,7 +615,7 @@ const styles = StyleSheet.create({
 
   // Categories
   categoryContainer: {
-      marginBottom: 24,
+      marginBottom: 16,
   },
   categoryContent: {
       paddingRight: 16,
@@ -499,6 +638,28 @@ const styles = StyleSheet.create({
       fontWeight: '600',
       color: '#333',
       textAlign: 'center',
+  },
+
+  // Filter Row
+  filterRowContainer: {
+      marginBottom: 20,
+  },
+  filterRowContent: {
+      paddingRight: 16,
+  },
+  filterPill: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: '#f2f2f2', // Light grey pill
+      borderRadius: 20,
+      paddingHorizontal: 12,
+      paddingVertical: 8,
+      marginRight: 10,
+  },
+  filterPillText: {
+      fontSize: 13,
+      fontWeight: '600',
+      color: '#000',
   },
 
   // Promo Banner
@@ -565,26 +726,57 @@ const styles = StyleSheet.create({
   // Sections
   sectionContainer: {
       marginBottom: 24,
+      paddingHorizontal: 16, // Ensure unified padding for results
   },
   sectionHeader: {
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
       marginBottom: 12,
-      paddingHorizontal: 16,
+      // paddingHorizontal handled by sectionContainer
   },
   sectionTitle: {
       fontSize: 20,
       fontWeight: 'bold',
       color: '#000',
-      paddingHorizontal: 16, // If not using sectionHeader
-      marginBottom: 12, // If not using sectionHeader
+      marginBottom: 12,
   },
   carouselContent: {
-      paddingHorizontal: 16,
+      // paddingHorizontal: 16, // If needed
+      paddingRight: 10,
   },
   verticalList: {
-      paddingHorizontal: 16,
+      // paddingHorizontal: 16,
+  },
+
+  // Dish Card (Search Result)
+  dishCard: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: 16,
+      backgroundColor: '#fff',
+  },
+  dishImage: {
+      width: 60,
+      height: 60,
+      borderRadius: 8,
+      marginRight: 12,
+      backgroundColor: '#f0f0f0',
+  },
+  dishName: {
+      fontSize: 16,
+      fontWeight: 'bold',
+      color: '#000',
+  },
+  dishRestName: {
+      fontSize: 12,
+      color: '#666',
+      marginBottom: 2,
+  },
+  dishPrice: {
+      fontSize: 14,
+      fontWeight: '600',
+      color: '#333',
   },
 
   // Horizontal Card Styles
