@@ -32,6 +32,7 @@ export default function RestaurantDetailScreen() {
   const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [cart, setCart] = useState<{ [key: number]: number }>({});
 
   useEffect(() => {
     if (id) {
@@ -68,6 +69,54 @@ export default function RestaurantDetailScreen() {
     }
   }
 
+  const handleAddToCart = (itemId: number) => {
+    setCart((prev) => ({
+      ...prev,
+      [itemId]: (prev[itemId] || 0) + 1,
+    }));
+  };
+
+  const handleRemoveFromCart = (itemId: number) => {
+    setCart((prev) => {
+      const newCart = { ...prev };
+      if (newCart[itemId] > 1) {
+        newCart[itemId]--;
+      } else {
+        delete newCart[itemId];
+      }
+      return newCart;
+    });
+  };
+
+  const calculateTotalPoints = () => {
+    let total = 0;
+    menuItems.forEach((item) => {
+      if (cart[item.id]) {
+        // Assume price * 10 is the points cost
+        total += Math.round(item.price * 10) * cart[item.id];
+      }
+    });
+    return total;
+  };
+
+  const handleCheckout = () => {
+    // Pass cart data as a stringified object
+    // We only need the items in the cart
+    const cartItems = menuItems.filter(item => cart[item.id]).map(item => ({
+        ...item,
+        quantity: cart[item.id],
+        pointsPrice: Math.round(item.price * 10)
+    }));
+
+    router.push({
+        pathname: "/checkout",
+        params: {
+            cartData: JSON.stringify(cartItems),
+            restaurantName: restaurant?.name
+        }
+    });
+  };
+
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
@@ -83,6 +132,8 @@ export default function RestaurantDetailScreen() {
       </View>
     );
   }
+
+  const totalPoints = calculateTotalPoints();
 
   return (
     <View style={styles.container}>
@@ -124,20 +175,46 @@ export default function RestaurantDetailScreen() {
         {/* Menu Section */}
         <View style={styles.menuContainer}>
           <Text style={styles.menuTitle}>Menú</Text>
-          {menuItems.map((item) => (
-            <TouchableOpacity key={item.id} style={styles.menuItem}>
-              <View style={styles.menuItemInfo}>
-                <Text style={styles.itemName}>{item.name}</Text>
-                {item.description && (
-                    <Text style={styles.itemDescription} numberOfLines={2}>{item.description}</Text>
-                )}
-                <Text style={styles.itemPrice}>{item.price.toFixed(2)} €</Text>
-              </View>
-              {item.image_url && (
-                  <Image source={{ uri: item.image_url }} style={styles.itemImage} />
-              )}
-            </TouchableOpacity>
-          ))}
+          {menuItems.map((item) => {
+            const pointsPrice = Math.round(item.price * 10);
+            const quantity = cart[item.id] || 0;
+
+            return (
+                <View key={item.id} style={styles.menuItem}>
+                <View style={styles.menuItemInfo}>
+                    <Text style={styles.itemName}>{item.name}</Text>
+                    {item.description && (
+                        <Text style={styles.itemDescription} numberOfLines={2}>{item.description}</Text>
+                    )}
+                    <Text style={styles.itemPrice}>{pointsPrice} pts</Text>
+                </View>
+                <View style={styles.rightSection}>
+                    {item.image_url && (
+                        <Image source={{ uri: item.image_url }} style={styles.itemImage} />
+                    )}
+
+                    {/* Add/Remove Buttons */}
+                    <View style={styles.qtyContainer}>
+                        {quantity > 0 ? (
+                            <View style={styles.qtyControls}>
+                                <TouchableOpacity onPress={() => handleRemoveFromCart(item.id)} style={styles.qtyButton}>
+                                    <Ionicons name="remove" size={16} color="#000" />
+                                </TouchableOpacity>
+                                <Text style={styles.qtyText}>{quantity}</Text>
+                                <TouchableOpacity onPress={() => handleAddToCart(item.id)} style={styles.qtyButton}>
+                                    <Ionicons name="add" size={16} color="#000" />
+                                </TouchableOpacity>
+                            </View>
+                        ) : (
+                            <TouchableOpacity onPress={() => handleAddToCart(item.id)} style={styles.addButton}>
+                                <Ionicons name="add" size={20} color="#fff" />
+                            </TouchableOpacity>
+                        )}
+                    </View>
+                </View>
+                </View>
+            );
+          })}
         </View>
 
         {/* Bottom padding for floating button */}
@@ -145,12 +222,17 @@ export default function RestaurantDetailScreen() {
       </ScrollView>
 
       {/* Floating Cart Button */}
-      <View style={styles.floatingButtonContainer}>
-        <TouchableOpacity style={styles.cartButton}>
-            <Text style={styles.cartButtonText}>Ver Carrito</Text>
-            <Text style={styles.cartButtonPrice}>0.00 €</Text>
-        </TouchableOpacity>
-      </View>
+      {totalPoints > 0 && (
+        <View style={styles.floatingButtonContainer}>
+            <TouchableOpacity style={styles.cartButton} onPress={handleCheckout}>
+                <View style={styles.cartCountCircle}>
+                    <Text style={styles.cartCountText}>{Object.values(cart).reduce((a, b) => a + b, 0)}</Text>
+                </View>
+                <Text style={styles.cartButtonText}>Ver Pedido</Text>
+                <Text style={styles.cartButtonPrice}>{totalPoints} pts</Text>
+            </TouchableOpacity>
+        </View>
+      )}
     </View>
   );
 }
@@ -276,14 +358,56 @@ const styles = StyleSheet.create({
   },
   itemPrice: {
       fontSize: 15,
-      fontWeight: '600',
-      color: '#111',
+      fontWeight: 'bold',
+      color: '#0a7ea4', // Brand color for points
+  },
+  rightSection: {
+      alignItems: 'flex-end',
   },
   itemImage: {
       width: 100,
       height: 100,
       borderRadius: 12,
       backgroundColor: '#eee',
+      marginBottom: 8,
+  },
+  qtyContainer: {
+      alignItems: 'center',
+      justifyContent: 'center',
+      height: 36,
+  },
+  addButton: {
+      width: 36,
+      height: 36,
+      borderRadius: 18,
+      backgroundColor: '#000',
+      justifyContent: 'center',
+      alignItems: 'center',
+  },
+  qtyControls: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: '#f0f0f0',
+      borderRadius: 18,
+      padding: 2,
+  },
+  qtyButton: {
+      width: 32,
+      height: 32,
+      borderRadius: 16,
+      backgroundColor: '#fff',
+      justifyContent: 'center',
+      alignItems: 'center',
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.1,
+      shadowRadius: 1,
+      elevation: 1,
+  },
+  qtyText: {
+      marginHorizontal: 12,
+      fontWeight: 'bold',
+      fontSize: 14,
   },
 
   // Floating Button
@@ -294,7 +418,7 @@ const styles = StyleSheet.create({
       right: 20,
   },
   cartButton: {
-      backgroundColor: '#000',
+      backgroundColor: '#222',
       flexDirection: 'row',
       justifyContent: 'space-between',
       padding: 16,
@@ -302,9 +426,22 @@ const styles = StyleSheet.create({
       alignItems: 'center',
       shadowColor: '#000',
       shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.2,
+      shadowOpacity: 0.25,
       shadowRadius: 8,
-      elevation: 5,
+      elevation: 6,
+  },
+  cartCountCircle: {
+      backgroundColor: '#444',
+      width: 24,
+      height: 24,
+      borderRadius: 12,
+      justifyContent: 'center',
+      alignItems: 'center',
+  },
+  cartCountText: {
+      color: '#fff',
+      fontSize: 12,
+      fontWeight: 'bold',
   },
   cartButtonText: {
       color: '#fff',
@@ -314,6 +451,6 @@ const styles = StyleSheet.create({
   cartButtonPrice: {
       color: '#fff',
       fontSize: 16,
-      fontWeight: '600',
+      fontWeight: 'bold',
   },
 });
