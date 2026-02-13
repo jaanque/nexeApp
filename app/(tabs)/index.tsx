@@ -24,8 +24,9 @@ export default function HomeScreen() {
   const [popularRestaurants, setPopularRestaurants] = useState<Restaurant[]>([]);
   const [loadingRestaurants, setLoadingRestaurants] = useState(true);
   const [locationText, setLocationText] = useState<string>("Cargando ubicación...");
-  const [canClaimDaily, setCanClaimDaily] = useState<boolean>(false);
+  const [hasClaimedWelcome, setHasClaimedWelcome] = useState<boolean>(true); // Default true to hide until check confirms false
   const [claiming, setClaiming] = useState<boolean>(false);
+  const [checkingClaim, setCheckingClaim] = useState<boolean>(true);
 
   const router = useRouter();
 
@@ -34,7 +35,9 @@ export default function HomeScreen() {
       setSession(session);
       if (session?.user) {
         fetchPoints(session.user.id);
-        checkDailyClaim(session.user.id);
+        checkWelcomeClaim(session.user.id);
+      } else {
+          setCheckingClaim(false);
       }
     });
 
@@ -42,7 +45,9 @@ export default function HomeScreen() {
       setSession(session);
       if (session?.user) {
         fetchPoints(session.user.id);
-        checkDailyClaim(session.user.id);
+        checkWelcomeClaim(session.user.id);
+      } else {
+          setCheckingClaim(false);
       }
     });
 
@@ -104,43 +109,34 @@ export default function HomeScreen() {
     }
   }
 
-  async function checkDailyClaim(userId: string) {
+  async function checkWelcomeClaim(userId: string) {
     try {
+      setCheckingClaim(true);
+      // Check if user exists in welcome_gift_claims table
+      // Since user_id is PK, checking existence is enough
       const { data, error } = await supabase
-        .from('daily_claims')
-        .select('claimed_at')
+        .from('welcome_gift_claims')
+        .select('user_id')
         .eq('user_id', userId)
-        .order('claimed_at', { ascending: false })
-        .limit(1);
+        .maybeSingle();
 
-      if (error && error.code !== 'PGRST116') { // PGRST116 is no rows returned for single(), but here we use select array
-         console.error('Error checking daily claim:', error);
-         // If table doesn't exist yet (dev env), assume true for now or handle gracefully
-         setCanClaimDaily(true);
-         return;
-      }
-
-      if (data && data.length > 0) {
-        const lastClaimDate = new Date(data[0].claimed_at);
-        const today = new Date();
-
-        // Check if claimed today (local time comparison simplification)
-        const isSameDay = lastClaimDate.getDate() === today.getDate() &&
-                          lastClaimDate.getMonth() === today.getMonth() &&
-                          lastClaimDate.getFullYear() === today.getFullYear();
-
-        setCanClaimDaily(!isSameDay);
+      if (error) {
+         console.error('Error checking welcome claim:', error);
+         // If error (e.g., table missing), default to claimed to avoid showing broken UI
+         setHasClaimedWelcome(true);
       } else {
-        // No claims ever
-        setCanClaimDaily(true);
+         // If data exists, they claimed it. If null, they haven't.
+         setHasClaimedWelcome(!!data);
       }
     } catch (error) {
       console.error('Unexpected error checking claim:', error);
-      setCanClaimDaily(true);
+      setHasClaimedWelcome(true);
+    } finally {
+        setCheckingClaim(false);
     }
   }
 
-  async function handleClaimDaily() {
+  async function handleClaimWelcome() {
     if (!session?.user || claiming) return;
 
     try {
@@ -149,12 +145,12 @@ export default function HomeScreen() {
 
         // 1. Insert claim record
         const { error: claimError } = await supabase
-            .from('daily_claims')
+            .from('welcome_gift_claims')
             .insert({ user_id: userId });
 
         if (claimError) {
             console.error('Error inserting claim:', claimError);
-            Alert.alert('Error', 'No se pudo reclamar la recompensa. Inténtalo de nuevo.');
+            Alert.alert('Error', 'No se pudo reclamar el regalo. Inténtalo de nuevo.');
             setClaiming(false);
             return;
         }
@@ -168,12 +164,12 @@ export default function HomeScreen() {
 
         if (updateError) {
             console.error('Error updating points:', updateError);
-            // Consider rolling back claim or just alerting (points might be out of sync but claim recorded)
-             Alert.alert('Atención', 'Recompensa registrada pero hubo un error actualizando los puntos.');
+             Alert.alert('Atención', 'Regalo registrado pero hubo un error actualizando los puntos.');
+             setHasClaimedWelcome(true); // Hide anyway since claim is recorded
         } else {
             setPoints(newPoints);
-            setCanClaimDaily(false);
-            Alert.alert('¡Felicidades!', 'Has ganado 5 puntos diarios.');
+            setHasClaimedWelcome(true); // Hide section immediately
+            Alert.alert('¡Felicidades!', 'Has recibido tu regalo de bienvenida de 5 puntos.');
         }
     } catch (error) {
         console.error('Unexpected error claiming:', error);
@@ -257,27 +253,27 @@ export default function HomeScreen() {
                 </ScrollView>
             </View>
 
-             {/* Daily Reward Banner (Previously Promo Banner) */}
-             <View style={styles.promoContainer}>
-                <View style={styles.promoContent}>
-                    <Text style={styles.promoTitle}>Recompensa Diaria</Text>
-                    <Text style={styles.promoText}>Gana 5 puntos cada día entrando a la app.</Text>
-                    <TouchableOpacity
-                        style={[styles.promoButton, !canClaimDaily && styles.promoButtonDisabled]}
-                        onPress={handleClaimDaily}
-                        disabled={!canClaimDaily || claiming}
-                    >
-                        {claiming ? (
-                            <ActivityIndicator size="small" color="#000" />
-                        ) : (
-                            <Text style={[styles.promoButtonText, !canClaimDaily && styles.promoButtonTextDisabled]}>
-                                {canClaimDaily ? "Reclamar 5 pts" : "Vuelve mañana"}
-                            </Text>
-                        )}
-                    </TouchableOpacity>
-                </View>
-                <Image source={{ uri: 'https://images.unsplash.com/photo-1513201099705-a9746e1e201f?q=80&w=2070&auto=format&fit=crop' }} style={styles.promoImage} contentFit="cover" />
-             </View>
+             {/* Welcome Gift Banner - Only show if not claimed */}
+             {!checkingClaim && !hasClaimedWelcome && (
+                 <View style={styles.promoContainer}>
+                    <View style={styles.promoContent}>
+                        <Text style={styles.promoTitle}>Regalo de Bienvenida</Text>
+                        <Text style={styles.promoText}>Reclama tus 5 puntos gratis por unirte a nosotros.</Text>
+                        <TouchableOpacity
+                            style={styles.promoButton}
+                            onPress={handleClaimWelcome}
+                            disabled={claiming}
+                        >
+                            {claiming ? (
+                                <ActivityIndicator size="small" color="#000" />
+                            ) : (
+                                <Text style={styles.promoButtonText}>Reclamar regalo</Text>
+                            )}
+                        </TouchableOpacity>
+                    </View>
+                    <Image source={{ uri: 'https://images.unsplash.com/photo-1513201099705-a9746e1e201f?q=80&w=2070&auto=format&fit=crop' }} style={styles.promoImage} contentFit="cover" />
+                 </View>
+             )}
           </View>
 
 
