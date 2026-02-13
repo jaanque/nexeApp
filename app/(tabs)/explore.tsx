@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { supabase } from '../../lib/supabase';
 import RestaurantMap from '../../components/RestaurantMap';
+import * as Location from 'expo-location';
 
 // Interface matching the database schema
 interface Restaurant {
@@ -137,10 +138,29 @@ export default function ExploreScreen() {
   const [restaurants, setRestaurants] = useState<Restaurant[]>(mockRestaurants);
   const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
   const [selectedRestaurant, setSelectedRestaurant] = useState<Restaurant | null>(null);
+  const [userLocation, setUserLocation] = useState<{ latitude: number, longitude: number } | null>(null);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   useEffect(() => {
     fetchRestaurants();
+    getUserLocation();
   }, []);
+
+  async function getUserLocation() {
+    try {
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        setErrorMsg('Permission to access location was denied');
+        return;
+      }
+
+      let location = await Location.getCurrentPositionAsync({});
+      setUserLocation(location.coords);
+    } catch (error) {
+      console.error("Error getting location:", error);
+      setErrorMsg('Error getting location');
+    }
+  }
 
   async function fetchRestaurants() {
     try {
@@ -206,6 +226,7 @@ export default function ExploreScreen() {
                 restaurants={restaurants}
                 selectedRestaurant={selectedRestaurant}
                 onSelectRestaurant={setSelectedRestaurant}
+                userLocation={userLocation}
             />
 
             {/* Popup Card */}

@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { StyleSheet } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 
 interface Restaurant {
@@ -17,19 +17,38 @@ interface RestaurantMapProps {
   restaurants: Restaurant[];
   selectedRestaurant: Restaurant | null;
   onSelectRestaurant: (restaurant: Restaurant | null) => void;
+  userLocation?: { latitude: number, longitude: number } | null;
 }
 
-export default function RestaurantMap({ restaurants, selectedRestaurant, onSelectRestaurant }: RestaurantMapProps) {
+export default function RestaurantMap({ restaurants, selectedRestaurant, onSelectRestaurant, userLocation }: RestaurantMapProps) {
+  const mapRef = useRef<MapView>(null);
+
+  useEffect(() => {
+    if (userLocation && mapRef.current) {
+        mapRef.current.animateToRegion({
+            latitude: userLocation.latitude,
+            longitude: userLocation.longitude,
+            latitudeDelta: 0.05,
+            longitudeDelta: 0.05,
+        }, 1000);
+    }
+  }, [userLocation]);
+
+  const initialRegion = {
+    latitude: 19.432608,
+    longitude: -99.133209,
+    latitudeDelta: 0.05,
+    longitudeDelta: 0.05,
+  };
+
   return (
     <MapView
+      ref={mapRef}
       style={styles.map}
-      initialRegion={{
-        latitude: 19.432608,
-        longitude: -99.133209,
-        latitudeDelta: 0.05,
-        longitudeDelta: 0.05,
-      }}
+      initialRegion={initialRegion}
       onPress={() => onSelectRestaurant(null)}
+      showsUserLocation={!!userLocation} // Native maps have built-in support for showing user location dot
+      showsMyLocationButton={true}
     >
       {restaurants.map((restaurant) => (
         <Marker
