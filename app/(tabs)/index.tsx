@@ -6,7 +6,6 @@ import { Session } from '@supabase/supabase-js';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
-import * as Location from 'expo-location';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 // Interface matching the database schema
@@ -37,7 +36,6 @@ export default function HomeScreen() {
   const [points, setPoints] = useState<number>(0);
   const [popularRestaurants, setPopularRestaurants] = useState<Restaurant[]>([]);
   const [loadingRestaurants, setLoadingRestaurants] = useState(true);
-  const [locationText, setLocationText] = useState<string>("Cargando ubicación...");
   const [hasClaimedWelcome, setHasClaimedWelcome] = useState<boolean>(true);
   const [claiming, setClaiming] = useState<boolean>(false);
   const [checkingClaim, setCheckingClaim] = useState<boolean>(true);
@@ -74,7 +72,6 @@ export default function HomeScreen() {
     });
 
     fetchPopularRestaurants();
-    fetchLocation();
   }, []);
 
   async function handleSearch(query: string) {
@@ -117,40 +114,6 @@ export default function HomeScreen() {
       } finally {
           setSearching(false);
       }
-  }
-
-  async function fetchLocation() {
-    try {
-      let { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        setLocationText('Ubicación desconocida');
-        return;
-      }
-
-      let location = await Location.getCurrentPositionAsync({});
-      let address = await Location.reverseGeocodeAsync({
-        latitude: location.coords.latitude,
-        longitude: location.coords.longitude
-      });
-
-      if (address && address.length > 0) {
-        const item = address[0];
-        const parts = [
-            item.city,
-            item.subregion,
-            item.region
-        ].filter(Boolean);
-
-        if (parts.length > 0) {
-            setLocationText(parts.join(', '));
-        } else {
-            setLocationText('Ubicación desconocida');
-        }
-      }
-    } catch (error) {
-      console.log('Error fetching location:', error);
-      setLocationText('Ubicación no disponible');
-    }
   }
 
   async function fetchPoints(userId: string) {
@@ -270,12 +233,23 @@ export default function HomeScreen() {
           {/* Header & Promo Wrapper */}
           <View style={[styles.purpleHeader, { paddingTop: insets.top + 10 }]}>
             <View style={styles.topBar}>
-                <TouchableOpacity style={styles.locationContainer} activeOpacity={0.7}>
-                    <View style={{ flex: 1, marginRight: 10, flexDirection: 'row', alignItems: 'center' }}>
-                        <Text style={[styles.greetingText, { color: '#fff' }]} numberOfLines={1}>{locationText}</Text>
-                        <IconSymbol size={16} name="chevron.down" color="#fff" style={{ marginLeft: 4, marginTop: 2 }} />
-                    </View>
-                </TouchableOpacity>
+                {/* Search Bar (Replaces Location Text) */}
+                <View style={styles.searchContainerInline}>
+                    <Ionicons name="search" size={18} color="#111" style={styles.searchIcon} />
+                    <TextInput
+                        placeholder="Restaurantes, platos..."
+                        placeholderTextColor="#666"
+                        style={styles.searchInput}
+                        value={searchQuery}
+                        onChangeText={handleSearch}
+                    />
+                    {isSearching && (
+                        <TouchableOpacity onPress={() => handleSearch("")}>
+                            <Ionicons name="close-circle" size={18} color="#666" />
+                        </TouchableOpacity>
+                    )}
+                </View>
+
                 <View style={styles.rightHeader}>
                     {/* Replaced Points Pill with Bell Icon per "Menu style" request, but user said "Copy style, not elements".
                         However, usually headers have notification icons. The user asked to copy the style of the provided image.
@@ -314,25 +288,6 @@ export default function HomeScreen() {
                     <Image source={{ uri: 'https://images.unsplash.com/photo-1513201099705-a9746e1e201f?q=80&w=2070&auto=format&fit=crop' }} style={styles.promoImage} contentFit="contain" />
                  </View>
              )}
-          </View>
-
-          {/* Search Bar - Overlapping or directly below */}
-          <View style={styles.searchWrapper}>
-            <View style={styles.searchContainer}>
-                <Ionicons name="search" size={20} color="#111" style={styles.searchIcon} />
-                <TextInput
-                    placeholder="Restaurantes, platos..."
-                    placeholderTextColor="#666"
-                    style={styles.searchInput}
-                    value={searchQuery}
-                    onChangeText={handleSearch}
-                />
-                {isSearching && (
-                    <TouchableOpacity onPress={() => handleSearch("")}>
-                        <Ionicons name="close-circle" size={20} color="#666" />
-                    </TouchableOpacity>
-                )}
-            </View>
           </View>
 
           {/* Categories */}
@@ -537,7 +492,7 @@ const styles = StyleSheet.create({
   purpleHeader: {
       backgroundColor: '#540B48', // Deep Purple
       paddingHorizontal: 16,
-      paddingBottom: 24, // Extra padding for overlap
+      paddingBottom: 20,
       borderBottomLeftRadius: 0,
       borderBottomRightRadius: 0,
   },
@@ -550,19 +505,12 @@ const styles = StyleSheet.create({
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
-      marginBottom: 16,
-  },
-  locationContainer: {
-      flex: 1,
+      marginBottom: 10, // Less bottom margin as promo follows
   },
   rightHeader: {
       flexDirection: 'row',
       alignItems: 'center',
-  },
-  greetingText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    // Color overridden inline to white
+      marginLeft: 10, // Space between search and icons
   },
   pointsPill: {
       flexDirection: 'row',
@@ -585,25 +533,16 @@ const styles = StyleSheet.create({
       marginRight: 4,
   },
 
-  // Search Bar Wrapper
-  searchWrapper: {
-      marginTop: -20, // Negative margin to overlap
-      paddingHorizontal: 16,
-      marginBottom: 10,
-      zIndex: 10,
-  },
-  searchContainer: {
+  // Inline Search Bar (In Header)
+  searchContainerInline: {
+    flex: 1, // Take available space
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff', // White background for search input to pop against hero
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    backgroundColor: '#fff',
+    borderRadius: 30, // More pill-shaped
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    // shadowColor: '#000', // Removed shadow for flat look in header
   },
   searchIcon: {
       marginRight: 12,
