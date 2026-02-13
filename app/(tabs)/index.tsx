@@ -269,6 +269,18 @@ export default function HomeScreen() {
                 </View>
             </View>
 
+            {/* New Banner Content within Header */}
+            {!isSearching && (
+                 <View style={styles.headerBannerContent}>
+                     <Text style={styles.headerTitle}>
+                        {session?.user ? '¡Hola de nuevo!' : 'Descubre sabores'}
+                     </Text>
+                     <Text style={styles.headerSubtitle}>
+                        ¿Qué te apetece comer hoy?
+                     </Text>
+                 </View>
+            )}
+
             {/* Welcome Gift Banner (Moved UP) */}
              {!isSearching && !checkingClaim && !hasClaimedWelcome && session?.user && (
                  <View style={styles.promoContainer}>
@@ -489,9 +501,23 @@ const styles = StyleSheet.create({
   purpleHeader: {
       backgroundColor: '#540B48', // Deep Purple
       paddingHorizontal: 16,
-      paddingBottom: 20,
-      borderBottomLeftRadius: 0,
-      borderBottomRightRadius: 0,
+      paddingBottom: 30, // Increased bottom padding for banner look
+      borderBottomLeftRadius: 20, // Added curve
+      borderBottomRightRadius: 20, // Added curve
+  },
+  headerBannerContent: {
+      marginTop: 10,
+      marginBottom: 10,
+  },
+  headerTitle: {
+      fontSize: 28,
+      fontWeight: 'bold',
+      color: '#fff',
+      marginBottom: 4,
+  },
+  headerSubtitle: {
+      fontSize: 16,
+      color: 'rgba(255,255,255,0.8)',
   },
   centerContent: {
     flex: 1,
@@ -556,12 +582,13 @@ const styles = StyleSheet.create({
 
   // Categories
   categoryContainer: {
-      marginBottom: 16,
-      marginTop: 10,
+      marginBottom: 24, // Increased spacing below categories
+      marginTop: 20, // Increased spacing above categories
   },
   categoryContent: {
-      paddingRight: 16,
-      paddingLeft: 16, // Added paddingLeft
+      paddingRight: 20,
+      paddingLeft: 20, // Increased horizontal padding
+      gap: 10, // Added gap between items if supported (React Native 0.71+) or use marginRight
   },
   categoryItem: {
       alignItems: 'center',
