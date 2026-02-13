@@ -6,7 +6,7 @@ import { Session } from '@supabase/supabase-js';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
-import { RewardsCard } from '@/components/RewardsCard';
+import * as Location from 'expo-location';
 
 // Interface matching the database schema
 interface Restaurant {
@@ -23,6 +23,7 @@ export default function HomeScreen() {
   const [points, setPoints] = useState<number>(0);
   const [popularRestaurants, setPopularRestaurants] = useState<Restaurant[]>([]);
   const [loadingRestaurants, setLoadingRestaurants] = useState(true);
+  const [locationText, setLocationText] = useState<string>("Cargando ubicación...");
 
   const router = useRouter();
 
@@ -42,7 +43,44 @@ export default function HomeScreen() {
     });
 
     fetchPopularRestaurants();
+    fetchLocation();
   }, []);
+
+  async function fetchLocation() {
+    try {
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        setLocationText('Ubicación desconocida');
+        return;
+      }
+
+      let location = await Location.getCurrentPositionAsync({});
+      let address = await Location.reverseGeocodeAsync({
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude
+      });
+
+      if (address && address.length > 0) {
+        const item = address[0];
+        // Construct string: City, Subregion (Comarca), Region (Comunidad)
+        // Note: Field availability depends on provider.
+        const parts = [
+            item.city,
+            item.subregion, // Often maps to county/district
+            item.region // Often maps to state/province/community
+        ].filter(Boolean);
+
+        if (parts.length > 0) {
+            setLocationText(parts.join(', '));
+        } else {
+            setLocationText('Ubicación desconocida');
+        }
+      }
+    } catch (error) {
+      console.log('Error fetching location:', error);
+      setLocationText('Ubicación no disponible');
+    }
+  }
 
   async function fetchPoints(userId: string) {
     try {
@@ -86,8 +124,6 @@ export default function HomeScreen() {
     }
   }
 
-  const username = session?.user?.user_metadata?.username || session?.user?.email?.split('@')[0] || "Usuario";
-
   const renderRestaurantItem: ListRenderItem<Restaurant> = ({ item }) => (
       <HorizontalRestaurantCard restaurant={item} />
   );
@@ -98,13 +134,13 @@ export default function HomeScreen() {
         <ScrollView style={styles.scrollContainer} showsVerticalScrollIndicator={false}>
           <View style={styles.headerContainer}>
             <View style={styles.topBar}>
-                <View>
-                    <Text style={styles.greetingText}>Hola, {username}</Text>
+                <View style={{ flex: 1, marginRight: 10 }}>
+                    <Text style={styles.greetingText} numberOfLines={2}>{locationText}</Text>
                 </View>
                 <View style={styles.rightHeader}>
                     <TouchableOpacity onPress={() => router.push('/wallet')} style={styles.pointsPill}>
                         <Text style={styles.pointsText}>{points} pts</Text>
-                        <IconSymbol size={16} name="star.fill" color="#FFD700" />
+                        <IconSymbol size={16} name="star" color="#FFD700" />
                     </TouchableOpacity>
                     <TouchableOpacity onPress={() => router.push('/profile')} style={styles.profileButton}>
                         <Ionicons name="person-circle-outline" size={32} color="#333" />
@@ -135,7 +171,7 @@ export default function HomeScreen() {
             </View>
           </View>
 
-          <RewardsCard currentPoints={points} />
+          {/* Removed RewardsCard as requested */}
 
           {/* Popular Restaurants Carousel */}
           <View style={styles.sectionContainer}>
@@ -237,7 +273,7 @@ const styles = StyleSheet.create({
       alignItems: 'center',
   },
   greetingText: {
-    fontSize: 24,
+    fontSize: 18, // Reduced slightly to accommodate longer location text
     fontWeight: 'bold',
     color: '#333',
   },
