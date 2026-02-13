@@ -19,9 +19,16 @@ interface Restaurant {
   longitude?: number;
 }
 
+import { useRouter } from 'expo-router';
+
 const RestaurantCard = ({ restaurant }: { restaurant: Restaurant }) => {
+  const router = useRouter();
   return (
-    <TouchableOpacity style={styles.card} activeOpacity={0.8}>
+    <TouchableOpacity
+      style={styles.card}
+      activeOpacity={0.8}
+      onPress={() => router.push(`/restaurant/${restaurant.id}`)}
+    >
       <Image
         source={{ uri: restaurant.image_url }}
         style={styles.image}
@@ -71,6 +78,7 @@ const MapPopupCard = ({ restaurant, onPress }: { restaurant: Restaurant; onPress
 };
 
 export default function ExploreScreen() {
+  const router = useRouter();
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
   const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
   const [selectedRestaurant, setSelectedRestaurant] = useState<Restaurant | null>(null);
@@ -180,8 +188,7 @@ export default function ExploreScreen() {
                     <MapPopupCard
                         restaurant={selectedRestaurant}
                         onPress={() => {
-                            // Handle navigation to detail here
-                            console.log('Navigate to:', selectedRestaurant.name);
+                            router.push(`/restaurant/${selectedRestaurant.id}`);
                         }}
                     />
                 </View>

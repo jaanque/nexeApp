@@ -167,8 +167,13 @@ function FilterItem({ label, icon }: { label: string, icon: any }) {
 }
 
 function HorizontalRestaurantCard({ restaurant }: { restaurant: Restaurant }) {
+    const router = useRouter();
     return (
-        <TouchableOpacity style={styles.card} activeOpacity={0.8}>
+        <TouchableOpacity
+            style={styles.card}
+            activeOpacity={0.8}
+            onPress={() => router.push(`/restaurant/${restaurant.id}`)}
+        >
             <Image
                 source={{ uri: restaurant.image_url }}
                 style={styles.cardImage}
