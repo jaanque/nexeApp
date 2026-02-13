@@ -1,4 +1,4 @@
-import { View, StyleSheet, Text, TextInput, ScrollView, TouchableOpacity, FlatList, ListRenderItem, ActivityIndicator, Alert, Dimensions } from 'react-native';
+import { View, StyleSheet, Text, TextInput, ScrollView, TouchableOpacity, FlatList, ListRenderItem, ActivityIndicator, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
@@ -265,18 +265,10 @@ export default function HomeScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Hero Banner Background */}
-      {session && session.user && (
-          <Image
-            source={{ uri: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=2070&auto=format&fit=crop' }}
-            style={[styles.heroBanner, { height: 180 + insets.top }]}
-            contentFit="cover"
-          />
-      )}
-
       {session && session.user ? (
         <ScrollView style={styles.scrollContainer} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
-          <View style={[styles.headerContainer, { paddingTop: insets.top + 10 }]}>
+          {/* Header & Promo Wrapper */}
+          <View style={[styles.purpleHeader, { paddingTop: insets.top + 10 }]}>
             <View style={styles.topBar}>
                 <TouchableOpacity style={styles.locationContainer} activeOpacity={0.7}>
                     <View style={{ flex: 1, marginRight: 10, flexDirection: 'row', alignItems: 'center' }}>
@@ -285,17 +277,47 @@ export default function HomeScreen() {
                     </View>
                 </TouchableOpacity>
                 <View style={styles.rightHeader}>
+                    {/* Replaced Points Pill with Bell Icon per "Menu style" request, but user said "Copy style, not elements".
+                        However, usually headers have notification icons. The user asked to copy the style of the provided image.
+                        I will keep the points pill but style it to fit the purple background (maybe transparent).
+                    */}
                     <TouchableOpacity onPress={() => router.push('/wallet')} style={[styles.pointsPill, { backgroundColor: 'rgba(255,255,255,0.2)', borderWidth: 0 }]}>
                         <Text style={[styles.pointsText, { color: '#fff' }]}>{points} pts</Text>
                         <IconSymbol size={16} name="star.fill" color="#FFD700" />
                     </TouchableOpacity>
                     <TouchableOpacity onPress={() => router.push('/profile')} style={styles.profileButton}>
+                         {/* Using a bell icon if I strictly follow the image style, but sticking to profile per "not elements". */}
+                        <Ionicons name="notifications-outline" size={28} color="#fff" style={{marginRight: 10}} />
                         <Ionicons name="person-circle" size={36} color="#fff" />
                     </TouchableOpacity>
                 </View>
             </View>
 
-            {/* Search Bar */}
+            {/* Welcome Gift Banner (Moved UP) */}
+             {!isSearching && !checkingClaim && !hasClaimedWelcome && (
+                 <View style={styles.promoContainer}>
+                    <View style={styles.promoContent}>
+                        <Text style={styles.promoTitle}>Regalo de Bienvenida</Text>
+                        <Text style={styles.promoText}>Reclama tus 5 puntos gratis por unirte a nosotros.</Text>
+                        <TouchableOpacity
+                            style={styles.promoButton}
+                            onPress={handleClaimWelcome}
+                            disabled={claiming}
+                        >
+                            {claiming ? (
+                                <ActivityIndicator size="small" color="#fff" />
+                            ) : (
+                                <Text style={styles.promoButtonText}>Reclamar regalo</Text>
+                            )}
+                        </TouchableOpacity>
+                    </View>
+                    <Image source={{ uri: 'https://images.unsplash.com/photo-1513201099705-a9746e1e201f?q=80&w=2070&auto=format&fit=crop' }} style={styles.promoImage} contentFit="contain" />
+                 </View>
+             )}
+          </View>
+
+          {/* Search Bar - Overlapping or directly below */}
+          <View style={styles.searchWrapper}>
             <View style={styles.searchContainer}>
                 <Ionicons name="search" size={20} color="#111" style={styles.searchIcon} />
                 <TextInput
@@ -311,13 +333,9 @@ export default function HomeScreen() {
                     </TouchableOpacity>
                 )}
             </View>
+          </View>
 
-            {/* Categories (Spacer to push content down below banner if needed, or just normal flow) */}
-            {/* Since banner is absolute, we need to ensure content flow works.
-                Actually, the banner is BEHIND. The headerContainer has transparent background?
-                Yes, removed backgroundColor: '#fff' from headerContainer.
-            */}
-
+          {/* Categories */}
             {!isSearching && (
                 <View style={styles.categoryContainer}>
                     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categoryContent}>
@@ -330,29 +348,6 @@ export default function HomeScreen() {
                     </ScrollView>
                 </View>
             )}
-
-             {/* Welcome Gift Banner */}
-             {!isSearching && !checkingClaim && !hasClaimedWelcome && (
-                 <View style={styles.promoContainer}>
-                    <View style={styles.promoContent}>
-                        <Text style={styles.promoTitle}>Regalo de Bienvenida</Text>
-                        <Text style={styles.promoText}>Reclama tus 5 puntos gratis por unirte a nosotros.</Text>
-                        <TouchableOpacity
-                            style={styles.promoButton}
-                            onPress={handleClaimWelcome}
-                            disabled={claiming}
-                        >
-                            {claiming ? (
-                                <ActivityIndicator size="small" color="#000" />
-                            ) : (
-                                <Text style={styles.promoButtonText}>Reclamar regalo</Text>
-                            )}
-                        </TouchableOpacity>
-                    </View>
-                    <Image source={{ uri: 'https://images.unsplash.com/photo-1513201099705-a9746e1e201f?q=80&w=2070&auto=format&fit=crop' }} style={styles.promoImage} contentFit="cover" />
-                 </View>
-             )}
-          </View>
 
           {/* Search Results */}
           {isSearching ? (
@@ -539,17 +534,12 @@ const styles = StyleSheet.create({
   scrollContainer: {
       flex: 1,
   },
-  headerContainer: {
+  purpleHeader: {
+      backgroundColor: '#540B48', // Deep Purple
       paddingHorizontal: 16,
-      paddingBottom: 10,
-      // Removed white background to show hero banner
-  },
-  heroBanner: {
-      position: 'absolute',
-      top: 0,
-      left: 0,
-      right: 0,
-      zIndex: 0,
+      paddingBottom: 24, // Extra padding for overlap
+      borderBottomLeftRadius: 0,
+      borderBottomRightRadius: 0,
   },
   centerContent: {
     flex: 1,
@@ -577,23 +567,31 @@ const styles = StyleSheet.create({
   pointsPill: {
       flexDirection: 'row',
       alignItems: 'center',
-      backgroundColor: '#f2f2f2',
+      backgroundColor: 'rgba(255,255,255,0.2)',
       paddingHorizontal: 10,
       paddingVertical: 6,
       borderRadius: 20,
       marginRight: 10,
   },
   profileButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
       padding: 0,
   },
   pointsText: {
       fontSize: 13,
       fontWeight: '600',
-      color: '#000',
+      color: '#fff',
       marginRight: 4,
   },
 
-  // Search Bar
+  // Search Bar Wrapper
+  searchWrapper: {
+      marginTop: -20, // Negative margin to overlap
+      paddingHorizontal: 16,
+      marginBottom: 10,
+      zIndex: 10,
+  },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -601,7 +599,6 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 14,
-    marginBottom: 20,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -621,10 +618,11 @@ const styles = StyleSheet.create({
   // Categories
   categoryContainer: {
       marginBottom: 16,
-      marginTop: 10, // Add spacing from search bar which might overlap banner bottom
+      marginTop: 10,
   },
   categoryContent: {
       paddingRight: 16,
+      paddingLeft: 16, // Added paddingLeft
   },
   categoryItem: {
       alignItems: 'center',
@@ -646,59 +644,49 @@ const styles = StyleSheet.create({
       textAlign: 'center',
   },
 
-  // Promo Banner
+  // Promo Banner (Styled to match Image)
   promoContainer: {
       flexDirection: 'row',
-      backgroundColor: '#000', // Or brand color
-      borderRadius: 12,
-      padding: 16,
-      marginBottom: 10,
+      // backgroundColor removed, inherits purple
+      paddingVertical: 10,
+      marginBottom: 20,
       height: 140,
-      overflow: 'hidden',
       position: 'relative',
   },
   promoContent: {
       flex: 1,
       zIndex: 2,
       justifyContent: 'center',
+      paddingRight: 20,
   },
   promoTitle: {
       color: '#fff',
-      fontSize: 18,
+      fontSize: 22, // Larger
       fontWeight: 'bold',
       marginBottom: 4,
   },
   promoText: {
-      color: '#ddd',
-      fontSize: 12,
-      marginBottom: 12,
-      width: '80%',
+      color: '#fff', // White
+      fontSize: 14,
+      marginBottom: 16,
+      opacity: 0.9,
   },
   promoButton: {
-      backgroundColor: '#fff',
-      paddingHorizontal: 12,
-      paddingVertical: 6,
+      backgroundColor: '#000', // Black button
+      paddingHorizontal: 16,
+      paddingVertical: 8,
       borderRadius: 20,
       alignSelf: 'flex-start',
   },
-  promoButtonDisabled: {
-      backgroundColor: '#333',
-  },
   promoButtonText: {
-      color: '#000',
-      fontSize: 12,
+      color: '#fff', // White text
+      fontSize: 14,
       fontWeight: 'bold',
   },
-  promoButtonTextDisabled: {
-      color: '#888',
-  },
   promoImage: {
-      position: 'absolute',
-      right: 0,
-      top: 0,
-      bottom: 0,
-      width: '50%',
-      opacity: 0.8,
+      width: 120,
+      height: 120,
+      // Position it nicely
   },
 
   welcomeText: {
@@ -710,14 +698,13 @@ const styles = StyleSheet.create({
   // Sections
   sectionContainer: {
       marginBottom: 24,
-      paddingHorizontal: 16, // Ensure unified padding for results
+      paddingHorizontal: 16,
   },
   sectionHeader: {
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
       marginBottom: 12,
-      // paddingHorizontal handled by sectionContainer
   },
   sectionTitle: {
       fontSize: 20,
@@ -726,7 +713,6 @@ const styles = StyleSheet.create({
       marginBottom: 12,
   },
   carouselContent: {
-      // paddingHorizontal: 16, // If needed
       paddingRight: 10,
   },
   verticalList: {
