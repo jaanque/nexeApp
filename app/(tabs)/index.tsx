@@ -1,4 +1,4 @@
-import { View, StyleSheet, Text, TextInput, ScrollView, TouchableOpacity, FlatList, ListRenderItem, ActivityIndicator } from 'react-native';
+import { View, StyleSheet, Text, TextInput, ScrollView, TouchableOpacity, FlatList, ListRenderItem, ActivityIndicator, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
@@ -24,6 +24,8 @@ export default function HomeScreen() {
   const [popularRestaurants, setPopularRestaurants] = useState<Restaurant[]>([]);
   const [loadingRestaurants, setLoadingRestaurants] = useState(true);
   const [locationText, setLocationText] = useState<string>("Cargando ubicación...");
+  const [canClaimDaily, setCanClaimDaily] = useState<boolean>(false);
+  const [claiming, setClaiming] = useState<boolean>(false);
 
   const router = useRouter();
 
@@ -32,6 +34,7 @@ export default function HomeScreen() {
       setSession(session);
       if (session?.user) {
         fetchPoints(session.user.id);
+        checkDailyClaim(session.user.id);
       }
     });
 
@@ -39,6 +42,7 @@ export default function HomeScreen() {
       setSession(session);
       if (session?.user) {
         fetchPoints(session.user.id);
+        checkDailyClaim(session.user.id);
       }
     });
 
@@ -97,6 +101,85 @@ export default function HomeScreen() {
       }
     } catch (error) {
       console.error('Unexpected error:', error);
+    }
+  }
+
+  async function checkDailyClaim(userId: string) {
+    try {
+      const { data, error } = await supabase
+        .from('daily_claims')
+        .select('claimed_at')
+        .eq('user_id', userId)
+        .order('claimed_at', { ascending: false })
+        .limit(1);
+
+      if (error && error.code !== 'PGRST116') { // PGRST116 is no rows returned for single(), but here we use select array
+         console.error('Error checking daily claim:', error);
+         // If table doesn't exist yet (dev env), assume true for now or handle gracefully
+         setCanClaimDaily(true);
+         return;
+      }
+
+      if (data && data.length > 0) {
+        const lastClaimDate = new Date(data[0].claimed_at);
+        const today = new Date();
+
+        // Check if claimed today (local time comparison simplification)
+        const isSameDay = lastClaimDate.getDate() === today.getDate() &&
+                          lastClaimDate.getMonth() === today.getMonth() &&
+                          lastClaimDate.getFullYear() === today.getFullYear();
+
+        setCanClaimDaily(!isSameDay);
+      } else {
+        // No claims ever
+        setCanClaimDaily(true);
+      }
+    } catch (error) {
+      console.error('Unexpected error checking claim:', error);
+      setCanClaimDaily(true);
+    }
+  }
+
+  async function handleClaimDaily() {
+    if (!session?.user || claiming) return;
+
+    try {
+        setClaiming(true);
+        const userId = session.user.id;
+
+        // 1. Insert claim record
+        const { error: claimError } = await supabase
+            .from('daily_claims')
+            .insert({ user_id: userId });
+
+        if (claimError) {
+            console.error('Error inserting claim:', claimError);
+            Alert.alert('Error', 'No se pudo reclamar la recompensa. Inténtalo de nuevo.');
+            setClaiming(false);
+            return;
+        }
+
+        // 2. Update points
+        const newPoints = points + 5;
+        const { error: updateError } = await supabase
+            .from('profiles')
+            .update({ points: newPoints })
+            .eq('id', userId);
+
+        if (updateError) {
+            console.error('Error updating points:', updateError);
+            // Consider rolling back claim or just alerting (points might be out of sync but claim recorded)
+             Alert.alert('Atención', 'Recompensa registrada pero hubo un error actualizando los puntos.');
+        } else {
+            setPoints(newPoints);
+            setCanClaimDaily(false);
+            Alert.alert('¡Felicidades!', 'Has ganado 5 puntos diarios.');
+        }
+    } catch (error) {
+        console.error('Unexpected error claiming:', error);
+        Alert.alert('Error', 'Ocurrió un error inesperado.');
+    } finally {
+        setClaiming(false);
     }
   }
 
@@ -174,16 +257,26 @@ export default function HomeScreen() {
                 </ScrollView>
             </View>
 
-             {/* Promo Banner */}
+             {/* Daily Reward Banner (Previously Promo Banner) */}
              <View style={styles.promoContainer}>
                 <View style={styles.promoContent}>
-                    <Text style={styles.promoTitle}>Oferta de bienvenida</Text>
-                    <Text style={styles.promoText}>50% de descuento en tus primeros 3 pedidos.</Text>
-                    <TouchableOpacity style={styles.promoButton}>
-                        <Text style={styles.promoButtonText}>Pedir ahora</Text>
+                    <Text style={styles.promoTitle}>Recompensa Diaria</Text>
+                    <Text style={styles.promoText}>Gana 5 puntos cada día entrando a la app.</Text>
+                    <TouchableOpacity
+                        style={[styles.promoButton, !canClaimDaily && styles.promoButtonDisabled]}
+                        onPress={handleClaimDaily}
+                        disabled={!canClaimDaily || claiming}
+                    >
+                        {claiming ? (
+                            <ActivityIndicator size="small" color="#000" />
+                        ) : (
+                            <Text style={[styles.promoButtonText, !canClaimDaily && styles.promoButtonTextDisabled]}>
+                                {canClaimDaily ? "Reclamar 5 pts" : "Vuelve mañana"}
+                            </Text>
+                        )}
                     </TouchableOpacity>
                 </View>
-                <Image source={{ uri: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=2070&auto=format&fit=crop' }} style={styles.promoImage} contentFit="cover" />
+                <Image source={{ uri: 'https://images.unsplash.com/photo-1513201099705-a9746e1e201f?q=80&w=2070&auto=format&fit=crop' }} style={styles.promoImage} contentFit="cover" />
              </View>
           </View>
 
@@ -447,10 +540,16 @@ const styles = StyleSheet.create({
       borderRadius: 20,
       alignSelf: 'flex-start',
   },
+  promoButtonDisabled: {
+      backgroundColor: '#333',
+  },
   promoButtonText: {
       color: '#000',
       fontSize: 12,
       fontWeight: 'bold',
+  },
+  promoButtonTextDisabled: {
+      color: '#888',
   },
   promoImage: {
       position: 'absolute',
