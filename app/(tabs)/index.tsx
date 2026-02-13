@@ -1,9 +1,10 @@
-import { View, StyleSheet, Button, Text } from 'react-native';
+import { View, StyleSheet, Button, Text, TextInput, ScrollView, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Session } from '@supabase/supabase-js';
 import { IconSymbol } from '@/components/ui/icon-symbol';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -60,6 +61,28 @@ export default function HomeScreen() {
             </View>
           </View>
 
+          {/* Search Bar */}
+          <View style={styles.searchContainer}>
+            <Ionicons name="search" size={20} color="#111" style={styles.searchIcon} />
+            <TextInput
+              placeholder="Buscar en NexeApp"
+              placeholderTextColor="#666"
+              style={styles.searchInput}
+            />
+          </View>
+
+          {/* Filter Bar */}
+          <View style={styles.filterContainer}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterContent}>
+                <FilterItem label="Per emportar" icon="bag-handle-outline" />
+                <FilterItem label="Ofertes flash" icon="flash-outline" />
+                <FilterItem label="Bescanviar" icon="swap-horizontal-outline" />
+                <FilterItem label="Regalar punts" icon="gift-outline" />
+                <FilterItem label="Ruleta" icon="color-wand-outline" />
+                <FilterItem label="Mapa" icon="map-outline" />
+            </ScrollView>
+          </View>
+
           <View style={styles.content}>
             <Text style={styles.subtitle}>Explora los mejores restaurantes</Text>
           </View>
@@ -71,6 +94,15 @@ export default function HomeScreen() {
       )}
     </View>
   );
+}
+
+function FilterItem({ label, icon }: { label: string, icon: any }) {
+    return (
+        <TouchableOpacity style={styles.filterItem}>
+             <Ionicons name={icon} size={18} color="#111" />
+            <Text style={styles.filterText}>{label}</Text>
+        </TouchableOpacity>
+    );
 }
 
 const styles = StyleSheet.create({
@@ -107,6 +139,51 @@ const styles = StyleSheet.create({
       color: '#333',
       marginRight: 6,
   },
+
+  // Search Bar
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f6f6f6',
+    borderRadius: 50,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    marginBottom: 20,
+  },
+  searchIcon: {
+      marginRight: 10,
+  },
+  searchInput: {
+      flex: 1,
+      fontSize: 16,
+      color: '#111',
+      fontWeight: '500',
+  },
+
+  // Filter Bar
+  filterContainer: {
+      height: 50,
+      marginBottom: 20,
+  },
+  filterContent: {
+      paddingRight: 20,
+  },
+  filterItem: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: '#f6f6f6',
+      borderRadius: 20,
+      paddingHorizontal: 16,
+      paddingVertical: 10,
+      marginRight: 10,
+  },
+  filterText: {
+      fontWeight: '600',
+      fontSize: 14,
+      color: '#111',
+      marginLeft: 8,
+  },
+
   content: {
     flex: 1,
     justifyContent: 'center',
