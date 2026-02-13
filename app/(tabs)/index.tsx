@@ -1,4 +1,4 @@
-import { View, StyleSheet, Button, Text, TextInput, ScrollView, TouchableOpacity, FlatList, ListRenderItem } from 'react-native';
+import { View, StyleSheet, Button, Text, TextInput, ScrollView, TouchableOpacity, FlatList, ListRenderItem, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
@@ -17,46 +17,12 @@ interface Restaurant {
   address: string;
 }
 
-const mockPopularRestaurants: Restaurant[] = [
-  {
-    id: 1,
-    name: 'Burger King',
-    image_url: 'https://images.unsplash.com/photo-1571091718767-18b5b1457add?w=800&q=80',
-    rating: 4.5,
-    cuisine_type: 'American • Burgers',
-    address: '123 Main St',
-  },
-  {
-    id: 2,
-    name: 'Sushi Master',
-    image_url: 'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=800&q=80',
-    rating: 4.8,
-    cuisine_type: 'Japanese • Sushi',
-    address: '456 Elm St',
-  },
-  {
-    id: 5,
-    name: 'Indian Spice',
-    image_url: 'https://images.unsplash.com/photo-1585937421612-70a008356f36?w=800&q=80',
-    rating: 4.7,
-    cuisine_type: 'Indian • Curry',
-    address: '202 Maple St',
-  },
-  {
-    id: 6,
-    name: 'Healthy Greens',
-    image_url: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=800&q=80',
-    rating: 4.6,
-    cuisine_type: 'Healthy • Salads',
-    address: '303 Birch St',
-  },
-];
-
 export default function HomeScreen() {
   const router = useRouter();
   const [session, setSession] = useState<Session | null>(null);
   const [points, setPoints] = useState<number>(0);
-  const [popularRestaurants, setPopularRestaurants] = useState<Restaurant[]>(mockPopularRestaurants);
+  const [popularRestaurants, setPopularRestaurants] = useState<Restaurant[]>([]);
+  const [loadingRestaurants, setLoadingRestaurants] = useState(true);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -96,6 +62,7 @@ export default function HomeScreen() {
 
   async function fetchPopularRestaurants() {
     try {
+      setLoadingRestaurants(true);
       const { data, error } = await supabase
         .from('restaurants')
         .select('*')
@@ -105,12 +72,15 @@ export default function HomeScreen() {
 
       if (error) {
         console.error('Error fetching restaurants:', error);
+        setPopularRestaurants([]);
       } else if (data && data.length > 0) {
         setPopularRestaurants(data);
       }
     } catch (error) {
-       // Fallback to mock data if fetch fails
-       console.log("Using mock data due to error", error);
+       console.error("Error fetching popular restaurants", error);
+       setPopularRestaurants([]);
+    } finally {
+        setLoadingRestaurants(false);
     }
   }
 
@@ -161,14 +131,20 @@ export default function HomeScreen() {
           {/* Popular Restaurants Carousel */}
           <View style={styles.sectionContainer}>
               <Text style={styles.sectionTitle}>Restaurantes Populares</Text>
-              <FlatList
-                  data={popularRestaurants}
-                  renderItem={renderRestaurantItem}
-                  keyExtractor={(item) => item.id.toString()}
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  contentContainerStyle={styles.carouselContent}
-              />
+              {loadingRestaurants ? (
+                  <ActivityIndicator size="large" color="#333" style={{ marginTop: 20 }} />
+              ) : popularRestaurants.length > 0 ? (
+                  <FlatList
+                      data={popularRestaurants}
+                      renderItem={renderRestaurantItem}
+                      keyExtractor={(item) => item.id.toString()}
+                      horizontal
+                      showsHorizontalScrollIndicator={false}
+                      contentContainerStyle={styles.carouselContent}
+                  />
+              ) : (
+                  <Text style={{ marginLeft: 20, color: '#666' }}>No hay restaurantes populares.</Text>
+              )}
           </View>
 
         </ScrollView>
