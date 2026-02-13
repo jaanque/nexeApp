@@ -1,4 +1,4 @@
-import { View, StyleSheet, Text, TextInput, ScrollView, TouchableOpacity, FlatList, ListRenderItem, ActivityIndicator, Alert } from 'react-native';
+import { View, StyleSheet, Text, TextInput, ScrollView, TouchableOpacity, FlatList, ListRenderItem, ActivityIndicator, Alert, Dimensions } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
@@ -7,6 +7,7 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import * as Location from 'expo-location';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 // Interface matching the database schema
 interface Restaurant {
@@ -49,6 +50,7 @@ export default function HomeScreen() {
   const [searching, setSearching] = useState<boolean>(false);
 
   const router = useRouter();
+  const insets = useSafeAreaInsets();
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -263,23 +265,32 @@ export default function HomeScreen() {
 
   return (
     <View style={styles.container}>
+      {/* Hero Banner Background */}
+      {session && session.user && (
+          <Image
+            source={{ uri: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=2070&auto=format&fit=crop' }}
+            style={[styles.heroBanner, { height: 180 + insets.top }]}
+            contentFit="cover"
+          />
+      )}
+
       {session && session.user ? (
         <ScrollView style={styles.scrollContainer} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
-          <View style={styles.headerContainer}>
+          <View style={[styles.headerContainer, { paddingTop: insets.top + 10 }]}>
             <View style={styles.topBar}>
                 <TouchableOpacity style={styles.locationContainer} activeOpacity={0.7}>
                     <View style={{ flex: 1, marginRight: 10, flexDirection: 'row', alignItems: 'center' }}>
-                        <Text style={styles.greetingText} numberOfLines={1}>{locationText}</Text>
-                        <IconSymbol size={16} name="chevron.down" color="#333" style={{ marginLeft: 4, marginTop: 2 }} />
+                        <Text style={[styles.greetingText, { color: '#fff' }]} numberOfLines={1}>{locationText}</Text>
+                        <IconSymbol size={16} name="chevron.down" color="#fff" style={{ marginLeft: 4, marginTop: 2 }} />
                     </View>
                 </TouchableOpacity>
                 <View style={styles.rightHeader}>
-                    <TouchableOpacity onPress={() => router.push('/wallet')} style={styles.pointsPill}>
-                        <Text style={styles.pointsText}>{points} pts</Text>
-                        <IconSymbol size={16} name="star.fill" color="#000" />
+                    <TouchableOpacity onPress={() => router.push('/wallet')} style={[styles.pointsPill, { backgroundColor: 'rgba(255,255,255,0.2)', borderWidth: 0 }]}>
+                        <Text style={[styles.pointsText, { color: '#fff' }]}>{points} pts</Text>
+                        <IconSymbol size={16} name="star.fill" color="#FFD700" />
                     </TouchableOpacity>
                     <TouchableOpacity onPress={() => router.push('/profile')} style={styles.profileButton}>
-                        <Ionicons name="person-circle" size={36} color="#000" />
+                        <Ionicons name="person-circle" size={36} color="#fff" />
                     </TouchableOpacity>
                 </View>
             </View>
@@ -301,7 +312,12 @@ export default function HomeScreen() {
                 )}
             </View>
 
-            {/* Categories */}
+            {/* Categories (Spacer to push content down below banner if needed, or just normal flow) */}
+            {/* Since banner is absolute, we need to ensure content flow works.
+                Actually, the banner is BEHIND. The headerContainer has transparent background?
+                Yes, removed backgroundColor: '#fff' from headerContainer.
+            */}
+
             {!isSearching && (
                 <View style={styles.categoryContainer}>
                     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categoryContent}>
@@ -311,19 +327,6 @@ export default function HomeScreen() {
                         <CategoryItem label="Postres" icon="ice-cream" color="#E3F2FD" iconColor="#2196F3" />
                         <CategoryItem label="Bebidas" icon="wine" color="#F3E5F5" iconColor="#9C27B0" />
                         <CategoryItem label="Envíos" icon="bicycle" color="#FAFAFA" iconColor="#666" />
-                    </ScrollView>
-                </View>
-            )}
-
-            {/* Filter Pills Row - Only show when not searching */}
-            {!isSearching && (
-                <View style={styles.filterRowContainer}>
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterRowContent}>
-                        <FilterPill label="Ordenar" icon="chevron-down" />
-                        <FilterPill label="Ofertas" icon="pricetag-outline" />
-                        <FilterPill label="Valoración" icon="star-outline" />
-                        <FilterPill label="Precio" icon="cash-outline" />
-                        <FilterPill label="Dietética" icon="leaf-outline" />
                     </ScrollView>
                 </View>
             )}
@@ -438,15 +441,6 @@ export default function HomeScreen() {
   );
 }
 
-function FilterPill({ label, icon }: { label: string, icon: any }) {
-    return (
-        <TouchableOpacity style={styles.filterPill}>
-            <Text style={styles.filterPillText}>{label}</Text>
-            <Ionicons name={icon} size={16} color="#000" style={{marginLeft: 4}} />
-        </TouchableOpacity>
-    );
-}
-
 function CategoryItem({ label, icon, color, iconColor }: { label: string, icon: any, color: string, iconColor: string }) {
     return (
         <TouchableOpacity style={styles.categoryItem}>
@@ -546,10 +540,16 @@ const styles = StyleSheet.create({
       flex: 1,
   },
   headerContainer: {
-      paddingTop: 60, // Safe area padding replacement
       paddingHorizontal: 16,
       paddingBottom: 10,
-      backgroundColor: '#fff',
+      // Removed white background to show hero banner
+  },
+  heroBanner: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      zIndex: 0,
   },
   centerContent: {
     flex: 1,
@@ -572,7 +572,7 @@ const styles = StyleSheet.create({
   greetingText: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#000',
+    // Color overridden inline to white
   },
   pointsPill: {
       flexDirection: 'row',
@@ -597,11 +597,16 @@ const styles = StyleSheet.create({
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f2f2f2',
-    borderRadius: 12, // More square-ish like Uber
+    backgroundColor: '#fff', // White background for search input to pop against hero
+    borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 14,
     marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   searchIcon: {
       marginRight: 12,
@@ -616,6 +621,7 @@ const styles = StyleSheet.create({
   // Categories
   categoryContainer: {
       marginBottom: 16,
+      marginTop: 10, // Add spacing from search bar which might overlap banner bottom
   },
   categoryContent: {
       paddingRight: 16,
@@ -638,28 +644,6 @@ const styles = StyleSheet.create({
       fontWeight: '600',
       color: '#333',
       textAlign: 'center',
-  },
-
-  // Filter Row
-  filterRowContainer: {
-      marginBottom: 20,
-  },
-  filterRowContent: {
-      paddingRight: 16,
-  },
-  filterPill: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      backgroundColor: '#f2f2f2', // Light grey pill
-      borderRadius: 20,
-      paddingHorizontal: 12,
-      paddingVertical: 8,
-      marginRight: 10,
-  },
-  filterPillText: {
-      fontSize: 13,
-      fontWeight: '600',
-      color: '#000',
   },
 
   // Promo Banner
