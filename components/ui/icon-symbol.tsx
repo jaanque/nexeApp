@@ -15,18 +15,31 @@ type IconSymbolName = keyof typeof MAPPING;
  */
 const MAPPING = {
   'house.fill': 'home',
-  'house': 'home-outline',
+  'house': 'home', // Filled
   'paperplane.fill': 'send',
   'chevron.left.forwardslash.chevron.right': 'code',
   'chevron.right': 'chevron-forward',
+  'chevron.down': 'chevron-down',
   'safari.fill': 'compass',
-  'safari': 'compass-outline',
-  'qrcode.viewfinder': 'scan-outline',
+  'safari': 'compass', // Filled
+  'qrcode.viewfinder': 'scan-circle', // Filled circle
   'creditcard.fill': 'card',
   'person.fill': 'person',
-  'person': 'person-outline',
+  'person': 'person', // Filled
   'bell.fill': 'notifications',
   'star.fill': 'star',
+  'fast-food': 'fast-food',
+  'pizza': 'pizza',
+  'restaurant': 'restaurant',
+  'ice-cream': 'ice-cream',
+  'wine': 'wine',
+  'bicycle': 'bicycle',
+  'bag-handle-outline': 'bag-handle-outline',
+  'flash-outline': 'flash-outline',
+  'swap-horizontal-outline': 'swap-horizontal-outline',
+  'gift-outline': 'gift-outline',
+  'color-wand-outline': 'color-wand-outline',
+  'map-outline': 'map-outline',
 } as IconMapping;
 
 /**
