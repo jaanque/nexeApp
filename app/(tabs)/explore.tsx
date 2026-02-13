@@ -1,4 +1,4 @@
-import { View, StyleSheet, Text, FlatList, TouchableOpacity, ListRenderItem } from 'react-native';
+import { View, StyleSheet, Text, FlatList, TouchableOpacity, ListRenderItem, ActivityIndicator } from 'react-native';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { useState, useEffect } from 'react';
@@ -18,70 +18,6 @@ interface Restaurant {
   latitude?: number;
   longitude?: number;
 }
-
-// Mock data matching the SQL inserts (Fallback)
-const mockRestaurants: Restaurant[] = [
-  {
-    id: 1,
-    name: 'Burger King',
-    image_url: 'https://images.unsplash.com/photo-1571091718767-18b5b1457add?w=800&q=80',
-    rating: 4.5,
-    cuisine_type: 'American • Burgers',
-    address: '123 Main St',
-    latitude: 19.432608,
-    longitude: -99.133209,
-  },
-  {
-    id: 2,
-    name: 'Sushi Master',
-    image_url: 'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=800&q=80',
-    rating: 4.8,
-    cuisine_type: 'Japanese • Sushi',
-    address: '456 Elm St',
-    latitude: 19.435200,
-    longitude: -99.141000,
-  },
-  {
-    id: 3,
-    name: 'Pizza Hut',
-    image_url: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=800&q=80',
-    rating: 4.2,
-    cuisine_type: 'Italian • Pizza',
-    address: '789 Oak St',
-    latitude: 19.429000,
-    longitude: -99.130000,
-  },
-  {
-    id: 4,
-    name: 'Taco Bell',
-    image_url: 'https://images.unsplash.com/photo-1565299585323-38d6b0865b47?w=800&q=80',
-    rating: 4.0,
-    cuisine_type: 'Mexican • Tacos',
-    address: '101 Pine St',
-    latitude: 19.440000,
-    longitude: -99.135000,
-  },
-  {
-    id: 5,
-    name: 'Indian Spice',
-    image_url: 'https://images.unsplash.com/photo-1585937421612-70a008356f36?w=800&q=80',
-    rating: 4.7,
-    cuisine_type: 'Indian • Curry',
-    address: '202 Maple St',
-    latitude: 19.425000,
-    longitude: -99.138000,
-  },
-  {
-    id: 6,
-    name: 'Healthy Greens',
-    image_url: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=800&q=80',
-    rating: 4.6,
-    cuisine_type: 'Healthy • Salads',
-    address: '303 Birch St',
-    latitude: 19.438000,
-    longitude: -99.145000,
-  },
-];
 
 const RestaurantCard = ({ restaurant }: { restaurant: Restaurant }) => {
   return (
@@ -135,11 +71,12 @@ const MapPopupCard = ({ restaurant, onPress }: { restaurant: Restaurant; onPress
 };
 
 export default function ExploreScreen() {
-  const [restaurants, setRestaurants] = useState<Restaurant[]>(mockRestaurants);
+  const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
   const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
   const [selectedRestaurant, setSelectedRestaurant] = useState<Restaurant | null>(null);
   const [userLocation, setUserLocation] = useState<{ latitude: number, longitude: number } | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchRestaurants();
@@ -164,6 +101,7 @@ export default function ExploreScreen() {
 
   async function fetchRestaurants() {
     try {
+      setLoading(true);
       const { data, error } = await supabase
         .from('restaurants')
         .select('*')
@@ -171,18 +109,15 @@ export default function ExploreScreen() {
 
       if (error) {
         console.error('Error fetching restaurants:', error);
-        // Fallback to mock data is already set initially
-      } else if (data && data.length > 0) {
-        // Merge fetched data with mock coordinates if missing from DB
-        const mergedData = data.map((r, index) => ({
-             ...r,
-             latitude: r.latitude || mockRestaurants[index % mockRestaurants.length].latitude,
-             longitude: r.longitude || mockRestaurants[index % mockRestaurants.length].longitude,
-        }));
-        setRestaurants(mergedData);
+        setRestaurants([]);
+      } else if (data) {
+        setRestaurants(data);
       }
     } catch (error) {
       console.error('Unexpected error:', error);
+      setRestaurants([]);
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -212,14 +147,24 @@ export default function ExploreScreen() {
         </View>
       </View>
 
-      {viewMode === 'list' ? (
-        <FlatList
-          data={restaurants}
-          renderItem={renderItem}
-          keyExtractor={(item) => item.id.toString()}
-          contentContainerStyle={styles.listContent}
-          showsVerticalScrollIndicator={false}
-        />
+      {loading ? (
+        <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#333" />
+        </View>
+      ) : viewMode === 'list' ? (
+        restaurants.length > 0 ? (
+          <FlatList
+            data={restaurants}
+            renderItem={renderItem}
+            keyExtractor={(item) => item.id.toString()}
+            contentContainerStyle={styles.listContent}
+            showsVerticalScrollIndicator={false}
+          />
+        ) : (
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>No hay restaurantes disponibles.</Text>
+          </View>
+        )
       ) : (
         <View style={styles.mapContainer}>
             <RestaurantMap
@@ -278,6 +223,21 @@ const styles = StyleSheet.create({
   },
   toggleButtonActive: {
       backgroundColor: '#333',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 50,
+  },
+  emptyText: {
+    fontSize: 16,
+    color: '#666',
   },
 
   // List Styles
