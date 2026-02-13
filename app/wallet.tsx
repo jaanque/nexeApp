@@ -6,19 +6,20 @@ import { LineChart } from 'react-native-chart-kit';
 import { Ionicons } from '@expo/vector-icons';
 import { RealtimeChannel } from '@supabase/supabase-js';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Colors } from '@/constants/theme';
 
 // Mock data for transactions since backend table is not available
 const TRANSACTIONS = [
-  { id: '1', title: 'Compra en Tienda', date: 'Hoy, 10:30 AM', amount: '+50', type: 'earn' },
-  { id: '2', title: 'Canje de Cupón', date: 'Ayer, 4:15 PM', amount: '-200', type: 'spend' },
-  { id: '3', title: 'Bono de Bienvenida', date: '12 May, 2024', amount: '+100', type: 'earn' },
-  { id: '4', title: 'Compra Online', date: '10 May, 2024', amount: '+25', type: 'earn' },
+  { id: '1', title: 'Starbucks', date: 'Hoy, 10:30 AM', amount: '-50', type: 'spend', icon: 'cafe-outline' },
+  { id: '2', title: 'Top Up', date: 'Ayer, 4:15 PM', amount: '+200', type: 'earn', icon: 'arrow-down-outline' },
+  { id: '3', title: 'Uber Eats', date: '12 May, 2024', amount: '-25', type: 'spend', icon: 'fast-food-outline' },
+  { id: '4', title: 'Apple Store', date: '10 May, 2024', amount: '-1200', type: 'spend', icon: 'logo-apple' },
+  { id: '5', title: 'Bonus', date: '01 May, 2024', amount: '+100', type: 'earn', icon: 'gift-outline' },
 ];
 
 export default function WalletScreen() {
   const [points, setPoints] = useState<number>(0);
   const [loading, setLoading] = useState(true);
+  const [userName, setUserName] = useState<string>("Usuario");
 
   useEffect(() => {
     let channel: RealtimeChannel;
@@ -29,6 +30,11 @@ export default function WalletScreen() {
         const { data: { session } } = await supabase.auth.getSession();
 
         if (session?.user) {
+            // Get user name
+            const meta = session.user.user_metadata;
+            const name = meta?.full_name || meta?.username || session.user.email?.split('@')[0] || "Usuario";
+            setUserName(name);
+
           // 1. Initial Fetch
           const { data, error } = await supabase
             .from('profiles')
@@ -82,7 +88,7 @@ export default function WalletScreen() {
 
   // Generate chart data
   const dataPoints = points > 0
-    ? [points * 0.2, points * 0.3, points * 0.25, points * 0.6, points * 0.8, points]
+    ? [points * 0.8, points * 0.85, points * 0.9, points * 0.95, points * 0.98, points]
     : [0, 0, 0, 0, 0, 0];
 
   const chartData = {
@@ -91,7 +97,7 @@ export default function WalletScreen() {
       {
         data: dataPoints,
         color: (opacity = 1) => `rgba(10, 126, 164, ${opacity})`, // Using theme tint color
-        strokeWidth: 3
+        strokeWidth: 2
       }
     ],
   };
@@ -100,19 +106,17 @@ export default function WalletScreen() {
     backgroundGradientFrom: "#ffffff",
     backgroundGradientTo: "#ffffff",
     decimalPlaces: 0,
-    color: (opacity = 1) => `rgba(10, 126, 164, ${opacity})`,
+    color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`, // Black line
     labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
     style: {
       borderRadius: 16
     },
     propsForDots: {
-      r: "4",
-      strokeWidth: "2",
-      stroke: "#fff"
+      r: "0", // No dots for cleaner look
     },
-    fillShadowGradientFrom: "#0a7ea4",
-    fillShadowGradientTo: "#ffffff",
-    fillShadowGradientOpacity: 0.3,
+    fillShadowGradientFrom: "#000",
+    fillShadowGradientTo: "#fff",
+    fillShadowGradientOpacity: 0.1,
   };
 
   const screenWidth = Dimensions.get("window").width;
@@ -123,108 +127,122 @@ export default function WalletScreen() {
 
         {/* Header */}
         <View style={styles.header}>
-          <View>
-            <Text style={styles.headerTitle}>Mi Billetera</Text>
-            <Text style={styles.headerSubtitle}>Gestiona tus puntos y recompensas</Text>
-          </View>
-          <TouchableOpacity style={styles.iconButton}>
-             <Ionicons name="notifications-outline" size={24} color={Colors.light.text} />
-          </TouchableOpacity>
-        </View>
-
-        {/* Wallet Card */}
-        <View style={styles.cardContainer}>
-          <LinearGradient
-            colors={[Colors.light.tint, '#005f73']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.card}
-          >
-            <View style={styles.cardHeader}>
-              <View>
-                <Text style={styles.cardLabel}>Puntos Disponibles</Text>
-                {loading ? (
-                    <ActivityIndicator size="small" color="#fff" style={{marginTop: 5, alignSelf: 'flex-start'}} />
-                ) : (
-                    <Text style={styles.cardBalance}>{points.toLocaleString()}</Text>
-                )}
-              </View>
-              <Ionicons name="qr-code-outline" size={32} color="rgba(255,255,255,0.8)" />
+            <View style={styles.headerAvatar}>
+                <Text style={styles.headerAvatarText}>{userName.charAt(0).toUpperCase()}</Text>
             </View>
-
-            <View style={styles.cardFooter}>
-              <View style={styles.tierBadge}>
-                <Ionicons name="star" size={12} color="#FFD700" style={{ marginRight: 4 }} />
-                <Text style={styles.tierText}>Miembro Gold</Text>
-              </View>
-              <Text style={styles.cardNumber}>**** **** **** 1234</Text>
+            <View style={{flex: 1, marginLeft: 12}}>
+                <Text style={styles.headerGreeting}>Hola, {userName.split(' ')[0]}</Text>
+                <Text style={styles.headerStatus}>Nexe Member</Text>
             </View>
-          </LinearGradient>
+            <TouchableOpacity style={styles.iconButton}>
+                 <Ionicons name="notifications-outline" size={24} color="#000" />
+            </TouchableOpacity>
         </View>
 
-        {/* Action Grid */}
-        <View style={styles.actionGrid}>
-          <ActionButton icon="gift-outline" label="Canjear" />
-          <ActionButton icon="time-outline" label="Historial" />
-          <ActionButton icon="scan-outline" label="Escanear" />
-          <ActionButton icon="information-circle-outline" label="Info" />
+        {/* Neobank Card */}
+        <View style={styles.cardWrapper}>
+            <LinearGradient
+                colors={['#1a1a1a', '#000000']} // Black metal look
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.card}
+            >
+                <View style={styles.cardTop}>
+                    <Text style={styles.cardBrand}>NEXE METAL</Text>
+                    <Ionicons name="wifi" size={24} color="rgba(255,255,255,0.6)" style={{ transform: [{ rotate: '90deg' }] }} />
+                </View>
+
+                <View style={styles.cardChipContainer}>
+                    <View style={styles.cardChip} />
+                    {/* Simulated Chip */}
+                </View>
+
+                <View style={styles.cardCenter}>
+                     <Text style={styles.cardBalanceLabel}>Saldo disponible</Text>
+                    {loading ? (
+                        <ActivityIndicator size="small" color="#fff" style={{alignSelf: 'flex-start', marginTop: 5}} />
+                    ) : (
+                        <Text style={styles.cardBalance}>{points.toLocaleString()} pts</Text>
+                    )}
+                </View>
+
+                <View style={styles.cardBottom}>
+                    <Text style={styles.cardHolderName}>{userName.toUpperCase()}</Text>
+                    <View style={styles.cardLogo}>
+                         <View style={[styles.cardLogoCircle, { backgroundColor: 'rgba(255,255,255,0.8)' }]} />
+                         <View style={[styles.cardLogoCircle, { backgroundColor: 'rgba(255,255,255,0.5)', marginLeft: -10 }]} />
+                    </View>
+                </View>
+            </LinearGradient>
+
+            {/* Card Shadow/Reflection effect */}
+            <View style={styles.cardReflection} />
         </View>
 
-        {/* Chart Section */}
+        {/* Action Buttons - Round like Revolut */}
+        <View style={styles.actionRow}>
+            <ActionButton icon="add" label="Añadir" color="#E3F2FD" iconColor="#2196F3" />
+            <ActionButton icon="arrow-forward" label="Enviar" color="#E8F5E9" iconColor="#4CAF50" />
+            <ActionButton icon="swap-horizontal" label="Canjear" color="#FFF3E0" iconColor="#FF9800" />
+            <ActionButton icon="ellipsis-horizontal" label="Más" color="#F3E5F5" iconColor="#9C27B0" />
+        </View>
+
+        {/* Analytics / Chart */}
         <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Tendencia de Puntos</Text>
-            <View style={styles.periodBadge}>
-              <Text style={styles.periodBadgeText}>6M</Text>
+             <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>Analíticas</Text>
+                <TouchableOpacity>
+                    <Text style={styles.seeAllText}>Ver todo</Text>
+                </TouchableOpacity>
             </View>
-          </View>
-
-          <View style={styles.chartWrapper}>
-             {!loading && (
-                <LineChart
-                    data={chartData}
-                    width={screenWidth - 40} // subtracting padding
-                    height={180}
-                    chartConfig={chartConfig}
-                    bezier
-                    withDots={true}
-                    withInnerLines={false}
-                    withOuterLines={false}
-                    withVerticalLines={false}
-                    withHorizontalLines={false}
-                    withHorizontalLabels={false}
-                    style={styles.chart}
-                />
-            )}
-          </View>
+            <View style={styles.chartContainer}>
+                {!loading && (
+                    <LineChart
+                        data={chartData}
+                        width={screenWidth - 40}
+                        height={160} // compact
+                        chartConfig={chartConfig}
+                        bezier
+                        withDots={false}
+                        withInnerLines={false}
+                        withOuterLines={false}
+                        withVerticalLines={false}
+                        withHorizontalLines={false}
+                        withHorizontalLabels={false}
+                        style={styles.chart}
+                    />
+                )}
+            </View>
         </View>
 
-        {/* Recent Transactions */}
+        {/* Transactions List */}
         <View style={[styles.section, { marginBottom: 100 }]}>
-          <Text style={styles.sectionTitle}>Actividad Reciente</Text>
-          <View style={styles.transactionList}>
-            {TRANSACTIONS.map((item) => (
-              <View key={item.id} style={styles.transactionItem}>
-                <View style={styles.transactionIconContainer}>
-                  <Ionicons
-                    name={item.type === 'earn' ? "arrow-down-circle" : "arrow-up-circle"}
-                    size={24}
-                    color={item.type === 'earn' ? "#4CAF50" : "#F44336"}
-                  />
-                </View>
-                <View style={styles.transactionInfo}>
-                  <Text style={styles.transactionTitle}>{item.title}</Text>
-                  <Text style={styles.transactionDate}>{item.date}</Text>
-                </View>
-                <Text style={[
-                  styles.transactionAmount,
-                  { color: item.type === 'earn' ? "#4CAF50" : "#333" }
-                ]}>
-                  {item.amount} pts
-                </Text>
-              </View>
-            ))}
-          </View>
+            <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>Transacciones</Text>
+                <TouchableOpacity>
+                    <Text style={styles.seeAllText}>Ver todo</Text>
+                </TouchableOpacity>
+            </View>
+
+            <View style={styles.transactionList}>
+                {TRANSACTIONS.map((item, index) => (
+                    <View key={item.id} style={[styles.transactionItem, index === TRANSACTIONS.length - 1 && { borderBottomWidth: 0 }]}>
+                        <View style={styles.transactionIconBox}>
+                             <Ionicons name={item.icon as any || "card-outline"} size={20} color="#333" />
+                        </View>
+                        <View style={styles.transactionDetails}>
+                            <Text style={styles.transactionTitle}>{item.title}</Text>
+                            <Text style={styles.transactionDate}>{item.date}</Text>
+                        </View>
+                        <Text style={[
+                            styles.transactionAmount,
+                            { color: item.type === 'earn' ? '#4CAF50' : '#000' }
+                        ]}>
+                            {item.amount}
+                        </Text>
+                    </View>
+                ))}
+            </View>
         </View>
 
       </ScrollView>
@@ -232,11 +250,11 @@ export default function WalletScreen() {
   );
 }
 
-function ActionButton({ icon, label }: { icon: any, label: string }) {
+function ActionButton({ icon, label, color, iconColor }: { icon: any, label: string, color: string, iconColor: string }) {
   return (
     <TouchableOpacity style={styles.actionButton}>
-      <View style={styles.actionIconCircle}>
-        <Ionicons name={icon} size={24} color={Colors.light.tint} />
+      <View style={[styles.actionCircle, { backgroundColor: color }]}>
+        <Ionicons name={icon} size={24} color={iconColor} />
       </View>
       <Text style={styles.actionLabel}>{label}</Text>
     </TouchableOpacity>
@@ -246,215 +264,225 @@ function ActionButton({ icon, label }: { icon: any, label: string }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F9FA', // Slightly off-white for depth
+    backgroundColor: '#fff',
   },
   scrollContent: {
-    paddingBottom: 20,
+    paddingBottom: 40,
   },
   header: {
     paddingHorizontal: 20,
-    paddingVertical: 20,
+    paddingVertical: 10,
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    marginBottom: 10,
   },
-  headerTitle: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#111',
+  headerAvatar: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      backgroundColor: '#f0f0f0',
+      justifyContent: 'center',
+      alignItems: 'center',
   },
-  headerSubtitle: {
-    fontSize: 14,
-    color: '#666',
-    marginTop: 2,
+  headerAvatarText: {
+      fontSize: 18,
+      fontWeight: 'bold',
+      color: '#333',
+  },
+  headerGreeting: {
+      fontSize: 16,
+      fontWeight: 'bold',
+      color: '#000',
+  },
+  headerStatus: {
+      fontSize: 12,
+      color: '#666',
   },
   iconButton: {
     padding: 8,
-    backgroundColor: '#fff',
+    backgroundColor: '#f5f5f5',
     borderRadius: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
   },
 
-  // Card Styles
-  cardContainer: {
-    paddingHorizontal: 20,
-    marginBottom: 25,
-    shadowColor: Colors.light.tint,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.25,
-    shadowRadius: 16,
-    elevation: 8,
+  // Card
+  cardWrapper: {
+      paddingHorizontal: 20,
+      marginBottom: 30,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 10 },
+      shadowOpacity: 0.3,
+      shadowRadius: 20,
+      elevation: 10,
   },
   card: {
-    borderRadius: 24,
-    padding: 24,
-    height: 200,
-    justifyContent: 'space-between',
+      height: 220,
+      borderRadius: 20,
+      padding: 24,
+      position: 'relative',
+      justifyContent: 'space-between',
   },
-  cardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
+  cardReflection: {
+      position: 'absolute',
+      top: 20,
+      left: 20,
+      right: 20,
+      height: 100,
+      backgroundColor: 'rgba(255,255,255,0.05)',
+      borderRadius: 20,
+      transform: [{ skewY: '-10deg' }],
   },
-  cardLabel: {
-    color: 'rgba(255,255,255,0.8)',
-    fontSize: 14,
-    fontWeight: '600',
-    marginBottom: 4,
+  cardTop: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+  },
+  cardBrand: {
+      color: 'rgba(255,255,255,0.9)',
+      fontSize: 14,
+      fontWeight: '700',
+      letterSpacing: 2,
+  },
+  cardChipContainer: {
+      marginTop: 20,
+  },
+  cardChip: {
+      width: 40,
+      height: 30,
+      borderRadius: 6,
+      backgroundColor: '#d4af37', // Gold chip color
+      borderWidth: 1,
+      borderColor: '#b8860b',
+  },
+  cardCenter: {
+      marginTop: 10,
+  },
+  cardBalanceLabel: {
+      color: 'rgba(255,255,255,0.6)',
+      fontSize: 12,
+      textTransform: 'uppercase',
+      letterSpacing: 1,
+      marginBottom: 4,
   },
   cardBalance: {
-    color: '#fff',
-    fontSize: 36,
-    fontWeight: 'bold',
+      color: '#fff',
+      fontSize: 32,
+      fontWeight: 'bold',
+      letterSpacing: 1,
   },
-  cardFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+  cardBottom: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'flex-end',
   },
-  tierBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 12,
+  cardHolderName: {
+      color: 'rgba(255,255,255,0.8)',
+      fontSize: 14,
+      fontWeight: '600',
+      letterSpacing: 1,
   },
-  tierText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 12,
+  cardLogo: {
+      flexDirection: 'row',
   },
-  cardNumber: {
-    color: 'rgba(255,255,255,0.6)',
-    fontSize: 14,
-    letterSpacing: 1,
+  cardLogoCircle: {
+      width: 24,
+      height: 24,
+      borderRadius: 12,
   },
 
-  // Action Grid
-  actionGrid: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    marginBottom: 30,
+  // Actions
+  actionRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-around', // Changed to space-around for even distribution
+      paddingHorizontal: 10,
+      marginBottom: 30,
   },
   actionButton: {
-    alignItems: 'center',
-    width: 70,
+      alignItems: 'center',
+      width: 70, // Fixed width
   },
-  actionIconCircle: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: '#fff',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
+  actionCircle: {
+      width: 50,
+      height: 50,
+      borderRadius: 25,
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginBottom: 8,
   },
   actionLabel: {
-    fontSize: 12,
-    color: '#444',
-    fontWeight: '500',
+      fontSize: 12,
+      fontWeight: '500',
+      color: '#333',
   },
 
-  // Sections
+  // Section
   section: {
-    marginBottom: 25,
-    paddingHorizontal: 20,
+      paddingHorizontal: 20,
+      marginBottom: 24,
   },
   sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 15,
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: 16,
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#222',
+      fontSize: 18,
+      fontWeight: 'bold',
+      color: '#000',
   },
-  periodBadge: {
-    backgroundColor: '#EDF2F7',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  periodBadgeText: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    color: '#4A5568',
+  seeAllText: {
+      fontSize: 14,
+      color: '#2196F3',
+      fontWeight: '600',
   },
 
   // Chart
-  chartWrapper: {
-    alignItems: 'center',
-    backgroundColor: '#fff',
-    borderRadius: 20,
-    padding: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
-    overflow: 'hidden',
+  chartContainer: {
+      backgroundColor: '#fff',
+      borderRadius: 16,
+      padding: 10,
+      borderWidth: 1,
+      borderColor: '#f0f0f0',
   },
   chart: {
-    marginTop: 10,
-    borderRadius: 16,
+      paddingRight: 0,
   },
 
   // Transactions
   transactionList: {
-    backgroundColor: '#fff',
-    borderRadius: 20,
-    padding: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
+      backgroundColor: '#fff',
   },
   transactionItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingVertical: 14,
+      borderBottomWidth: 1,
+      borderBottomColor: '#f5f5f5',
   },
-  transactionIconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#f5f5f5',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
+  transactionIconBox: {
+      width: 44,
+      height: 44,
+      borderRadius: 22,
+      backgroundColor: '#f5f5f5',
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginRight: 14,
   },
-  transactionInfo: {
-    flex: 1,
+  transactionDetails: {
+      flex: 1,
   },
   transactionTitle: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#333',
+      fontSize: 16,
+      fontWeight: '600',
+      color: '#000',
+      marginBottom: 2,
   },
   transactionDate: {
-    fontSize: 12,
-    color: '#888',
-    marginTop: 2,
+      fontSize: 12,
+      color: '#888',
   },
   transactionAmount: {
-    fontSize: 15,
-    fontWeight: 'bold',
+      fontSize: 16,
+      fontWeight: '600',
   },
 });
