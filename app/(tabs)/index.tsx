@@ -74,6 +74,13 @@ export default function HomeScreen() {
     fetchPopularRestaurants();
   }, []);
 
+  function getGreeting() {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Buenos días';
+    if (hour < 20) return 'Buenas tardes';
+    return 'Buenas noches';
+  }
+
   async function handleSearch(query: string) {
       setSearchQuery(query);
       if (query.length < 3) {
@@ -273,10 +280,10 @@ export default function HomeScreen() {
             {!isSearching && (
                  <View style={styles.headerBannerContent}>
                      <Text style={styles.headerTitle}>
-                        {session?.user ? '¡Hola de nuevo!' : 'Descubre sabores'}
+                        {session?.user ? getGreeting() + ', viajero' : getGreeting()}
                      </Text>
                      <Text style={styles.headerSubtitle}>
-                        ¿Qué te apetece comer hoy?
+                        Encuentra lo que te hace feliz hoy
                      </Text>
                  </View>
             )}
@@ -501,9 +508,8 @@ const styles = StyleSheet.create({
   purpleHeader: {
       backgroundColor: '#540B48', // Deep Purple
       paddingHorizontal: 16,
-      paddingBottom: 30, // Increased bottom padding for banner look
-      borderBottomLeftRadius: 20, // Added curve
-      borderBottomRightRadius: 20, // Added curve
+      paddingBottom: 60, // Increased height significantly
+      // Removed rounded borders as requested
   },
   headerBannerContent: {
       marginTop: 10,
@@ -718,18 +724,29 @@ const styles = StyleSheet.create({
   // Horizontal Card Styles
   cardHorizontal: {
       width: 280, // Slightly wider
-      marginRight: 12,
+      marginRight: 16, // Increased spacing
       backgroundColor: '#fff',
+      borderRadius: 12,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 4,
+      elevation: 3, // Android shadow
+      paddingBottom: 12, // Space for content
+      marginBottom: 4, // Space for shadow
   },
   cardImageHorizontal: {
       width: '100%',
       height: 160, // Taller image
-      borderRadius: 12,
+      borderTopLeftRadius: 12,
+      borderTopRightRadius: 12,
+      borderBottomLeftRadius: 0,
+      borderBottomRightRadius: 0,
       marginBottom: 8,
       backgroundColor: '#f0f0f0',
   },
   cardContentHorizontal: {
-      paddingHorizontal: 0, // Align with image
+      paddingHorizontal: 12, // Added padding inside card
   },
 
   // Vertical Card Styles
@@ -737,16 +754,27 @@ const styles = StyleSheet.create({
       width: '100%',
       marginBottom: 24,
       backgroundColor: '#fff',
+      borderRadius: 16,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.1,
+      shadowRadius: 8,
+      elevation: 4, // Android shadow
+      overflow: 'visible', // Allow shadow
   },
   cardImageVertical: {
       width: '100%',
-      height: 200, // Large banner image
-      borderRadius: 12,
-      marginBottom: 10,
+      height: 220, // Even larger image for impact
+      borderTopLeftRadius: 16,
+      borderTopRightRadius: 16,
+      borderBottomLeftRadius: 0,
+      borderBottomRightRadius: 0,
+      marginBottom: 0, // No margin, content follows directly
       backgroundColor: '#f0f0f0',
   },
   cardContentVertical: {
-      paddingHorizontal: 0,
+      paddingHorizontal: 16,
+      paddingVertical: 16,
   },
 
   // Shared Card Elements
@@ -754,18 +782,18 @@ const styles = StyleSheet.create({
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
-      marginBottom: 4,
+      marginBottom: 6,
   },
   cardTitle: {
       fontSize: 16,
-      fontWeight: 'bold',
-      color: '#000',
+      fontWeight: '700', // Stronger font weight
+      color: '#1a1a1a', // Softer black
       flex: 1,
   },
   cardTitleLarge: {
-      fontSize: 18,
-      fontWeight: 'bold',
-      color: '#000',
+      fontSize: 20, // Larger title
+      fontWeight: '700',
+      color: '#1a1a1a',
       flex: 1,
   },
   ratingBadge: {
