@@ -1,4 +1,4 @@
-import { View, StyleSheet, Text, TextInput, ScrollView, TouchableOpacity, FlatList, ListRenderItem, ActivityIndicator, Alert } from 'react-native';
+import { View, StyleSheet, Text, TextInput, ScrollView, TouchableOpacity, FlatList, ListRenderItem, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
@@ -38,9 +38,6 @@ export default function HomeScreen() {
   const [points, setPoints] = useState<number>(0);
   const [popularRestaurants, setPopularRestaurants] = useState<Restaurant[]>([]);
   const [loadingRestaurants, setLoadingRestaurants] = useState(true);
-  const [hasClaimedWelcome, setHasClaimedWelcome] = useState<boolean>(true);
-  const [claiming, setClaiming] = useState<boolean>(false);
-  const [checkingClaim, setCheckingClaim] = useState<boolean>(true);
 
   // Search State
   const [searchQuery, setSearchQuery] = useState<string>("");
@@ -48,6 +45,9 @@ export default function HomeScreen() {
   const [searchResultsDishes, setSearchResultsDishes] = useState<MenuItemResult[]>([]);
   const [isSearching, setIsSearching] = useState<boolean>(false);
   const [searching, setSearching] = useState<boolean>(false);
+
+  // Filter State
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
 
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -57,9 +57,6 @@ export default function HomeScreen() {
       setSession(session);
       if (session?.user) {
         fetchPoints(session.user.id);
-        checkWelcomeClaim(session.user.id);
-      } else {
-          setCheckingClaim(false);
       }
     });
 
@@ -67,9 +64,6 @@ export default function HomeScreen() {
       setSession(session);
       if (session?.user) {
         fetchPoints(session.user.id);
-        checkWelcomeClaim(session.user.id);
-      } else {
-          setCheckingClaim(false);
       }
     });
 
@@ -96,27 +90,21 @@ export default function HomeScreen() {
       setSearching(true);
 
       try {
-          // Search Restaurants
           const { data: restData } = await supabase
             .from('restaurants')
             .select('*')
             .ilike('name', `%${query}%`)
             .limit(5);
 
-          if (restData) {
-              setSearchResultsRestaurants(restData);
-          }
+          if (restData) setSearchResultsRestaurants(restData);
 
-          // Search Menu Items
           const { data: menuData } = await supabase
             .from('menu_items')
             .select('*, restaurants(name)')
             .ilike('name', `%${query}%`)
             .limit(10);
 
-          if (menuData) {
-              setSearchResultsDishes(menuData as any);
-          }
+          if (menuData) setSearchResultsDishes(menuData as any);
 
       } catch (error) {
           console.error("Search error:", error);
@@ -127,87 +115,14 @@ export default function HomeScreen() {
 
   async function fetchPoints(userId: string) {
     try {
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from('profiles')
         .select('points')
         .eq('id', userId)
         .single();
-
-      if (error) {
-        console.error('Error fetching points:', error);
-      } else if (data) {
-        setPoints(data.points || 0);
-      }
+      if (data) setPoints(data.points || 0);
     } catch (error) {
-      console.error('Unexpected error:', error);
-    }
-  }
-
-  async function checkWelcomeClaim(userId: string) {
-    try {
-      setCheckingClaim(true);
-      const { data, error } = await supabase
-        .from('welcome_gift_claims')
-        .select('user_id')
-        .eq('user_id', userId)
-        .maybeSingle();
-
-      if (error) {
-         console.error('Error checking welcome claim:', error);
-         setHasClaimedWelcome(true);
-      } else {
-         setHasClaimedWelcome(!!data);
-      }
-    } catch (error) {
-      console.error('Unexpected error checking claim:', error);
-      setHasClaimedWelcome(true);
-    } finally {
-        setCheckingClaim(false);
-    }
-  }
-
-  async function handleClaimWelcome() {
-    if (!session?.user || claiming) return;
-
-    if (process.env.EXPO_OS === 'ios') {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    }
-
-    try {
-        setClaiming(true);
-        const userId = session.user.id;
-
-        const { error: claimError } = await supabase
-            .from('welcome_gift_claims')
-            .insert({ user_id: userId });
-
-        if (claimError) {
-            console.error('Error inserting claim:', claimError);
-            Alert.alert('Error', 'No se pudo reclamar el regalo. Inténtalo de nuevo.');
-            setClaiming(false);
-            return;
-        }
-
-        const newPoints = points + 5;
-        const { error: updateError } = await supabase
-            .from('profiles')
-            .update({ points: newPoints })
-            .eq('id', userId);
-
-        if (updateError) {
-            console.error('Error updating points:', updateError);
-             Alert.alert('Atención', 'Regalo registrado pero hubo un error actualizando los puntos.');
-             setHasClaimedWelcome(true);
-        } else {
-            setPoints(newPoints);
-            setHasClaimedWelcome(true);
-            Alert.alert('¡Felicidades!', 'Has recibido tu regalo de bienvenida de 5 puntos.');
-        }
-    } catch (error) {
-        console.error('Unexpected error claiming:', error);
-        Alert.alert('Error', 'Ocurrió un error inesperado.');
-    } finally {
-        setClaiming(false);
+      console.error('Error fetching points:', error);
     }
   }
 
@@ -221,165 +136,136 @@ export default function HomeScreen() {
         .order('rating', { ascending: false })
         .limit(10);
 
-      if (error) {
-        console.error('Error fetching restaurants:', error);
-        setPopularRestaurants([]);
-      } else if (data && data.length > 0) {
-        setPopularRestaurants(data);
-      }
+      if (data) setPopularRestaurants(data);
     } catch (error) {
        console.error("Error fetching popular restaurants", error);
-       setPopularRestaurants([]);
     } finally {
         setLoadingRestaurants(false);
     }
   }
 
   const renderHorizontalRestaurantItem: ListRenderItem<Restaurant> = ({ item }) => (
-      <HorizontalRestaurantCard restaurant={item} />
+      <OfferCard restaurant={item} />
   );
+
+  const getGreeting = () => {
+      if (!session?.user) return 'Hola, Invitado';
+      const meta = session.user.user_metadata;
+      const name = meta?.full_name?.split(' ')[0] || meta?.username || 'Viajero';
+      return `Hola, ${name}`;
+  };
+
+  const getInitials = () => {
+      if (!session?.user) return '?';
+      const meta = session.user.user_metadata;
+      const name = meta?.full_name || meta?.username || 'U';
+      return name.charAt(0).toUpperCase();
+  };
 
   return (
     <View style={styles.container}>
-      <StatusBar style="light" />
+      <StatusBar style="dark" />
+
+      {/* 1. Header */}
+      <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
+          <View>
+              <Text style={styles.greetingText}>{getGreeting()}</Text>
+              <Text style={styles.statusText}>Nivel Explorador</Text>
+          </View>
+          <View style={styles.headerRight}>
+              <TouchableOpacity style={styles.iconButton} onPress={() => {}}>
+                  <IconSymbol name="bell.fill" size={24} color="#121212" />
+                  <View style={styles.notificationDot} />
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.avatarContainer} onPress={() => router.push('/profile')}>
+                  <Text style={styles.avatarText}>{getInitials()}</Text>
+              </TouchableOpacity>
+          </View>
+      </View>
+
       <ScrollView
-        style={styles.scrollContainer}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 100 }}
       >
-          {/* Header */}
-          <View style={[styles.headerContainer, { paddingTop: insets.top + 10 }]}>
-            <View style={styles.headerTopRow}>
-                {/* Modern Title */}
-                <Text style={styles.modernTitle}>
-                    {session?.user ? 'Hola viajero' : 'Descubre'}
-                </Text>
-
-                <View style={styles.rightHeader}>
-                    {/* Points Pill */}
-                    <TouchableOpacity
-                        onPress={() => handlePress(() => session?.user ? router.push('/wallet') : router.push('/login'))}
-                        style={styles.pointsPill}
-                    >
-                        <Text style={styles.pointsText}>{points} pts</Text>
-                        <IconSymbol size={16} name="star.fill" color="#FFD700" />
-                    </TouchableOpacity>
-
-                    {/* Profile Button */}
-                    <TouchableOpacity
-                        onPress={() => handlePress(() => session?.user ? router.push('/profile') : router.push('/login'))}
-                        style={styles.profileButton}
-                    >
-                        <IconSymbol name="person.circle" size={32} color="#fff" />
-                    </TouchableOpacity>
+          {/* 2. Hero Card (Wallet) */}
+          <View style={styles.heroContainer}>
+            <View style={styles.heroCard}>
+                <View style={styles.heroLeft}>
+                    <Text style={styles.heroPoints}>{points.toLocaleString()}</Text>
+                    <Text style={styles.heroLabel}>Puntos Nexe disponibles</Text>
                 </View>
-            </View>
-
-            <View style={styles.searchWrapper}>
-                <View style={styles.searchContainer}>
-                    <Ionicons name="search" size={20} color="#000" style={styles.searchIcon} />
-                    <TextInput
-                        placeholder="Buscar..."
-                        placeholderTextColor="#666"
-                        style={styles.searchInput}
-                        value={searchQuery}
-                        onChangeText={handleSearch}
-                    />
-                    {isSearching && (
-                        <TouchableOpacity onPress={() => handlePress(() => handleSearch(""))}>
-                            <Ionicons name="close-circle" size={18} color="#666" />
-                        </TouchableOpacity>
-                    )}
-                </View>
+                <TouchableOpacity
+                    style={styles.heroButton}
+                    activeOpacity={0.8}
+                    onPress={() => handlePress(() => router.push('/scan'))}
+                >
+                    <IconSymbol name="qrcode.viewfinder" size={20} color="#fff" style={{marginRight: 6}} />
+                    <Text style={styles.heroButtonText}>Escanear</Text>
+                </TouchableOpacity>
             </View>
           </View>
 
-          {/* Welcome Gift Banner */}
-             {!isSearching && !checkingClaim && !hasClaimedWelcome && session?.user && (
-                 <View style={styles.promoPadding}>
-                    <View style={styles.promoContainer}>
-                        <View style={styles.promoContent}>
-                            <Text style={styles.promoTitle}>Regalo de Bienvenida</Text>
-                            <Text style={styles.promoText}>5 puntos gratis por unirte.</Text>
-                            <TouchableOpacity
-                                style={styles.promoButton}
-                                onPress={handleClaimWelcome}
-                                disabled={claiming}
-                            >
-                                {claiming ? (
-                                    <ActivityIndicator size="small" color="#000" />
-                                ) : (
-                                    <Text style={styles.promoButtonText}>Reclamar</Text>
-                                )}
-                            </TouchableOpacity>
-                        </View>
-                        <Image source={{ uri: 'https://images.unsplash.com/photo-1513201099705-a9746e1e201f?q=80&w=2070&auto=format&fit=crop' }} style={styles.promoImage} contentFit="contain" />
-                    </View>
-                 </View>
-             )}
+          {/* 3. Search & Filters */}
+          <View style={styles.searchSection}>
+              <View style={styles.searchBar}>
+                  <Ionicons name="search-outline" size={20} color="#6E7278" style={{marginRight: 10}} />
+                  <TextInput
+                    placeholder="Buscar comercio o oferta..."
+                    placeholderTextColor="#6E7278"
+                    style={styles.searchInput}
+                    value={searchQuery}
+                    onChangeText={handleSearch}
+                  />
+                  {isSearching && (
+                        <TouchableOpacity onPress={() => handlePress(() => handleSearch(""))}>
+                            <Ionicons name="close-circle" size={18} color="#6E7278" />
+                        </TouchableOpacity>
+                  )}
+              </View>
 
-          {/* Categories */}
-            {!isSearching && (
-                <View style={styles.categoryContainer}>
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categoryContent}>
-                        <CategoryItem label="Hamburguesas" icon="fast-food" />
-                        <CategoryItem label="Pizza" icon="pizza" />
-                        <CategoryItem label="Asiática" icon="restaurant" />
-                        <CategoryItem label="Postres" icon="ice-cream" />
-                        <CategoryItem label="Bebidas" icon="wine" />
-                        <CategoryItem label="Envíos" icon="bicycle" />
-                    </ScrollView>
-                </View>
-            )}
+              {!isSearching && (
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterScroll} contentContainerStyle={styles.filterContent}>
+                      {["Restauración", "Moda", "Servicios", "Ocio"].map((cat) => (
+                          <TouchableOpacity
+                            key={cat}
+                            style={[styles.filterPill, activeCategory === cat && styles.filterPillActive]}
+                            onPress={() => setActiveCategory(activeCategory === cat ? null : cat)}
+                          >
+                              <Text style={[styles.filterText, activeCategory === cat && styles.filterTextActive]}>{cat}</Text>
+                          </TouchableOpacity>
+                      ))}
+                  </ScrollView>
+              )}
+          </View>
 
           {/* Search Results */}
           {isSearching ? (
-              <View style={styles.sectionContainer}>
-                  {searching ? (
+             <View style={styles.sectionContainer}>
+                 {searching ? (
                       <ActivityIndicator size="large" color="#000" style={{marginTop: 20}} />
                   ) : (
                       <>
                         <Text style={styles.sectionTitle}>Resultados</Text>
-
-                        {/* Restaurants Matches */}
-                        {searchResultsRestaurants.length > 0 && (
-                            <View style={{marginBottom: 20}}>
-                                <Text style={[styles.sectionTitle, {fontSize: 16, marginBottom: 10}]}>Restaurantes</Text>
-                                {searchResultsRestaurants.map(item => (
-                                    <VerticalRestaurantCard key={`rest-${item.id}`} restaurant={item} />
-                                ))}
-                            </View>
-                        )}
-
-                        {/* Dish Matches */}
-                        {searchResultsDishes.length > 0 && (
-                            <View>
-                                <Text style={[styles.sectionTitle, {fontSize: 16, marginBottom: 10}]}>Platos</Text>
-                                {searchResultsDishes.map(item => (
-                                    <DishResultCard key={`dish-${item.id}`} item={item} />
-                                ))}
-                            </View>
-                        )}
-
+                        {searchResultsRestaurants.map(item => (
+                            <BusinessRow key={`rest-${item.id}`} restaurant={item} />
+                        ))}
+                         {searchResultsDishes.map(item => (
+                            <DishResultCard key={`dish-${item.id}`} item={item} />
+                        ))}
                         {searchResultsRestaurants.length === 0 && searchResultsDishes.length === 0 && (
-                            <Text style={{textAlign: 'center', marginTop: 20, color: '#666'}}>No se encontraron resultados.</Text>
+                            <Text style={{textAlign: 'center', marginTop: 20, color: '#6E7278'}}>No se encontraron resultados.</Text>
                         )}
                       </>
                   )}
-              </View>
+             </View>
           ) : (
-              <>
-                {/* Popular Restaurants Horizontal */}
+            <>
+                {/* 4. Offers Near You (Rewards) */}
                 <View style={styles.sectionContainer}>
-                    <View style={styles.sectionHeader}>
-                        <Text style={styles.sectionTitle}>Favoritos cerca de ti</Text>
-                        <TouchableOpacity onPress={() => handlePress(() => {})}>
-                             <IconSymbol name="arrow.right" size={20} color="#000" />
-                        </TouchableOpacity>
-                    </View>
+                    <Text style={styles.sectionTitle}>Recompensas Activas</Text>
                     {loadingRestaurants ? (
-                        <ActivityIndicator size="large" color="#000" style={{ marginTop: 20 }} />
-                    ) : popularRestaurants.length > 0 ? (
+                        <ActivityIndicator color="#000" />
+                    ) : (
                         <FlatList
                             data={popularRestaurants}
                             renderItem={renderHorizontalRestaurantItem}
@@ -388,46 +274,79 @@ export default function HomeScreen() {
                             showsHorizontalScrollIndicator={false}
                             contentContainerStyle={styles.carouselContent}
                         />
-                    ) : (
-                        <Text style={{ marginLeft: 20, color: '#666' }}>No hay restaurantes populares.</Text>
                     )}
                 </View>
 
-                {/* All Restaurants Vertical */}
+                {/* 5. Local Businesses List */}
                 <View style={styles.sectionContainer}>
-                    <Text style={styles.sectionTitle}>Todos los restaurantes</Text>
+                    <Text style={styles.sectionTitle}>Comercios Nexe</Text>
                     {loadingRestaurants ? (
-                        <ActivityIndicator size="large" color="#000" />
-                    ) : popularRestaurants.length > 0 ? (
-                        <View style={styles.verticalList}>
-                            {popularRestaurants.map((restaurant) => (
-                                <VerticalRestaurantCard key={restaurant.id} restaurant={restaurant} />
+                        <ActivityIndicator color="#000" />
+                    ) : (
+                        <View style={styles.listContainer}>
+                            {popularRestaurants.map((restaurant, index) => (
+                                <BusinessRow
+                                    key={restaurant.id}
+                                    restaurant={restaurant}
+                                    isLast={index === popularRestaurants.length - 1}
+                                />
                             ))}
                         </View>
-                    ) : null}
+                    )}
                 </View>
-              </>
+            </>
           )}
 
-        </ScrollView>
+      </ScrollView>
     </View>
   );
 }
 
-function CategoryItem({ label, icon }: { label: string, icon: any }) {
+// Components
+
+function OfferCard({ restaurant }: { restaurant: Restaurant }) {
+    const router = useRouter();
     return (
         <TouchableOpacity
-            style={styles.categoryItem}
+            style={styles.offerCard}
+            activeOpacity={0.9}
             onPress={() => {
-                if (process.env.EXPO_OS === 'ios') {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                }
+                if (process.env.EXPO_OS === 'ios') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                router.push(`/restaurant/${restaurant.id}`);
             }}
         >
-            <View style={styles.categoryIconContainer}>
-                <IconSymbol name={icon} size={30} color="#000" />
+            <View style={styles.offerImageContainer}>
+                <Image source={{ uri: restaurant.image_url }} style={styles.offerImage} contentFit="cover" />
+                {/* Removed floating price badge overlay in favor of simpler design or put it in text if data available */}
             </View>
-            <Text style={styles.categoryText}>{label}</Text>
+            <View style={styles.offerContent}>
+                <Text style={styles.offerTitle} numberOfLines={1}>{restaurant.name}</Text>
+                <Text style={styles.offerSubtitle} numberOfLines={1}>Oferta especial disponible</Text>
+                <View style={styles.pointsBadge}>
+                    <Text style={styles.pointsBadgeText}>500 pts</Text>
+                </View>
+            </View>
+        </TouchableOpacity>
+    );
+}
+
+function BusinessRow({ restaurant, isLast }: { restaurant: Restaurant, isLast?: boolean }) {
+    const router = useRouter();
+    return (
+        <TouchableOpacity
+            style={[styles.businessRow, isLast && { borderBottomWidth: 0 }]}
+            activeOpacity={0.7}
+            onPress={() => {
+                if (process.env.EXPO_OS === 'ios') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                router.push(`/restaurant/${restaurant.id}`);
+            }}
+        >
+            <Image source={{ uri: restaurant.image_url }} style={styles.businessImage} contentFit="cover" />
+            <View style={styles.businessInfo}>
+                <Text style={styles.businessName} numberOfLines={1}>{restaurant.name}</Text>
+                <Text style={styles.businessMeta} numberOfLines={1}>{restaurant.cuisine_type} • 200m</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color="#ccc" />
         </TouchableOpacity>
     );
 }
@@ -436,100 +355,15 @@ function DishResultCard({ item }: { item: MenuItemResult }) {
     const router = useRouter();
     return (
         <TouchableOpacity
-            style={styles.dishCard}
-            onPress={() => {
-                if (process.env.EXPO_OS === 'ios') {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                }
-                router.push(`/restaurant/${item.restaurant_id}`);
-            }}
+            style={styles.businessRow}
+            onPress={() => router.push(`/restaurant/${item.restaurant_id}`)}
         >
-            <Image source={{ uri: item.image_url }} style={styles.dishImage} contentFit="cover" />
-            <View style={{flex: 1}}>
-                <Text style={styles.dishName}>{item.name}</Text>
-                <Text style={styles.dishRestName}>{item.restaurants?.name}</Text>
-                <Text style={styles.dishPrice}>${item.price}</Text>
+             <Image source={{ uri: item.image_url }} style={styles.businessImage} contentFit="cover" />
+             <View style={styles.businessInfo}>
+                <Text style={styles.businessName}>{item.name}</Text>
+                <Text style={styles.businessMeta}>{item.restaurants?.name}</Text>
             </View>
-        </TouchableOpacity>
-    );
-}
-
-function HorizontalRestaurantCard({ restaurant }: { restaurant: Restaurant }) {
-    const router = useRouter();
-    return (
-        <TouchableOpacity
-            style={styles.cardHorizontal}
-            activeOpacity={0.9}
-            onPress={() => {
-                if (process.env.EXPO_OS === 'ios') {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                }
-                router.push(`/restaurant/${restaurant.id}`);
-            }}
-        >
-            <View style={styles.imageContainerHorizontal}>
-                <Image
-                    source={{ uri: restaurant.image_url }}
-                    style={styles.cardImageHorizontal}
-                    contentFit="cover"
-                    transition={200}
-                />
-                <View style={styles.heartButton}>
-                    <Ionicons name="heart-outline" size={20} color="#fff" />
-                </View>
-                <View style={styles.ratingBadgeOverImage}>
-                    <Text style={styles.ratingTextOverImage}>{restaurant.rating}</Text>
-                </View>
-            </View>
-
-            <View style={styles.cardContentHorizontal}>
-                <Text style={styles.cardTitle} numberOfLines={1}>{restaurant.name}</Text>
-                <Text style={styles.cardSubtitle} numberOfLines={1}>
-                    $ • {restaurant.cuisine_type}
-                </Text>
-                <Text style={styles.deliveryText}>
-                    <Ionicons name="time-outline" size={12} color="#666" /> 15-25 min • Envío gratis
-                </Text>
-            </View>
-        </TouchableOpacity>
-    );
-}
-
-function VerticalRestaurantCard({ restaurant }: { restaurant: Restaurant }) {
-    const router = useRouter();
-    return (
-        <TouchableOpacity
-            style={styles.cardVertical}
-            activeOpacity={0.9}
-            onPress={() => {
-                if (process.env.EXPO_OS === 'ios') {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                }
-                router.push(`/restaurant/${restaurant.id}`);
-            }}
-        >
-             <View style={styles.imageContainerVertical}>
-                <Image
-                    source={{ uri: restaurant.image_url }}
-                    style={styles.cardImageVertical}
-                    contentFit="cover"
-                    transition={200}
-                />
-                <View style={styles.heartButton}>
-                    <Ionicons name="heart-outline" size={20} color="#fff" />
-                </View>
-                 <View style={styles.ratingBadgeOverImage}>
-                    <Text style={styles.ratingTextOverImage}>{restaurant.rating}</Text>
-                </View>
-            </View>
-
-            <View style={styles.cardContentVertical}>
-                <View style={styles.rowBetween}>
-                    <Text style={styles.cardTitleLarge} numberOfLines={1}>{restaurant.name}</Text>
-                </View>
-                <Text style={styles.cardSubtitle} numberOfLines={1}>$$ • {restaurant.cuisine_type} • 1.2 km</Text>
-                <Text style={styles.deliveryText}>20-30 min • $1.49 envío</Text>
-            </View>
+            <Text style={{fontWeight:'600'}}>${item.price}</Text>
         </TouchableOpacity>
     );
 }
@@ -537,304 +371,242 @@ function VerticalRestaurantCard({ restaurant }: { restaurant: Restaurant }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
-  },
-  scrollContainer: {
-      flex: 1,
+    backgroundColor: '#FFFFFF', // Pure White
   },
 
   // Header
-  headerContainer: {
-      backgroundColor: '#000',
-      paddingBottom: 20,
-      paddingHorizontal: 16,
-      borderBottomWidth: 0,
-      zIndex: 10,
-  },
-  headerTopRow: {
+  header: {
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
-      marginBottom: 20,
+      paddingHorizontal: 20,
+      paddingBottom: 20,
+      backgroundColor: '#FFFFFF',
   },
-  modernTitle: {
-      fontSize: 28,
+  greetingText: {
+      fontSize: 20,
       fontWeight: 'bold',
-      color: '#fff',
-      letterSpacing: -0.5,
+      color: '#121212',
   },
-  rightHeader: {
+  statusText: {
+      fontSize: 12,
+      color: '#6E7278',
+      marginTop: 2,
+  },
+  headerRight: {
       flexDirection: 'row',
       alignItems: 'center',
   },
-  pointsPill: {
-      flexDirection: 'row',
+  iconButton: {
+      position: 'relative',
+      marginRight: 16,
+      padding: 4,
+  },
+  notificationDot: {
+      position: 'absolute',
+      top: 4,
+      right: 6,
+      width: 8,
+      height: 8,
+      borderRadius: 4,
+      backgroundColor: 'red',
+      borderWidth: 1,
+      borderColor: '#fff',
+  },
+  avatarContainer: {
+      width: 40,
+      height: 40,
+      borderRadius: 14, // Squircle-ish
+      backgroundColor: '#F5F6F8',
+      justifyContent: 'center',
       alignItems: 'center',
-      backgroundColor: 'rgba(255,255,255,0.2)',
-      paddingHorizontal: 10,
-      paddingVertical: 6,
-      borderRadius: 20,
-      marginRight: 10,
+      overflow: 'hidden',
   },
-  pointsText: {
-      color: '#fff',
-      fontWeight: '600',
-      fontSize: 13,
-      marginRight: 4,
-  },
-  profileButton: {
-      padding: 0,
+  avatarText: {
+      fontSize: 16,
+      fontWeight: 'bold',
+      color: '#121212',
   },
 
-  // Search
-  searchWrapper: {
-      width: '100%',
+  // Hero Card
+  heroContainer: {
+      paddingHorizontal: 20,
+      marginBottom: 24,
   },
-  searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fff', // White search bar on black banner
-    borderRadius: 30, // Full pill shape
-    paddingHorizontal: 16,
-    height: 50,
+  heroCard: {
+      backgroundColor: '#F5F6F8', // Smoke Gray
+      borderRadius: 24,
+      padding: 24,
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
   },
-  searchIcon: {
-      marginRight: 10,
+  heroLeft: {
+      flex: 1,
+  },
+  heroPoints: {
+      fontSize: 32,
+      fontWeight: 'bold',
+      color: '#121212',
+      letterSpacing: -1,
+  },
+  heroLabel: {
+      fontSize: 14,
+      color: '#6E7278',
+      marginTop: 4,
+  },
+  heroButton: {
+      backgroundColor: '#000000',
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: 16,
+      paddingVertical: 12,
+      borderRadius: 18,
+  },
+  heroButtonText: {
+      color: '#FFFFFF',
+      fontWeight: '600',
+      fontSize: 14,
+  },
+
+  // Search & Filters
+  searchSection: {
+      marginBottom: 32,
+  },
+  searchBar: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: '#F5F6F8',
+      marginHorizontal: 20,
+      paddingHorizontal: 16,
+      height: 50,
+      borderRadius: 16,
+      marginBottom: 16,
   },
   searchInput: {
       flex: 1,
       fontSize: 16,
-      color: '#000',
+      color: '#121212',
+  },
+  filterScroll: {
+      paddingLeft: 20,
+  },
+  filterContent: {
+      paddingRight: 20,
+  },
+  filterPill: {
+      paddingHorizontal: 20,
+      paddingVertical: 10,
+      borderRadius: 20,
+      backgroundColor: '#F5F6F8',
+      marginRight: 10,
+  },
+  filterPillActive: {
+      backgroundColor: '#000000',
+  },
+  filterText: {
+      fontSize: 14,
+      color: '#121212',
       fontWeight: '500',
   },
-
-  // Categories
-  categoryContainer: {
-      marginVertical: 24,
-  },
-  categoryContent: {
-      paddingHorizontal: 16,
-      paddingRight: 16,
-  },
-  categoryItem: {
-      alignItems: 'center',
-      marginRight: 24,
-      width: 70,
-  },
-  categoryIconContainer: {
-      width: 60,
-      height: 60,
-      // Removed background as per clean aesthetic
-      justifyContent: 'center',
-      alignItems: 'center',
-      marginBottom: 8,
-  },
-  categoryText: {
-      fontSize: 12,
-      fontWeight: '600',
-      color: '#000',
-      textAlign: 'center',
-  },
-
-  // Promo Banner
-  promoPadding: {
-      paddingHorizontal: 16,
-      marginBottom: 20,
-  },
-  promoContainer: {
-      flexDirection: 'row',
-      backgroundColor: '#111', // Black background for contrast
-      borderRadius: 16,
-      padding: 20,
-      height: 150,
-      position: 'relative',
-      overflow: 'hidden',
-  },
-  promoContent: {
-      flex: 1,
-      zIndex: 2,
-      justifyContent: 'center',
-      paddingRight: 10,
-  },
-  promoTitle: {
-      color: '#fff',
-      fontSize: 22,
-      fontWeight: 'bold',
-      marginBottom: 6,
-  },
-  promoText: {
-      color: '#ccc',
-      fontSize: 14,
-      marginBottom: 16,
-  },
-  promoButton: {
-      backgroundColor: '#fff',
-      paddingHorizontal: 16,
-      paddingVertical: 10,
-      borderRadius: 24,
-      alignSelf: 'flex-start',
-  },
-  promoButtonText: {
-      color: '#000',
-      fontSize: 13,
-      fontWeight: 'bold',
-  },
-  promoImage: {
-      width: 140,
-      height: 140,
-      position: 'absolute',
-      right: -30,
-      bottom: -30,
-      transform: [{ rotate: '-10deg' }],
+  filterTextActive: {
+      color: '#FFFFFF',
   },
 
   // Sections
   sectionContainer: {
       marginBottom: 32,
-      paddingHorizontal: 16,
-  },
-  sectionHeader: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      marginBottom: 16,
   },
   sectionTitle: {
-      fontSize: 22, // Clean bold title
-      fontWeight: '700',
-      color: '#000',
-      letterSpacing: -0.5,
+      fontSize: 18,
+      fontWeight: 'bold',
+      color: '#121212',
+      marginLeft: 20,
+      marginBottom: 16,
   },
   carouselContent: {
-      paddingRight: 16,
-  },
-  verticalList: {
-      // paddingHorizontal: 16,
+      paddingHorizontal: 20,
+      paddingRight: 8, // Adjust for last item spacing
   },
 
-  // Dish Card
-  dishCard: {
+  // Offer Card
+  offerCard: {
+      width: 200,
+      marginRight: 16,
+      backgroundColor: '#F5F6F8',
+      borderRadius: 20, // Bottom is straight in requirement but looks better rounded or as specified
+      // Requirement: "Recorte Squircle superior (20px), recto inferior." - Implementing roughly
+      overflow: 'hidden',
+      paddingBottom: 12,
+  },
+  offerImageContainer: {
+      height: 120,
+      borderTopLeftRadius: 20,
+      borderTopRightRadius: 20,
+      overflow: 'hidden',
+  },
+  offerImage: {
+      width: '100%',
+      height: '100%',
+      backgroundColor: '#ddd',
+  },
+  offerContent: {
+      padding: 12,
+  },
+  offerTitle: {
+      fontSize: 14,
+      fontWeight: 'bold',
+      color: '#121212',
+      marginBottom: 2,
+  },
+  offerSubtitle: {
+      fontSize: 12,
+      color: '#6E7278',
+      marginBottom: 8,
+  },
+  pointsBadge: {
+      backgroundColor: '#000',
+      alignSelf: 'flex-start',
+      paddingHorizontal: 8,
+      paddingVertical: 4,
+      borderRadius: 6,
+  },
+  pointsBadgeText: {
+      color: '#fff',
+      fontSize: 10,
+      fontWeight: 'bold',
+  },
+
+  // Business Row
+  listContainer: {
+      paddingHorizontal: 20,
+  },
+  businessRow: {
       flexDirection: 'row',
       alignItems: 'center',
-      marginBottom: 16,
-      backgroundColor: '#fff',
+      paddingVertical: 12,
       borderBottomWidth: 1,
-      borderBottomColor: '#f0f0f0',
-      paddingBottom: 16,
+      borderBottomColor: '#F0F0F0', // Thin separator
   },
-  dishImage: {
-      width: 80,
-      height: 80,
-      borderRadius: 8,
+  businessImage: {
+      width: 50,
+      height: 50,
+      borderRadius: 16, // Squircle 16px
+      backgroundColor: '#F5F6F8',
       marginRight: 16,
-      backgroundColor: '#f0f0f0',
   },
-  dishName: {
+  businessInfo: {
+      flex: 1,
+      marginRight: 10,
+  },
+  businessName: {
       fontSize: 16,
       fontWeight: 'bold',
-      color: '#000',
-      marginBottom: 4,
+      color: '#121212',
+      marginBottom: 2,
   },
-  dishRestName: {
-      fontSize: 12,
-      color: '#666',
-      marginBottom: 4,
-  },
-  dishPrice: {
-      fontSize: 14,
-      fontWeight: '600',
-      color: '#333',
-  },
-
-  // Horizontal Card
-  cardHorizontal: {
-      width: 280, // Slightly wider
-      marginRight: 16,
-      backgroundColor: '#fff',
-      marginBottom: 4,
-  },
-  imageContainerHorizontal: {
-      position: 'relative',
-      marginBottom: 12,
-  },
-  cardImageHorizontal: {
-      width: '100%',
-      height: 180, // Taller
-      borderRadius: 16, // More rounded
-      backgroundColor: '#f0f0f0',
-  },
-  cardContentHorizontal: {
-      paddingHorizontal: 0,
-  },
-
-  // Vertical Card
-  cardVertical: {
-      width: '100%',
-      marginBottom: 32,
-      backgroundColor: '#fff',
-  },
-  imageContainerVertical: {
-      position: 'relative',
-      marginBottom: 16,
-  },
-  cardImageVertical: {
-      width: '100%',
-      height: 220,
-      borderRadius: 16,
-      backgroundColor: '#f0f0f0',
-  },
-  cardContentVertical: {
-      paddingHorizontal: 0,
-  },
-
-  // Shared
-  rowBetween: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      marginBottom: 4,
-  },
-  cardTitle: {
-      fontSize: 16,
-      fontWeight: '700',
-      color: '#000',
-      marginBottom: 4,
-  },
-  cardTitleLarge: {
-      fontSize: 20,
-      fontWeight: '700',
-      color: '#000',
-      flex: 1,
-  },
-  cardSubtitle: {
-      fontSize: 14,
-      color: '#666',
-      marginBottom: 6,
-  },
-  deliveryText: {
+  businessMeta: {
       fontSize: 13,
-      color: '#666',
-  },
-  heartButton: {
-      position: 'absolute',
-      top: 12,
-      right: 12,
-      backgroundColor: 'rgba(0,0,0,0.3)',
-      borderRadius: 20,
-      padding: 8,
-  },
-  ratingBadgeOverImage: {
-      position: 'absolute',
-      bottom: 12,
-      right: 12,
-      backgroundColor: 'rgba(255,255,255,0.95)',
-      borderRadius: 12,
-      paddingHorizontal: 10,
-      paddingVertical: 6,
-  },
-  ratingTextOverImage: {
-      fontSize: 12,
-      fontWeight: '800',
-      color: '#000',
+      color: '#6E7278',
   },
 });

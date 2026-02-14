@@ -1,17 +1,14 @@
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
 import * as Haptics from 'expo-haptics';
 
 export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
-  const colorScheme = useColorScheme();
 
-  // Postmates style: Black for active, Gray for inactive
+  // Nexe Clean: Black for active, Stone Gray for inactive
   const activeColor = '#000000';
-  const inactiveColor = '#999999';
+  const inactiveColor = '#6E7278';
 
   return (
     <View style={[styles.tabBar, { paddingBottom: insets.bottom + 5 }]}>
@@ -63,7 +60,7 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
             {options.tabBarIcon?.({
                 focused: isFocused,
                 color: isFocused ? activeColor : inactiveColor,
-                size: 24, // Slightly larger standard icon
+                size: 24,
             })}
             <Text style={{
                 color: isFocused ? activeColor : inactiveColor,
@@ -88,15 +85,12 @@ const styles = StyleSheet.create({
     right: 0,
     flexDirection: 'row',
     backgroundColor: '#fff',
-    borderTopColor: '#eee',
+    borderTopColor: '#F0F0F0',
     borderTopWidth: 1,
     paddingTop: 10,
-    // Shadow for depth (optional, keep it subtle)
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-    elevation: 5,
+    // No shadows - Clean Aesthetic
+    shadowColor: 'transparent',
+    elevation: 0,
   },
   tabItem: {
     flex: 1,
