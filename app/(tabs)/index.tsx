@@ -8,6 +8,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
+import * as Location from 'expo-location';
 import { StatusBar } from 'expo-status-bar';
 
 // Interface matching the database schema
@@ -18,6 +19,8 @@ interface Restaurant {
   rating: number;
   cuisine_type: string;
   address: string;
+  latitude?: number;
+  longitude?: number;
 }
 
 // Interface for MenuItem search results
@@ -39,6 +42,9 @@ export default function HomeScreen() {
   const [popularRestaurants, setPopularRestaurants] = useState<Restaurant[]>([]);
   const [rewardItems, setRewardItems] = useState<MenuItemResult[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Location State
+  const [userLocation, setUserLocation] = useState<{ latitude: number, longitude: number } | null>(null);
 
   // Search State
   const [searchQuery, setSearchQuery] = useState<string>("");
@@ -69,7 +75,47 @@ export default function HomeScreen() {
     });
 
     fetchData();
+    getUserLocation();
   }, []);
+
+  async function getUserLocation() {
+    try {
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        console.log('Permission to access location was denied');
+        return;
+      }
+
+      let location = await Location.getCurrentPositionAsync({});
+      setUserLocation(location.coords);
+    } catch (error) {
+      console.error("Error getting location:", error);
+    }
+  }
+
+  function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number) {
+      if (!lat1 || !lon1 || !lat2 || !lon2) return "200m"; // Default fallback
+
+      const R = 6371; // Radius of the earth in km
+      const dLat = deg2rad(lat2 - lat1);
+      const dLon = deg2rad(lon2 - lon1);
+      const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
+        Math.sin(dLon / 2) * Math.sin(dLon / 2)
+        ;
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      const d = R * c; // Distance in km
+
+      if (d < 1) {
+          return `${Math.round(d * 1000)}m`;
+      }
+      return `${d.toFixed(1)} km`;
+  }
+
+  function deg2rad(deg: number) {
+      return deg * (Math.PI / 180);
+  }
 
   function handlePress(action: () => void) {
       if (process.env.EXPO_OS === 'ios') {
@@ -299,18 +345,27 @@ export default function HomeScreen() {
 
                 {/* 5. Local Businesses List */}
                 <View style={styles.sectionContainer}>
-                    <Text style={styles.sectionTitle}>Comercios Nexe</Text>
+                    <View style={{ paddingHorizontal: 20, marginBottom: 16 }}>
+                        <Text style={styles.sectionTitle}>Comercios Nexe</Text>
+                    </View>
                     {loading ? (
                         <ActivityIndicator color="#000" />
                     ) : (
                         <View style={styles.listContainer}>
-                            {popularRestaurants.map((restaurant, index) => (
-                                <BusinessRow
-                                    key={restaurant.id}
-                                    restaurant={restaurant}
-                                    isLast={index === popularRestaurants.length - 1}
-                                />
-                            ))}
+                            {popularRestaurants.map((restaurant, index) => {
+                                const distance = (userLocation && restaurant.latitude && restaurant.longitude)
+                                    ? calculateDistance(userLocation.latitude, userLocation.longitude, restaurant.latitude, restaurant.longitude)
+                                    : undefined;
+
+                                return (
+                                    <BusinessRow
+                                        key={restaurant.id}
+                                        restaurant={restaurant}
+                                        isLast={index === popularRestaurants.length - 1}
+                                        distance={distance}
+                                    />
+                                );
+                            })}
                         </View>
                     )}
                 </View>
@@ -333,8 +388,6 @@ function RewardCard({ item }: { item: MenuItemResult }) {
             activeOpacity={0.9}
             onPress={() => {
                 if (process.env.EXPO_OS === 'ios') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                // Navigate to restaurant details, or item details if available.
-                // For now, restaurant details seems appropriate as per previous logic.
                 router.push(`/restaurant/${item.restaurant_id}`);
             }}
         >
@@ -358,13 +411,13 @@ function RewardCard({ item }: { item: MenuItemResult }) {
                     <Text style={styles.rewardTitle} numberOfLines={1}>{item.name}</Text>
                     <IconSymbol name="color-wand-outline" size={16} color="green" />
                 </View>
-                <Text style={styles.rewardSubtitle} numberOfLines={1}>{pointsPrice} pts • {item.restaurants?.name}</Text>
+                <Text style={[styles.rewardSubtitle, { fontWeight: 'bold' }]} numberOfLines={1}>{pointsPrice} pts • {item.restaurants?.name}</Text>
             </View>
         </TouchableOpacity>
     );
 }
 
-function BusinessRow({ restaurant, isLast }: { restaurant: Restaurant, isLast?: boolean }) {
+function BusinessRow({ restaurant, isLast, distance }: { restaurant: Restaurant, isLast?: boolean, distance?: string }) {
     const router = useRouter();
     return (
         <TouchableOpacity
@@ -378,7 +431,7 @@ function BusinessRow({ restaurant, isLast }: { restaurant: Restaurant, isLast?: 
             <Image source={{ uri: restaurant.image_url }} style={styles.businessImage} contentFit="cover" />
             <View style={styles.businessInfo}>
                 <Text style={styles.businessName} numberOfLines={1}>{restaurant.name}</Text>
-                <Text style={styles.businessMeta} numberOfLines={1}>{restaurant.cuisine_type} • 200m</Text>
+                <Text style={styles.businessMeta} numberOfLines={1}>{restaurant.cuisine_type} • {distance || '200m'}</Text>
             </View>
             <Ionicons name="chevron-forward" size={20} color="#ccc" />
         </TouchableOpacity>
