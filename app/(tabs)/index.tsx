@@ -40,9 +40,6 @@ export default function HomeScreen() {
   const [rewardItems, setRewardItems] = useState<MenuItemResult[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Cart State
-  const [cart, setCart] = useState<{ [key: number]: number }>({});
-
   // Search State
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [searchResultsRestaurants, setSearchResultsRestaurants] = useState<Restaurant[]>([]);
@@ -159,66 +156,8 @@ export default function HomeScreen() {
     }
   }
 
-  const handleAddToCart = (itemId: number) => {
-    setCart((prev) => ({
-      ...prev,
-      [itemId]: (prev[itemId] || 0) + 1,
-    }));
-    if (process.env.EXPO_OS === 'ios') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-  };
-
-  const handleRemoveFromCart = (itemId: number) => {
-    setCart((prev) => {
-      const newCart = { ...prev };
-      if (newCart[itemId] > 1) {
-        newCart[itemId]--;
-      } else {
-        delete newCart[itemId];
-      }
-      return newCart;
-    });
-    if (process.env.EXPO_OS === 'ios') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-  };
-
-  const calculateTotalPoints = () => {
-    let total = 0;
-    // We need to look up items from rewardItems and searchResultsDishes potentially?
-    // For simplicity, let's assume all cart items are in rewardItems for now or we just map from known lists.
-    // A more robust way would be to have a map of all loaded items.
-    // Let's iterate over rewardItems to find price.
-    rewardItems.forEach((item) => {
-      if (cart[item.id]) {
-        total += Math.round(item.price * 10) * cart[item.id];
-      }
-    });
-    return total;
-  };
-
-  const handleCheckout = () => {
-    const cartItems = rewardItems.filter(item => cart[item.id]).map(item => ({
-        ...item,
-        quantity: cart[item.id],
-        pointsPrice: Math.round(item.price * 10)
-    }));
-
-    if (cartItems.length === 0) return;
-
-    router.push({
-        pathname: "/checkout",
-        params: {
-            cartData: JSON.stringify(cartItems),
-            restaurantName: "Recompensas Nexe"
-        }
-    });
-  };
-
   const renderRewardItem: ListRenderItem<MenuItemResult> = ({ item }) => (
-      <RewardCard
-        item={item}
-        quantity={cart[item.id] || 0}
-        onAdd={() => handleAddToCart(item.id)}
-        onRemove={() => handleRemoveFromCart(item.id)}
-      />
+      <RewardCard item={item} />
   );
 
   const getGreeting = () => {
@@ -234,9 +173,6 @@ export default function HomeScreen() {
       const name = meta?.full_name || meta?.username || 'U';
       return name.charAt(0).toUpperCase();
   };
-
-  const totalPoints = calculateTotalPoints();
-  const cartItemCount = Object.values(cart).reduce((a, b) => a + b, 0);
 
   return (
     <View style={styles.container}>
@@ -340,8 +276,11 @@ export default function HomeScreen() {
                 <View style={styles.sectionContainer}>
                     <View style={styles.sectionHeader}>
                         <Text style={styles.sectionTitle}>Recompensas Activas</Text>
-                        <TouchableOpacity onPress={() => {}}>
-                            <Text style={styles.seeAllText}>Ver todo</Text>
+                        <TouchableOpacity
+                            style={styles.arrowButton}
+                            onPress={() => {}}
+                        >
+                            <Ionicons name="arrow-forward" size={20} color="#000" />
                         </TouchableOpacity>
                     </View>
                     {loading ? (
@@ -379,57 +318,49 @@ export default function HomeScreen() {
           )}
 
       </ScrollView>
-
-      {/* Floating Cart Button */}
-      {cartItemCount > 0 && (
-        <View style={styles.floatingButtonContainer}>
-            <TouchableOpacity style={styles.cartButton} onPress={handleCheckout}>
-                <View style={styles.cartCountCircle}>
-                    <Text style={styles.cartCountText}>{cartItemCount}</Text>
-                </View>
-                <Text style={styles.cartButtonText}>Ver Pedido</Text>
-                <Text style={styles.cartButtonPrice}>{totalPoints} pts</Text>
-            </TouchableOpacity>
-        </View>
-      )}
     </View>
   );
 }
 
 // Components
 
-function RewardCard({ item, quantity, onAdd, onRemove }: { item: MenuItemResult, quantity: number, onAdd: () => void, onRemove: () => void }) {
+function RewardCard({ item }: { item: MenuItemResult }) {
     const pointsPrice = Math.round(item.price * 10);
+    const router = useRouter();
     return (
-        <View style={styles.rewardCard}>
+        <TouchableOpacity
+            style={styles.rewardCard}
+            activeOpacity={0.9}
+            onPress={() => {
+                if (process.env.EXPO_OS === 'ios') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                // Navigate to restaurant details, or item details if available.
+                // For now, restaurant details seems appropriate as per previous logic.
+                router.push(`/restaurant/${item.restaurant_id}`);
+            }}
+        >
             <View style={styles.rewardImageContainer}>
                 <Image source={{ uri: item.image_url }} style={styles.rewardImage} contentFit="cover" />
-            </View>
-            <View style={styles.rewardContent}>
-                <Text style={styles.rewardTitle} numberOfLines={1}>{item.name}</Text>
-                <Text style={styles.rewardSubtitle} numberOfLines={1}>{item.restaurants?.name}</Text>
 
-                <View style={styles.rewardFooter}>
-                    <Text style={styles.rewardPrice}>{pointsPrice} pts</Text>
+                {/* Top Offer Badge */}
+                <View style={styles.topOfferBadge}>
+                    <Ionicons name="trophy" size={12} color="#fff" style={{marginRight: 4}} />
+                    <Text style={styles.topOfferText}>Oferta Top • 2 disponibles</Text>
+                </View>
 
-                    {quantity > 0 ? (
-                        <View style={styles.qtyControlSmall}>
-                            <TouchableOpacity onPress={onRemove} style={styles.qtyBtnSmall}>
-                                <Ionicons name="remove" size={12} color="#000" />
-                            </TouchableOpacity>
-                            <Text style={styles.qtyTextSmall}>{quantity}</Text>
-                            <TouchableOpacity onPress={onAdd} style={styles.qtyBtnSmall}>
-                                <Ionicons name="add" size={12} color="#000" />
-                            </TouchableOpacity>
-                        </View>
-                    ) : (
-                        <TouchableOpacity style={styles.addButton} onPress={onAdd}>
-                            <Ionicons name="add" size={16} color="#fff" />
-                        </TouchableOpacity>
-                    )}
+                {/* Heart Icon */}
+                <View style={styles.heartIconOverlay}>
+                    <Ionicons name="heart-outline" size={20} color="#fff" />
                 </View>
             </View>
-        </View>
+
+            <View style={styles.rewardContent}>
+                <View style={styles.rewardTitleRow}>
+                    <Text style={styles.rewardTitle} numberOfLines={1}>{item.name}</Text>
+                    <IconSymbol name="color-wand-outline" size={16} color="green" />
+                </View>
+                <Text style={styles.rewardSubtitle} numberOfLines={1}>{pointsPrice} pts • {item.restaurants?.name}</Text>
+            </View>
+        </TouchableOpacity>
     );
 }
 
@@ -628,89 +559,83 @@ const styles = StyleSheet.create({
       marginBottom: 16,
   },
   sectionTitle: {
-      fontSize: 18,
+      fontSize: 22,
       fontWeight: 'bold',
       color: '#121212',
+      letterSpacing: -0.5,
   },
-  seeAllText: {
-      fontSize: 14,
-      color: '#007AFF', // Blue Accent
-      fontWeight: '600',
+  arrowButton: {
+      width: 32,
+      height: 32,
+      borderRadius: 16,
+      backgroundColor: '#F5F6F8',
+      justifyContent: 'center',
+      alignItems: 'center',
   },
   carouselContent: {
       paddingHorizontal: 20,
       paddingRight: 8, // Adjust for last item spacing
   },
 
-  // Reward Card
+  // Reward Card (Uber Eats Style)
   rewardCard: {
-      width: 160,
+      width: 280, // Wider card
       marginRight: 16,
-      backgroundColor: '#F5F6F8',
-      borderRadius: 20,
-      overflow: 'hidden',
-      paddingBottom: 12,
+      backgroundColor: 'transparent', // Clean look
+      marginBottom: 4,
   },
   rewardImageContainer: {
-      height: 100,
-      borderTopLeftRadius: 20,
-      borderTopRightRadius: 20,
+      height: 160,
+      borderRadius: 16,
       overflow: 'hidden',
+      position: 'relative',
+      backgroundColor: '#f0f0f0',
   },
   rewardImage: {
       width: '100%',
       height: '100%',
-      backgroundColor: '#ddd',
+  },
+  topOfferBadge: {
+      position: 'absolute',
+      top: 12,
+      left: 12,
+      backgroundColor: '#16a34a', // Green
+      paddingHorizontal: 10,
+      paddingVertical: 6,
+      borderRadius: 20,
+      flexDirection: 'row',
+      alignItems: 'center',
+  },
+  topOfferText: {
+      color: '#fff',
+      fontWeight: 'bold',
+      fontSize: 12,
+  },
+  heartIconOverlay: {
+      position: 'absolute',
+      top: 12,
+      right: 12,
   },
   rewardContent: {
-      padding: 12,
+      marginTop: 12,
+      paddingHorizontal: 4,
   },
-  rewardTitle: {
-      fontSize: 14,
-      fontWeight: 'bold',
-      color: '#121212',
-      marginBottom: 2,
-  },
-  rewardSubtitle: {
-      fontSize: 11,
-      color: '#6E7278',
-      marginBottom: 8,
-  },
-  rewardFooter: {
+  rewardTitleRow: {
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
+      marginBottom: 4,
   },
-  rewardPrice: {
-      fontSize: 13,
-      fontWeight: '700',
-      color: '#121212',
-  },
-  addButton: {
-      width: 24,
-      height: 24,
-      borderRadius: 12,
-      backgroundColor: '#000',
-      justifyContent: 'center',
-      alignItems: 'center',
-  },
-  qtyControlSmall: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      backgroundColor: '#fff',
-      borderRadius: 12,
-      padding: 2,
-  },
-  qtyBtnSmall: {
-      width: 20,
-      height: 20,
-      justifyContent: 'center',
-      alignItems: 'center',
-  },
-  qtyTextSmall: {
-      fontSize: 12,
+  rewardTitle: {
+      fontSize: 16,
       fontWeight: 'bold',
-      marginHorizontal: 4,
+      color: '#121212',
+      flex: 1,
+      marginRight: 8,
+  },
+  rewardSubtitle: {
+      fontSize: 14,
+      color: '#6E7278',
   },
 
   // Business Row
@@ -744,49 +669,5 @@ const styles = StyleSheet.create({
   businessMeta: {
       fontSize: 13,
       color: '#6E7278',
-  },
-
-  // Floating Button
-  floatingButtonContainer: {
-      position: 'absolute',
-      bottom: 20,
-      left: 20,
-      right: 20,
-  },
-  cartButton: {
-      backgroundColor: '#121212',
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      padding: 16,
-      borderRadius: 24,
-      alignItems: 'center',
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.25,
-      shadowRadius: 8,
-      elevation: 6,
-  },
-  cartCountCircle: {
-      backgroundColor: '#333',
-      width: 24,
-      height: 24,
-      borderRadius: 12,
-      justifyContent: 'center',
-      alignItems: 'center',
-  },
-  cartCountText: {
-      color: '#fff',
-      fontSize: 12,
-      fontWeight: 'bold',
-  },
-  cartButtonText: {
-      color: '#fff',
-      fontSize: 16,
-      fontWeight: 'bold',
-  },
-  cartButtonPrice: {
-      color: '#fff',
-      fontSize: 16,
-      fontWeight: 'bold',
   },
 });
