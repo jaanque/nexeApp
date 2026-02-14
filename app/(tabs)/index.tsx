@@ -74,13 +74,6 @@ export default function HomeScreen() {
     fetchPopularRestaurants();
   }, []);
 
-  function getGreeting() {
-    const hour = new Date().getHours();
-    if (hour < 12) return 'Buenos días';
-    if (hour < 20) return 'Buenas tardes';
-    return 'Buenas noches';
-  }
-
   async function handleSearch(query: string) {
       setSearchQuery(query);
       if (query.length < 3) {
@@ -235,15 +228,36 @@ export default function HomeScreen() {
 
   return (
     <View style={styles.container}>
-      <ScrollView style={styles.scrollContainer} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
-          {/* Header & Promo Wrapper */}
-          <View style={[styles.purpleHeader, { paddingTop: insets.top + 10 }]}>
-            <View style={styles.topBar}>
-                {/* Search Bar (Replaces Location Text) */}
-                <View style={styles.searchContainerInline}>
-                    <Ionicons name="search" size={18} color="#111" style={styles.searchIcon} />
+      <ScrollView
+        style={styles.scrollContainer}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 100 }}
+        stickyHeaderIndices={[0]} // Optional: Make header sticky if preferred, but let's stick to standard flow first. Actually, standard Postmates has sticky search. Let's not complicate sticky indices yet.
+      >
+          {/* New Clean Header */}
+          <View style={[styles.headerContainer, { paddingTop: insets.top + 10 }]}>
+            <View style={styles.headerTopRow}>
+                <View style={styles.addressWrapper}>
+                    <Text style={styles.deliveryLabel}>Entregar en</Text>
+                    <View style={styles.addressRow}>
+                        <Text style={styles.addressText}>Casa</Text>
+                        <IconSymbol name="chevron.down" size={14} color="#000" style={{marginLeft: 4, marginTop: 2}} />
+                    </View>
+                </View>
+
+                <TouchableOpacity
+                    onPress={() => session?.user ? router.push('/profile') : router.push('/login')}
+                    style={styles.profileButton}
+                >
+                    <IconSymbol name="person.circle" size={32} color="#000" />
+                </TouchableOpacity>
+            </View>
+
+            <View style={styles.searchWrapper}>
+                <View style={styles.searchContainer}>
+                    <Ionicons name="search" size={20} color="#000" style={styles.searchIcon} />
                     <TextInput
-                        placeholder="Restaurantes, platos..."
+                        placeholder="Buscar..."
                         placeholderTextColor="#666"
                         style={styles.searchInput}
                         value={searchQuery}
@@ -255,72 +269,43 @@ export default function HomeScreen() {
                         </TouchableOpacity>
                     )}
                 </View>
-
-                <View style={styles.rightHeader}>
-                    {/* Points Pill (Same height/style as search) */}
-                    <TouchableOpacity
-                        onPress={() => session?.user ? router.push('/wallet') : router.push('/login')}
-                        style={styles.pointsPill}
-                    >
-                        <Text style={[styles.pointsText, { color: '#fff' }]}>{points} pts</Text>
-                        <IconSymbol size={16} name="star.fill" color="#FFD700" />
-                    </TouchableOpacity>
-
-                    {/* Profile Button (Same height/style as search/points) */}
-                    <TouchableOpacity
-                        onPress={() => session?.user ? router.push('/profile') : router.push('/login')}
-                        style={styles.profileButton}
-                    >
-                        <Ionicons name="person-circle" size={40} color="#fff" />
-                    </TouchableOpacity>
-                </View>
             </View>
+          </View>
 
-            {/* New Banner Content within Header */}
-            {!isSearching && (
-                 <View style={styles.headerBannerContent}>
-                     <Text style={styles.headerTitle}>
-                        {session?.user ? getGreeting() + ', viajero' : getGreeting()}
-                     </Text>
-                     <Text style={styles.headerSubtitle}>
-                        Encuentra lo que te hace feliz hoy
-                     </Text>
-                 </View>
-            )}
-
-            {/* Welcome Gift Banner (Moved UP) */}
+          {/* Welcome Gift Banner (Styled as dark card) */}
              {!isSearching && !checkingClaim && !hasClaimedWelcome && session?.user && (
-                 <View style={styles.promoContainer}>
-                    <View style={styles.promoContent}>
-                        <Text style={styles.promoTitle}>Regalo de Bienvenida</Text>
-                        <Text style={styles.promoText}>Reclama tus 5 puntos gratis por unirte a nosotros.</Text>
-                        <TouchableOpacity
-                            style={styles.promoButton}
-                            onPress={handleClaimWelcome}
-                            disabled={claiming}
-                        >
-                            {claiming ? (
-                                <ActivityIndicator size="small" color="#fff" />
-                            ) : (
-                                <Text style={styles.promoButtonText}>Reclamar regalo</Text>
-                            )}
-                        </TouchableOpacity>
+                 <View style={styles.promoPadding}>
+                    <View style={styles.promoContainer}>
+                        <View style={styles.promoContent}>
+                            <Text style={styles.promoTitle}>Regalo de Bienvenida</Text>
+                            <Text style={styles.promoText}>5 puntos gratis por unirte.</Text>
+                            <TouchableOpacity
+                                style={styles.promoButton}
+                                onPress={handleClaimWelcome}
+                                disabled={claiming}
+                            >
+                                {claiming ? (
+                                    <ActivityIndicator size="small" color="#000" />
+                                ) : (
+                                    <Text style={styles.promoButtonText}>Reclamar</Text>
+                                )}
+                            </TouchableOpacity>
+                        </View>
+                        <Image source={{ uri: 'https://images.unsplash.com/photo-1513201099705-a9746e1e201f?q=80&w=2070&auto=format&fit=crop' }} style={styles.promoImage} contentFit="contain" />
                     </View>
-                    <Image source={{ uri: 'https://images.unsplash.com/photo-1513201099705-a9746e1e201f?q=80&w=2070&auto=format&fit=crop' }} style={styles.promoImage} contentFit="contain" />
                  </View>
              )}
-          </View>
 
           {/* Categories */}
             {!isSearching && (
                 <View style={styles.categoryContainer}>
                     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categoryContent}>
-                        <CategoryItem label="Hamburguesas" icon="fast-food" color="#FFF3E0" iconColor="#FF9800" />
-                        <CategoryItem label="Pizza" icon="pizza" color="#FFEBEE" iconColor="#F44336" />
-                        <CategoryItem label="Asiática" icon="restaurant" color="#E8F5E9" iconColor="#4CAF50" />
-                        <CategoryItem label="Postres" icon="ice-cream" color="#E3F2FD" iconColor="#2196F3" />
-                        <CategoryItem label="Bebidas" icon="wine" color="#F3E5F5" iconColor="#9C27B0" />
-                        <CategoryItem label="Envíos" icon="bicycle" color="#FAFAFA" iconColor="#666" />
+                        <CategoryItem label="Hamburguesas" icon="fast-food" />
+                        <CategoryItem label="Pizza" icon="pizza" />
+                        <CategoryItem label="Asiática" icon="restaurant" />
+                        <CategoryItem label="Postres" icon="ice-cream" />
+                        <CategoryItem label="Bebidas" icon="wine" />
+                        <CategoryItem label="Envíos" icon="bicycle" />
                     </ScrollView>
                 </View>
             )}
@@ -367,7 +352,7 @@ export default function HomeScreen() {
                     <View style={styles.sectionHeader}>
                         <Text style={styles.sectionTitle}>Favoritos cerca de ti</Text>
                         <TouchableOpacity>
-                            <IconSymbol name="chevron.right" size={20} color="#000" />
+                             <IconSymbol name="arrow.right" size={20} color="#000" />
                         </TouchableOpacity>
                     </View>
                     {loadingRestaurants ? (
@@ -407,11 +392,11 @@ export default function HomeScreen() {
   );
 }
 
-function CategoryItem({ label, icon, color, iconColor }: { label: string, icon: any, color: string, iconColor: string }) {
+function CategoryItem({ label, icon }: { label: string, icon: any }) {
     return (
         <TouchableOpacity style={styles.categoryItem}>
-            <View style={[styles.categoryIconContainer, { backgroundColor: color }]}>
-                <IconSymbol name={icon} size={28} color={iconColor} />
+            <View style={styles.categoryIconContainer}>
+                <IconSymbol name={icon} size={30} color="#000" />
             </View>
             <Text style={styles.categoryText}>{label}</Text>
         </TouchableOpacity>
@@ -443,24 +428,29 @@ function HorizontalRestaurantCard({ restaurant }: { restaurant: Restaurant }) {
             activeOpacity={0.9}
             onPress={() => router.push(`/restaurant/${restaurant.id}`)}
         >
-            <Image
-                source={{ uri: restaurant.image_url }}
-                style={styles.cardImageHorizontal}
-                contentFit="cover"
-                transition={200}
-            />
-            <View style={styles.favoriteButton}>
-                <Ionicons name="heart-outline" size={20} color="#fff" />
-            </View>
-            <View style={styles.cardContentHorizontal}>
-                <View style={styles.rowBetween}>
-                    <Text style={styles.cardTitle} numberOfLines={1}>{restaurant.name}</Text>
-                    <View style={styles.ratingBadge}>
-                        <Text style={styles.ratingText}>{restaurant.rating}</Text>
-                    </View>
+            <View style={styles.imageContainerHorizontal}>
+                <Image
+                    source={{ uri: restaurant.image_url }}
+                    style={styles.cardImageHorizontal}
+                    contentFit="cover"
+                    transition={200}
+                />
+                <View style={styles.heartButton}>
+                    <Ionicons name="heart-outline" size={20} color="#fff" />
                 </View>
-                <Text style={styles.cardSubtitle} numberOfLines={1}>$ • {restaurant.cuisine_type}</Text>
-                <Text style={styles.deliveryText}>15-25 min • Envío gratis</Text>
+                <View style={styles.ratingBadgeOverImage}>
+                    <Text style={styles.ratingTextOverImage}>{restaurant.rating}</Text>
+                </View>
+            </View>
+
+            <View style={styles.cardContentHorizontal}>
+                <Text style={styles.cardTitle} numberOfLines={1}>{restaurant.name}</Text>
+                <Text style={styles.cardSubtitle} numberOfLines={1}>
+                    $ • {restaurant.cuisine_type}
+                </Text>
+                <Text style={styles.deliveryText}>
+                    <Ionicons name="time-outline" size={12} color="#666" /> 15-25 min • Envío gratis
+                </Text>
             </View>
         </TouchableOpacity>
     );
@@ -474,21 +464,24 @@ function VerticalRestaurantCard({ restaurant }: { restaurant: Restaurant }) {
             activeOpacity={0.9}
             onPress={() => router.push(`/restaurant/${restaurant.id}`)}
         >
-             <Image
-                source={{ uri: restaurant.image_url }}
-                style={styles.cardImageVertical}
-                contentFit="cover"
-                transition={200}
-            />
-            <View style={styles.favoriteButton}>
-                <Ionicons name="heart-outline" size={20} color="#fff" />
+             <View style={styles.imageContainerVertical}>
+                <Image
+                    source={{ uri: restaurant.image_url }}
+                    style={styles.cardImageVertical}
+                    contentFit="cover"
+                    transition={200}
+                />
+                <View style={styles.heartButton}>
+                    <Ionicons name="heart-outline" size={20} color="#fff" />
+                </View>
+                 <View style={styles.ratingBadgeOverImage}>
+                    <Text style={styles.ratingTextOverImage}>{restaurant.rating}</Text>
+                </View>
             </View>
+
             <View style={styles.cardContentVertical}>
-                 <View style={styles.rowBetween}>
+                <View style={styles.rowBetween}>
                     <Text style={styles.cardTitleLarge} numberOfLines={1}>{restaurant.name}</Text>
-                    <View style={styles.ratingBadge}>
-                        <Text style={styles.ratingText}>{restaurant.rating}</Text>
-                    </View>
                 </View>
                 <Text style={styles.cardSubtitle} numberOfLines={1}>$$ • {restaurant.cuisine_type} • 1.2 km</Text>
                 <Text style={styles.deliveryText}>20-30 min • $1.49 envío</Text>
@@ -505,79 +498,63 @@ const styles = StyleSheet.create({
   scrollContainer: {
       flex: 1,
   },
-  purpleHeader: {
-      backgroundColor: '#540B48', // Deep Purple
+
+  // Header
+  headerContainer: {
+      backgroundColor: '#fff',
+      paddingBottom: 10,
       paddingHorizontal: 16,
-      paddingBottom: 60, // Increased height significantly
-      // Removed rounded borders as requested
+      borderBottomWidth: 0,
+      // shadowColor: '#000',
+      // shadowOpacity: 0.05,
+      // shadowRadius: 5,
+      // elevation: 2,
+      zIndex: 10,
   },
-  headerBannerContent: {
-      marginTop: 10,
-      marginBottom: 10,
-  },
-  headerTitle: {
-      fontSize: 28,
-      fontWeight: 'bold',
-      color: '#fff',
-      marginBottom: 4,
-  },
-  headerSubtitle: {
-      fontSize: 16,
-      color: 'rgba(255,255,255,0.8)',
-  },
-  centerContent: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  topBar: {
+  headerTopRow: {
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
-      marginBottom: 10, // Less bottom margin as promo follows
+      marginBottom: 12,
   },
-  rightHeader: {
+  addressWrapper: {
+      flex: 1,
+  },
+  deliveryLabel: {
+      fontSize: 12,
+      color: '#666',
+      fontWeight: '600',
+      textTransform: 'uppercase',
+      letterSpacing: 0.5,
+      marginBottom: 2,
+  },
+  addressRow: {
       flexDirection: 'row',
       alignItems: 'center',
-      marginLeft: 10, // Space between search and icons
   },
-  pointsPill: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      backgroundColor: 'rgba(255,255,255,0.2)',
-      paddingHorizontal: 10,
-      borderRadius: 12, // Match search bar radius
-      marginRight: 10,
-      height: 40, // Match search bar height
+  addressText: {
+      fontSize: 18,
+      fontWeight: 'bold',
+      color: '#000',
   },
   profileButton: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      padding: 0,
-      height: 40, // Match search bar height
-      width: 40, // Square/Circular aspect
-      justifyContent: 'center',
-  },
-  pointsText: {
-      fontSize: 13,
-      fontWeight: '600',
-      color: '#fff',
-      marginRight: 4,
+      padding: 4,
   },
 
-  // Inline Search Bar (In Header)
-  searchContainerInline: {
-    flex: 1, // Take available space
+  // Search
+  searchWrapper: {
+      width: '100%',
+  },
+  searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
-    borderRadius: 12, // Less circular, more squared-rounded
-    paddingHorizontal: 12,
-    height: 40, // Fixed height for alignment
-    // shadowColor: '#000', // Removed shadow for flat look in header
+    backgroundColor: '#F3F3F3', // Light gray background
+    borderRadius: 25, // Pill shape
+    paddingHorizontal: 16,
+    height: 50,
   },
   searchIcon: {
-      marginRight: 8,
+      marginRight: 10,
   },
   searchInput: {
       flex: 1,
@@ -588,23 +565,22 @@ const styles = StyleSheet.create({
 
   // Categories
   categoryContainer: {
-      marginBottom: 24, // Increased spacing below categories
-      marginTop: 20, // Increased spacing above categories
+      marginVertical: 20,
   },
   categoryContent: {
-      paddingRight: 20,
-      paddingLeft: 20, // Increased horizontal padding
-      gap: 10, // Added gap between items if supported (React Native 0.71+) or use marginRight
+      paddingHorizontal: 16,
+      paddingRight: 16,
   },
   categoryItem: {
       alignItems: 'center',
-      marginRight: 20,
-      width: 60,
+      marginRight: 24,
+      width: 70,
   },
   categoryIconContainer: {
-      width: 56,
-      height: 56,
-      borderRadius: 28,
+      width: 60,
+      height: 60,
+      borderRadius: 8, // Square with rounded corners or just remove bg
+      // backgroundColor: '#F3F3F3', // Optional: very subtle background
       justifyContent: 'center',
       alignItems: 'center',
       marginBottom: 8,
@@ -612,108 +588,112 @@ const styles = StyleSheet.create({
   categoryText: {
       fontSize: 12,
       fontWeight: '600',
-      color: '#333',
+      color: '#000',
       textAlign: 'center',
   },
 
-  // Promo Banner (Styled to match Image)
+  // Promo Banner
+  promoPadding: {
+      paddingHorizontal: 16,
+      marginBottom: 20,
+  },
   promoContainer: {
       flexDirection: 'row',
-      // backgroundColor removed, inherits purple
-      paddingVertical: 10,
-      marginBottom: 20,
+      backgroundColor: '#111', // Black background for contrast
+      borderRadius: 12,
+      padding: 16,
       height: 140,
       position: 'relative',
+      overflow: 'hidden',
   },
   promoContent: {
       flex: 1,
       zIndex: 2,
       justifyContent: 'center',
-      paddingRight: 20,
+      paddingRight: 10,
   },
   promoTitle: {
       color: '#fff',
-      fontSize: 22, // Larger
+      fontSize: 20,
       fontWeight: 'bold',
       marginBottom: 4,
   },
   promoText: {
-      color: '#fff', // White
-      fontSize: 14,
+      color: '#ccc',
+      fontSize: 13,
       marginBottom: 16,
-      opacity: 0.9,
   },
   promoButton: {
-      backgroundColor: '#000', // Black button
-      paddingHorizontal: 16,
+      backgroundColor: '#fff',
+      paddingHorizontal: 14,
       paddingVertical: 8,
       borderRadius: 20,
       alignSelf: 'flex-start',
   },
   promoButtonText: {
-      color: '#fff', // White text
-      fontSize: 14,
+      color: '#000',
+      fontSize: 13,
       fontWeight: 'bold',
   },
   promoImage: {
       width: 120,
       height: 120,
-      // Position it nicely
-  },
-
-  welcomeText: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 10,
+      position: 'absolute',
+      right: -20,
+      bottom: -20,
+      transform: [{ rotate: '-10deg' }],
   },
 
   // Sections
   sectionContainer: {
-      marginBottom: 24,
+      marginBottom: 30,
       paddingHorizontal: 16,
   },
   sectionHeader: {
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
-      marginBottom: 12,
+      marginBottom: 16,
   },
   sectionTitle: {
-      fontSize: 20,
-      fontWeight: 'bold',
+      fontSize: 20, // Clean bold title
+      fontWeight: '700',
       color: '#000',
-      marginBottom: 12,
   },
   carouselContent: {
-      paddingRight: 10,
+      paddingRight: 16,
   },
   verticalList: {
       // paddingHorizontal: 16,
   },
 
-  // Dish Card (Search Result)
+  // Dish Card
   dishCard: {
       flexDirection: 'row',
       alignItems: 'center',
       marginBottom: 16,
       backgroundColor: '#fff',
+      borderBottomWidth: 1,
+      borderBottomColor: '#f0f0f0',
+      paddingBottom: 16,
   },
   dishImage: {
-      width: 60,
-      height: 60,
+      width: 80,
+      height: 80,
       borderRadius: 8,
-      marginRight: 12,
+      marginRight: 16,
       backgroundColor: '#f0f0f0',
   },
   dishName: {
       fontSize: 16,
       fontWeight: 'bold',
       color: '#000',
+      marginBottom: 4,
   },
   dishRestName: {
       fontSize: 12,
       color: '#666',
-      marginBottom: 2,
+      marginBottom: 4,
   },
   dishPrice: {
       fontSize: 14,
@@ -721,110 +701,96 @@ const styles = StyleSheet.create({
       color: '#333',
   },
 
-  // Horizontal Card Styles
+  // Horizontal Card
   cardHorizontal: {
-      width: 280, // Slightly wider
-      marginRight: 16, // Increased spacing
+      width: 260,
+      marginRight: 16,
       backgroundColor: '#fff',
-      borderRadius: 12,
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.1,
-      shadowRadius: 4,
-      elevation: 3, // Android shadow
-      paddingBottom: 12, // Space for content
-      marginBottom: 4, // Space for shadow
+      // No shadow/elevation for cleaner look
+      marginBottom: 4,
+  },
+  imageContainerHorizontal: {
+      position: 'relative',
+      marginBottom: 10,
   },
   cardImageHorizontal: {
       width: '100%',
-      height: 160, // Taller image
-      borderTopLeftRadius: 12,
-      borderTopRightRadius: 12,
-      borderBottomLeftRadius: 0,
-      borderBottomRightRadius: 0,
-      marginBottom: 8,
+      height: 150,
+      borderRadius: 12, // Rounded corners
       backgroundColor: '#f0f0f0',
   },
   cardContentHorizontal: {
-      paddingHorizontal: 12, // Added padding inside card
+      paddingHorizontal: 0,
   },
 
-  // Vertical Card Styles
+  // Vertical Card
   cardVertical: {
       width: '100%',
-      marginBottom: 24,
+      marginBottom: 30,
       backgroundColor: '#fff',
-      borderRadius: 16,
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.1,
-      shadowRadius: 8,
-      elevation: 4, // Android shadow
-      overflow: 'visible', // Allow shadow
+  },
+  imageContainerVertical: {
+      position: 'relative',
+      marginBottom: 12,
   },
   cardImageVertical: {
       width: '100%',
-      height: 220, // Even larger image for impact
-      borderTopLeftRadius: 16,
-      borderTopRightRadius: 16,
-      borderBottomLeftRadius: 0,
-      borderBottomRightRadius: 0,
-      marginBottom: 0, // No margin, content follows directly
+      height: 200,
+      borderRadius: 12,
       backgroundColor: '#f0f0f0',
   },
   cardContentVertical: {
-      paddingHorizontal: 16,
-      paddingVertical: 16,
+      paddingHorizontal: 0,
   },
 
-  // Shared Card Elements
+  // Shared
   rowBetween: {
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
-      marginBottom: 6,
+      marginBottom: 4,
   },
   cardTitle: {
-      fontSize: 16,
-      fontWeight: '700', // Stronger font weight
-      color: '#1a1a1a', // Softer black
-      flex: 1,
+      fontSize: 15,
+      fontWeight: '700',
+      color: '#000',
+      marginBottom: 2,
   },
   cardTitleLarge: {
-      fontSize: 20, // Larger title
+      fontSize: 18,
       fontWeight: '700',
-      color: '#1a1a1a',
-      flex: 1,
-  },
-  ratingBadge: {
-      backgroundColor: '#f2f2f2',
-      borderRadius: 12,
-      paddingHorizontal: 8,
-      paddingVertical: 4,
-      minWidth: 28,
-      alignItems: 'center',
-  },
-  ratingText: {
-      fontSize: 12,
-      fontWeight: '600',
       color: '#000',
+      flex: 1,
   },
   cardSubtitle: {
       fontSize: 14,
       color: '#666',
-      marginBottom: 2,
+      marginBottom: 4,
   },
   deliveryText: {
       fontSize: 12,
       color: '#666',
   },
-  favoriteButton: {
+  heartButton: {
       position: 'absolute',
       top: 10,
       right: 10,
-      backgroundColor: 'rgba(0,0,0,0.4)', // Slightly darker
+      backgroundColor: 'rgba(0,0,0,0.3)',
       borderRadius: 20,
       padding: 6,
-      zIndex: 1,
+  },
+  ratingBadgeOverImage: {
+      position: 'absolute',
+      bottom: 10,
+      right: 10,
+      backgroundColor: 'rgba(255,255,255,0.9)',
+      borderRadius: 12,
+      paddingHorizontal: 8,
+      paddingVertical: 4,
+  },
+  ratingTextOverImage: {
+      fontSize: 12,
+      fontWeight: 'bold',
+      color: '#000',
   },
 });

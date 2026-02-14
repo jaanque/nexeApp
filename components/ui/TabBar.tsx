@@ -8,11 +8,13 @@ import * as Haptics from 'expo-haptics';
 export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
   const colorScheme = useColorScheme();
+
+  // Postmates style: Black for active, Gray for inactive
   const activeColor = '#000000';
-  const inactiveColor = Colors[colorScheme ?? 'light'].tabIconDefault;
+  const inactiveColor = '#999999';
 
   return (
-    <View style={[styles.tabBar, { paddingBottom: insets.bottom + 10 }]}>
+    <View style={[styles.tabBar, { paddingBottom: insets.bottom + 5 }]}>
       {state.routes.map((route, index) => {
         const { options } = descriptors[route.key];
         const label =
@@ -47,9 +49,6 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
           });
         };
 
-        // Determine if this is the "explore" tab which should be pill-shaped
-        const isExplore = route.name === 'explore';
-
         return (
           <Pressable
             key={route.key}
@@ -59,34 +58,21 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
             testID={options.tabBarTestID}
             onPress={onPress}
             onLongPress={onLongPress}
-            style={[
-              styles.tabItem,
-              isExplore ? styles.tabItemExplore : styles.tabItemCircle,
-              {
-                backgroundColor: 'white',
-                shadowColor: '#000',
-                shadowOffset: { width: 0, height: 2 },
-                shadowOpacity: 0.15,
-                shadowRadius: 4,
-                elevation: 5,
-              }
-            ]}
+            style={styles.tabItem}
           >
             {options.tabBarIcon?.({
                 focused: isFocused,
                 color: isFocused ? activeColor : inactiveColor,
-                size: 22,
+                size: 24, // Slightly larger standard icon
             })}
-            {isExplore && (
-                <Text style={{
-                    color: isFocused ? activeColor : inactiveColor,
-                    marginLeft: 8,
-                    fontWeight: '600',
-                    fontSize: 14
-                }}>
-                  {typeof label === 'string' ? label : 'Explorar'}
-                </Text>
-            )}
+            <Text style={{
+                color: isFocused ? activeColor : inactiveColor,
+                fontSize: 10,
+                fontWeight: isFocused ? '600' : '500',
+                marginTop: 4,
+            }}>
+              {typeof label === 'string' ? label : ''}
+            </Text>
           </Pressable>
         );
       })}
@@ -98,26 +84,23 @@ const styles = StyleSheet.create({
   tabBar: {
     position: 'absolute',
     bottom: 0,
+    left: 0,
+    right: 0,
     flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    width: '100%',
-    backgroundColor: 'transparent',
-    gap: 10, // Decreased gap
+    backgroundColor: '#fff',
+    borderTopColor: '#eee',
+    borderTopWidth: 1,
+    paddingTop: 10,
+    // Shadow for depth (optional, keep it subtle)
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 5,
   },
   tabItem: {
-    justifyContent: 'center',
+    flex: 1,
     alignItems: 'center',
-  },
-  tabItemCircle: {
-    width: 50, // Smaller size
-    height: 50,
-    borderRadius: 25,
-  },
-  tabItemExplore: {
-    height: 50, // Smaller size
-    paddingHorizontal: 20,
-    borderRadius: 25,
-    flexDirection: 'row',
+    justifyContent: 'center',
   },
 });
