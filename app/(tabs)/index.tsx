@@ -36,6 +36,13 @@ interface MenuItemResult {
     };
 }
 
+const CATEGORIES = [
+  { id: 'Restauración', label: 'Restauración', icon: 'restaurant-outline' },
+  { id: 'Moda', label: 'Moda', icon: 'shirt-outline' },
+  { id: 'Servicios', label: 'Servicios', icon: 'briefcase-outline' },
+  { id: 'Ocio', label: 'Ocio', icon: 'ticket-outline' },
+];
+
 export default function HomeScreen() {
   const [session, setSession] = useState<Session | null>(null);
   const [points, setPoints] = useState<number>(0);
@@ -249,15 +256,23 @@ export default function HomeScreen() {
           <View style={styles.heroContainer}>
             <View style={styles.heroCard}>
                 <View style={styles.heroLeft}>
-                    <Text style={styles.heroPoints}>{points.toLocaleString()}</Text>
-                    <Text style={styles.heroLabel}>Puntos Nexe disponibles</Text>
+                    <View style={{flexDirection: 'row', alignItems: 'flex-end'}}>
+                        <Text style={styles.heroPoints}>{points.toLocaleString()}</Text>
+                        <Text style={styles.heroPointsSuffix}> pts</Text>
+                    </View>
+                    <View style={styles.heroLabelContainer}>
+                        <Ionicons name="wallet-outline" size={14} color="#6E7278" style={{ marginRight: 4 }} />
+                        <Text style={styles.heroLabel}>Saldo disponible</Text>
+                    </View>
                 </View>
                 <TouchableOpacity
                     style={styles.heroButton}
                     activeOpacity={0.8}
                     onPress={() => handlePress(() => router.push('/scan'))}
                 >
-                    <IconSymbol name="qrcode.viewfinder" size={20} color="#fff" style={{marginRight: 6}} />
+                    <View style={styles.scanIconContainer}>
+                         <Ionicons name="qr-code-outline" size={20} color="#fff" />
+                    </View>
                     <Text style={styles.heroButtonText}>Escanear</Text>
                 </TouchableOpacity>
             </View>
@@ -283,13 +298,19 @@ export default function HomeScreen() {
 
               {!isSearching && (
                   <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterScroll} contentContainerStyle={styles.filterContent}>
-                      {["Restauración", "Moda", "Servicios", "Ocio"].map((cat) => (
+                      {CATEGORIES.map((cat) => (
                           <TouchableOpacity
-                            key={cat}
-                            style={[styles.filterPill, activeCategory === cat && styles.filterPillActive]}
-                            onPress={() => setActiveCategory(activeCategory === cat ? null : cat)}
+                            key={cat.id}
+                            style={[styles.filterPill, activeCategory === cat.id && styles.filterPillActive]}
+                            onPress={() => setActiveCategory(activeCategory === cat.id ? null : cat.id)}
                           >
-                              <Text style={[styles.filterText, activeCategory === cat && styles.filterTextActive]}>{cat}</Text>
+                              <Ionicons
+                                name={cat.icon as any}
+                                size={16}
+                                color={activeCategory === cat.id ? "#FFFFFF" : "#121212"}
+                                style={{marginRight: 6}}
+                              />
+                              <Text style={[styles.filterText, activeCategory === cat.id && styles.filterTextActive]}>{cat.label}</Text>
                           </TouchableOpacity>
                       ))}
                   </ScrollView>
@@ -533,22 +554,45 @@ const styles = StyleSheet.create({
   },
   heroPoints: {
       fontSize: 32,
-      fontWeight: 'bold',
+      fontWeight: '800',
       color: '#121212',
       letterSpacing: -1,
+      lineHeight: 34,
+  },
+  heroPointsSuffix: {
+      fontSize: 18,
+      fontWeight: '600',
+      color: '#121212',
+      marginBottom: 4,
+  },
+  heroLabelContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginTop: 4,
   },
   heroLabel: {
       fontSize: 14,
       color: '#6E7278',
-      marginTop: 4,
+      fontWeight: '500',
   },
   heroButton: {
-      backgroundColor: '#000000',
+      backgroundColor: '#121212', // Ink Black
       flexDirection: 'row',
       alignItems: 'center',
-      paddingHorizontal: 16,
-      paddingVertical: 12,
+      paddingRight: 20,
+      paddingLeft: 6,
+      paddingVertical: 6,
+      borderRadius: 24, // Full pill for button inside card
+      height: 48,
+  },
+  scanIconContainer: {
+      width: 36,
+      height: 36,
       borderRadius: 18,
+      backgroundColor: 'rgba(255,255,255,0.2)',
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginRight: 10,
   },
   heroButtonText: {
       color: '#FFFFFF',
@@ -582,19 +626,21 @@ const styles = StyleSheet.create({
       paddingRight: 20,
   },
   filterPill: {
-      paddingHorizontal: 20,
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: 16,
       paddingVertical: 10,
       borderRadius: 20,
       backgroundColor: '#F5F6F8',
       marginRight: 10,
   },
   filterPillActive: {
-      backgroundColor: '#000000',
+      backgroundColor: '#121212',
   },
   filterText: {
       fontSize: 14,
       color: '#121212',
-      fontWeight: '500',
+      fontWeight: '600',
   },
   filterTextActive: {
       color: '#FFFFFF',
