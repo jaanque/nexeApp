@@ -40,6 +40,9 @@ const MAPPING = {
   'gift-outline': 'gift-outline',
   'color-wand-outline': 'color-wand-outline',
   'map-outline': 'map-outline',
+  'list.bullet': 'list',
+  'person.circle': 'person-circle-outline',
+  'arrow.right': 'arrow-forward',
 } as IconMapping;
 
 /**

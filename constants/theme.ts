@@ -5,17 +5,20 @@
 
 import { Platform } from 'react-native';
 
-const tintColorLight = '#0a7ea4';
+const tintColorLight = '#007AFF'; // Nexe Blue/Accent
 const tintColorDark = '#fff';
 
 export const Colors = {
   light: {
-    text: '#11181C',
-    background: '#fff',
+    text: '#121212', // Ink Black
+    textSecondary: '#6E7278', // Stone Gray
+    background: '#FFFFFF', // Pure White
+    surface: '#F5F6F8', // Smoke Gray
     tint: tintColorLight,
-    icon: '#687076',
-    tabIconDefault: '#687076',
-    tabIconSelected: tintColorLight,
+    icon: '#6E7278', // Stone Gray
+    tabIconDefault: '#6E7278',
+    tabIconSelected: '#000000', // Active Tab Black
+    border: '#F0F0F0',
   },
   dark: {
     text: '#ECEDEE',

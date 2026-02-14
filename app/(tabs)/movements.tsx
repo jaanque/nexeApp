@@ -264,7 +264,7 @@ function ActionButton({ icon, label, color, iconColor }: { icon: any, label: str
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#FFFFFF',
   },
   scrollContent: {
     paddingBottom: 40,
