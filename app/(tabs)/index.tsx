@@ -7,6 +7,8 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import * as Haptics from 'expo-haptics';
+import { StatusBar } from 'expo-status-bar';
 
 // Interface matching the database schema
 interface Restaurant {
@@ -73,6 +75,13 @@ export default function HomeScreen() {
 
     fetchPopularRestaurants();
   }, []);
+
+  function handlePress(action: () => void) {
+      if (process.env.EXPO_OS === 'ios') {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      }
+      action();
+  }
 
   async function handleSearch(query: string) {
       setSearchQuery(query);
@@ -160,6 +169,10 @@ export default function HomeScreen() {
   async function handleClaimWelcome() {
     if (!session?.user || claiming) return;
 
+    if (process.env.EXPO_OS === 'ios') {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    }
+
     try {
         setClaiming(true);
         const userId = session.user.id;
@@ -228,29 +241,38 @@ export default function HomeScreen() {
 
   return (
     <View style={styles.container}>
+      <StatusBar style="light" />
       <ScrollView
         style={styles.scrollContainer}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 100 }}
-        stickyHeaderIndices={[0]} // Optional: Make header sticky if preferred, but let's stick to standard flow first. Actually, standard Postmates has sticky search. Let's not complicate sticky indices yet.
       >
-          {/* New Clean Header */}
+          {/* Header */}
           <View style={[styles.headerContainer, { paddingTop: insets.top + 10 }]}>
             <View style={styles.headerTopRow}>
-                <View style={styles.addressWrapper}>
-                    <Text style={styles.deliveryLabel}>Entregar en</Text>
-                    <View style={styles.addressRow}>
-                        <Text style={styles.addressText}>Casa</Text>
-                        <IconSymbol name="chevron.down" size={14} color="#000" style={{marginLeft: 4, marginTop: 2}} />
-                    </View>
-                </View>
+                {/* Modern Title */}
+                <Text style={styles.modernTitle}>
+                    {session?.user ? 'Hola viajero' : 'Descubre'}
+                </Text>
 
-                <TouchableOpacity
-                    onPress={() => session?.user ? router.push('/profile') : router.push('/login')}
-                    style={styles.profileButton}
-                >
-                    <IconSymbol name="person.circle" size={32} color="#000" />
-                </TouchableOpacity>
+                <View style={styles.rightHeader}>
+                    {/* Points Pill */}
+                    <TouchableOpacity
+                        onPress={() => handlePress(() => session?.user ? router.push('/wallet') : router.push('/login'))}
+                        style={styles.pointsPill}
+                    >
+                        <Text style={styles.pointsText}>{points} pts</Text>
+                        <IconSymbol size={16} name="star.fill" color="#FFD700" />
+                    </TouchableOpacity>
+
+                    {/* Profile Button */}
+                    <TouchableOpacity
+                        onPress={() => handlePress(() => session?.user ? router.push('/profile') : router.push('/login'))}
+                        style={styles.profileButton}
+                    >
+                        <IconSymbol name="person.circle" size={32} color="#fff" />
+                    </TouchableOpacity>
+                </View>
             </View>
 
             <View style={styles.searchWrapper}>
@@ -264,7 +286,7 @@ export default function HomeScreen() {
                         onChangeText={handleSearch}
                     />
                     {isSearching && (
-                        <TouchableOpacity onPress={() => handleSearch("")}>
+                        <TouchableOpacity onPress={() => handlePress(() => handleSearch(""))}>
                             <Ionicons name="close-circle" size={18} color="#666" />
                         </TouchableOpacity>
                     )}
@@ -272,7 +294,7 @@ export default function HomeScreen() {
             </View>
           </View>
 
-          {/* Welcome Gift Banner (Styled as dark card) */}
+          {/* Welcome Gift Banner */}
              {!isSearching && !checkingClaim && !hasClaimedWelcome && session?.user && (
                  <View style={styles.promoPadding}>
                     <View style={styles.promoContainer}>
@@ -351,7 +373,7 @@ export default function HomeScreen() {
                 <View style={styles.sectionContainer}>
                     <View style={styles.sectionHeader}>
                         <Text style={styles.sectionTitle}>Favoritos cerca de ti</Text>
-                        <TouchableOpacity>
+                        <TouchableOpacity onPress={() => handlePress(() => {})}>
                              <IconSymbol name="arrow.right" size={20} color="#000" />
                         </TouchableOpacity>
                     </View>
@@ -394,7 +416,14 @@ export default function HomeScreen() {
 
 function CategoryItem({ label, icon }: { label: string, icon: any }) {
     return (
-        <TouchableOpacity style={styles.categoryItem}>
+        <TouchableOpacity
+            style={styles.categoryItem}
+            onPress={() => {
+                if (process.env.EXPO_OS === 'ios') {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                }
+            }}
+        >
             <View style={styles.categoryIconContainer}>
                 <IconSymbol name={icon} size={30} color="#000" />
             </View>
@@ -408,7 +437,12 @@ function DishResultCard({ item }: { item: MenuItemResult }) {
     return (
         <TouchableOpacity
             style={styles.dishCard}
-            onPress={() => router.push(`/restaurant/${item.restaurant_id}`)}
+            onPress={() => {
+                if (process.env.EXPO_OS === 'ios') {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                }
+                router.push(`/restaurant/${item.restaurant_id}`);
+            }}
         >
             <Image source={{ uri: item.image_url }} style={styles.dishImage} contentFit="cover" />
             <View style={{flex: 1}}>
@@ -426,7 +460,12 @@ function HorizontalRestaurantCard({ restaurant }: { restaurant: Restaurant }) {
         <TouchableOpacity
             style={styles.cardHorizontal}
             activeOpacity={0.9}
-            onPress={() => router.push(`/restaurant/${restaurant.id}`)}
+            onPress={() => {
+                if (process.env.EXPO_OS === 'ios') {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                }
+                router.push(`/restaurant/${restaurant.id}`);
+            }}
         >
             <View style={styles.imageContainerHorizontal}>
                 <Image
@@ -462,7 +501,12 @@ function VerticalRestaurantCard({ restaurant }: { restaurant: Restaurant }) {
         <TouchableOpacity
             style={styles.cardVertical}
             activeOpacity={0.9}
-            onPress={() => router.push(`/restaurant/${restaurant.id}`)}
+            onPress={() => {
+                if (process.env.EXPO_OS === 'ios') {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                }
+                router.push(`/restaurant/${restaurant.id}`);
+            }}
         >
              <View style={styles.imageContainerVertical}>
                 <Image
@@ -501,44 +545,45 @@ const styles = StyleSheet.create({
 
   // Header
   headerContainer: {
-      backgroundColor: '#fff',
-      paddingBottom: 10,
+      backgroundColor: '#000',
+      paddingBottom: 20,
       paddingHorizontal: 16,
       borderBottomWidth: 0,
-      // shadowColor: '#000',
-      // shadowOpacity: 0.05,
-      // shadowRadius: 5,
-      // elevation: 2,
       zIndex: 10,
   },
   headerTopRow: {
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
-      marginBottom: 12,
+      marginBottom: 20,
   },
-  addressWrapper: {
-      flex: 1,
+  modernTitle: {
+      fontSize: 28,
+      fontWeight: 'bold',
+      color: '#fff',
+      letterSpacing: -0.5,
   },
-  deliveryLabel: {
-      fontSize: 12,
-      color: '#666',
-      fontWeight: '600',
-      textTransform: 'uppercase',
-      letterSpacing: 0.5,
-      marginBottom: 2,
-  },
-  addressRow: {
+  rightHeader: {
       flexDirection: 'row',
       alignItems: 'center',
   },
-  addressText: {
-      fontSize: 18,
-      fontWeight: 'bold',
-      color: '#000',
+  pointsPill: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: 'rgba(255,255,255,0.2)',
+      paddingHorizontal: 10,
+      paddingVertical: 6,
+      borderRadius: 20,
+      marginRight: 10,
+  },
+  pointsText: {
+      color: '#fff',
+      fontWeight: '600',
+      fontSize: 13,
+      marginRight: 4,
   },
   profileButton: {
-      padding: 4,
+      padding: 0,
   },
 
   // Search
@@ -548,8 +593,8 @@ const styles = StyleSheet.create({
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F3F3F3', // Light gray background
-    borderRadius: 25, // Pill shape
+    backgroundColor: '#fff', // White search bar on black banner
+    borderRadius: 30, // Full pill shape
     paddingHorizontal: 16,
     height: 50,
   },
@@ -565,7 +610,7 @@ const styles = StyleSheet.create({
 
   // Categories
   categoryContainer: {
-      marginVertical: 20,
+      marginVertical: 24,
   },
   categoryContent: {
       paddingHorizontal: 16,
@@ -579,8 +624,7 @@ const styles = StyleSheet.create({
   categoryIconContainer: {
       width: 60,
       height: 60,
-      borderRadius: 8, // Square with rounded corners or just remove bg
-      // backgroundColor: '#F3F3F3', // Optional: very subtle background
+      // Removed background as per clean aesthetic
       justifyContent: 'center',
       alignItems: 'center',
       marginBottom: 8,
@@ -600,9 +644,9 @@ const styles = StyleSheet.create({
   promoContainer: {
       flexDirection: 'row',
       backgroundColor: '#111', // Black background for contrast
-      borderRadius: 12,
-      padding: 16,
-      height: 140,
+      borderRadius: 16,
+      padding: 20,
+      height: 150,
       position: 'relative',
       overflow: 'hidden',
   },
@@ -614,20 +658,20 @@ const styles = StyleSheet.create({
   },
   promoTitle: {
       color: '#fff',
-      fontSize: 20,
+      fontSize: 22,
       fontWeight: 'bold',
-      marginBottom: 4,
+      marginBottom: 6,
   },
   promoText: {
       color: '#ccc',
-      fontSize: 13,
+      fontSize: 14,
       marginBottom: 16,
   },
   promoButton: {
       backgroundColor: '#fff',
-      paddingHorizontal: 14,
-      paddingVertical: 8,
-      borderRadius: 20,
+      paddingHorizontal: 16,
+      paddingVertical: 10,
+      borderRadius: 24,
       alignSelf: 'flex-start',
   },
   promoButtonText: {
@@ -636,17 +680,17 @@ const styles = StyleSheet.create({
       fontWeight: 'bold',
   },
   promoImage: {
-      width: 120,
-      height: 120,
+      width: 140,
+      height: 140,
       position: 'absolute',
-      right: -20,
-      bottom: -20,
+      right: -30,
+      bottom: -30,
       transform: [{ rotate: '-10deg' }],
   },
 
   // Sections
   sectionContainer: {
-      marginBottom: 30,
+      marginBottom: 32,
       paddingHorizontal: 16,
   },
   sectionHeader: {
@@ -656,9 +700,10 @@ const styles = StyleSheet.create({
       marginBottom: 16,
   },
   sectionTitle: {
-      fontSize: 20, // Clean bold title
+      fontSize: 22, // Clean bold title
       fontWeight: '700',
       color: '#000',
+      letterSpacing: -0.5,
   },
   carouselContent: {
       paddingRight: 16,
@@ -703,20 +748,19 @@ const styles = StyleSheet.create({
 
   // Horizontal Card
   cardHorizontal: {
-      width: 260,
+      width: 280, // Slightly wider
       marginRight: 16,
       backgroundColor: '#fff',
-      // No shadow/elevation for cleaner look
       marginBottom: 4,
   },
   imageContainerHorizontal: {
       position: 'relative',
-      marginBottom: 10,
+      marginBottom: 12,
   },
   cardImageHorizontal: {
       width: '100%',
-      height: 150,
-      borderRadius: 12, // Rounded corners
+      height: 180, // Taller
+      borderRadius: 16, // More rounded
       backgroundColor: '#f0f0f0',
   },
   cardContentHorizontal: {
@@ -726,17 +770,17 @@ const styles = StyleSheet.create({
   // Vertical Card
   cardVertical: {
       width: '100%',
-      marginBottom: 30,
+      marginBottom: 32,
       backgroundColor: '#fff',
   },
   imageContainerVertical: {
       position: 'relative',
-      marginBottom: 12,
+      marginBottom: 16,
   },
   cardImageVertical: {
       width: '100%',
-      height: 200,
-      borderRadius: 12,
+      height: 220,
+      borderRadius: 16,
       backgroundColor: '#f0f0f0',
   },
   cardContentVertical: {
@@ -751,13 +795,13 @@ const styles = StyleSheet.create({
       marginBottom: 4,
   },
   cardTitle: {
-      fontSize: 15,
+      fontSize: 16,
       fontWeight: '700',
       color: '#000',
-      marginBottom: 2,
+      marginBottom: 4,
   },
   cardTitleLarge: {
-      fontSize: 18,
+      fontSize: 20,
       fontWeight: '700',
       color: '#000',
       flex: 1,
@@ -765,32 +809,32 @@ const styles = StyleSheet.create({
   cardSubtitle: {
       fontSize: 14,
       color: '#666',
-      marginBottom: 4,
+      marginBottom: 6,
   },
   deliveryText: {
-      fontSize: 12,
+      fontSize: 13,
       color: '#666',
   },
   heartButton: {
       position: 'absolute',
-      top: 10,
-      right: 10,
+      top: 12,
+      right: 12,
       backgroundColor: 'rgba(0,0,0,0.3)',
       borderRadius: 20,
-      padding: 6,
+      padding: 8,
   },
   ratingBadgeOverImage: {
       position: 'absolute',
-      bottom: 10,
-      right: 10,
-      backgroundColor: 'rgba(255,255,255,0.9)',
+      bottom: 12,
+      right: 12,
+      backgroundColor: 'rgba(255,255,255,0.95)',
       borderRadius: 12,
-      paddingHorizontal: 8,
-      paddingVertical: 4,
+      paddingHorizontal: 10,
+      paddingVertical: 6,
   },
   ratingTextOverImage: {
       fontSize: 12,
-      fontWeight: 'bold',
+      fontWeight: '800',
       color: '#000',
   },
 });
