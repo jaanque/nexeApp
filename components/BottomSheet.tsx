@@ -1,21 +1,15 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { StyleSheet, View, Dimensions } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
-  withSpring,
+  withTiming,
+  Easing,
 } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
-
-// Snap points relative to the screen height (from top)
-// 0 is top of screen.
-const SNAP_POINTS = {
-  expanded: SCREEN_HEIGHT * 0.1, // 10% from top
-  half: SCREEN_HEIGHT * 0.55,    // 55% from top
-  collapsed: SCREEN_HEIGHT - 100,// Peeking at bottom
-};
 
 interface BottomSheetProps {
   children: React.ReactNode;
@@ -23,6 +17,23 @@ interface BottomSheetProps {
 }
 
 export default function BottomSheet({ children, header }: BottomSheetProps) {
+  const insets = useSafeAreaInsets();
+
+  // Calculate snap points dynamically based on safe area
+  // 0 is top of screen
+  const SNAP_POINTS = useMemo(() => {
+      const bottomInset = insets.bottom || 20;
+      // Estimate tab bar height ~60 + inset
+      const tabBarHeightEstimate = 60 + bottomInset;
+      const peekHeight = 100; // Amount of sheet visible above tab bar
+
+      return {
+          expanded: SCREEN_HEIGHT * 0.12, // 12% from top (leave room for status bar/header)
+          half: SCREEN_HEIGHT * 0.55,     // 55% from top
+          collapsed: SCREEN_HEIGHT - tabBarHeightEstimate - peekHeight,
+      };
+  }, [insets.bottom]);
+
   const translateY = useSharedValue(SNAP_POINTS.half);
   const context = useSharedValue({ y: 0 });
 
@@ -31,19 +42,27 @@ export default function BottomSheet({ children, header }: BottomSheetProps) {
       context.value = { y: translateY.value };
     })
     .onUpdate((event) => {
-      translateY.value = event.translationY + context.value.y;
+      let newValue = event.translationY + context.value.y;
       // Clamp to top
-      if (translateY.value < SNAP_POINTS.expanded) {
-          translateY.value = SNAP_POINTS.expanded;
+      if (newValue < SNAP_POINTS.expanded) {
+          newValue = SNAP_POINTS.expanded;
       }
+      translateY.value = newValue;
     })
     .onEnd(() => {
-      if (translateY.value < SNAP_POINTS.expanded + 150) {
-        translateY.value = withSpring(SNAP_POINTS.expanded, { damping: 15 });
+      // Logic for snapping
+      // No bounce: use withTiming or overdamped spring
+      const config = {
+          duration: 300,
+          easing: Easing.out(Easing.cubic),
+      };
+
+      if (translateY.value < SNAP_POINTS.expanded + 100) {
+        translateY.value = withTiming(SNAP_POINTS.expanded, config);
       } else if (translateY.value > SNAP_POINTS.half + 100) {
-        translateY.value = withSpring(SNAP_POINTS.collapsed, { damping: 15 });
+        translateY.value = withTiming(SNAP_POINTS.collapsed, config);
       } else {
-        translateY.value = withSpring(SNAP_POINTS.half, { damping: 15 });
+        translateY.value = withTiming(SNAP_POINTS.half, config);
       }
     });
 
@@ -83,7 +102,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 5,
     elevation: 5,
-    zIndex: 100, // Ensure it's on top of map
+    zIndex: 100,
   },
   handleContainer: {
     paddingBottom: 10,
