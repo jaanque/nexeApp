@@ -53,6 +53,7 @@ export default function HomeScreen() {
   const [session, setSession] = useState<Session | null>(null);
   const [points, setPoints] = useState<number>(0);
   const [popularRestaurants, setPopularRestaurants] = useState<Restaurant[]>([]);
+  const [sortedRestaurants, setSortedRestaurants] = useState<Restaurant[]>([]);
   const [rewardItems, setRewardItems] = useState<MenuItemResult[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -98,6 +99,22 @@ export default function HomeScreen() {
       handleSearch(debouncedSearchQuery);
   }, [debouncedSearchQuery]);
 
+  // Effect to sort restaurants when location or list changes
+  useEffect(() => {
+      if (popularRestaurants.length > 0) {
+          if (userLocation) {
+              const sorted = [...popularRestaurants].sort((a, b) => {
+                  const distA = (a.latitude && a.longitude) ? getDistanceInMeters(userLocation.latitude, userLocation.longitude, a.latitude, a.longitude) : Infinity;
+                  const distB = (b.latitude && b.longitude) ? getDistanceInMeters(userLocation.latitude, userLocation.longitude, b.latitude, b.longitude) : Infinity;
+                  return distA - distB;
+              });
+              setSortedRestaurants(sorted);
+          } else {
+              setSortedRestaurants(popularRestaurants);
+          }
+      }
+  }, [popularRestaurants, userLocation]);
+
   async function getUserLocation() {
     try {
       let { status } = await Location.requestForegroundPermissionsAsync();
@@ -113,28 +130,27 @@ export default function HomeScreen() {
     }
   }
 
-  function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number) {
-      if (!lat1 || !lon1 || !lat2 || !lon2) return "200m"; // Default fallback
+  function getDistanceInMeters(lat1: number, lon1: number, lat2: number, lon2: number) {
+      const R = 6371e3; // metres
+      const φ1 = lat1 * Math.PI/180; // φ, λ in radians
+      const φ2 = lat2 * Math.PI/180;
+      const Δφ = (lat2-lat1) * Math.PI/180;
+      const Δλ = (lon2-lon1) * Math.PI/180;
 
-      const R = 6371; // Radius of the earth in km
-      const dLat = deg2rad(lat2 - lat1);
-      const dLon = deg2rad(lon2 - lon1);
-      const a =
-        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-        Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
-        Math.sin(dLon / 2) * Math.sin(dLon / 2)
-        ;
-      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-      const d = R * c; // Distance in km
+      const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+              Math.cos(φ1) * Math.cos(φ2) *
+              Math.sin(Δλ/2) * Math.sin(Δλ/2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
 
-      if (d < 1) {
-          return `${Math.round(d * 1000)}m`;
-      }
-      return `${d.toFixed(1)} km`;
+      return R * c;
   }
 
-  function deg2rad(deg: number) {
-      return deg * (Math.PI / 180);
+  function formatDistance(lat1: number, lon1: number, lat2: number, lon2: number) {
+      const d = getDistanceInMeters(lat1, lon1, lat2, lon2);
+      if (d < 1000) {
+          return `${Math.round(d)}m`;
+      }
+      return `${(d / 1000).toFixed(1)} km`;
   }
 
   function handlePress(action: () => void) {
@@ -144,27 +160,29 @@ export default function HomeScreen() {
       action();
   }
 
-  function handleClearSearch() {
+  function handleCancelSearch() {
       LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
       setSearchQuery("");
       setSearchResultsRestaurants([]);
       setSearchResultsDishes([]);
       setIsSearching(false);
+      setIsFocused(false);
       Keyboard.dismiss();
+  }
+
+  function handleFocus() {
+      if (!isSearching) {
+          LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+          setIsSearching(true);
+      }
+      setIsFocused(true);
   }
 
   async function handleSearch(query: string) {
       if (query.length < 3) {
-          if (isSearching && query.length === 0) {
-             LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-             setIsSearching(false);
-          }
+          setSearchResultsRestaurants([]);
+          setSearchResultsDishes([]);
           return;
-      }
-
-      if (!isSearching) {
-          LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-          setIsSearching(true);
       }
 
       setSearching(true);
@@ -213,9 +231,9 @@ export default function HomeScreen() {
       const { data: restData } = await supabase
         .from('restaurants')
         .select('*')
-        .gte('rating', 4.5)
-        .order('rating', { ascending: false })
-        .limit(10);
+        //.gte('rating', 4.5) // Removed rating filter to show more businesses
+        //.order('rating', { ascending: false })
+        .limit(20);
 
       if (restData) setPopularRestaurants(restData);
 
@@ -265,7 +283,7 @@ export default function HomeScreen() {
           </View>
           <View style={styles.headerRight}>
               <TouchableOpacity style={styles.iconButton} onPress={() => {}}>
-                  <IconSymbol name="bell.fill" size={24} color="#121212" />
+                  <IconSymbol name="bell" size={24} color="#121212" />
                   <View style={styles.notificationDot} />
               </TouchableOpacity>
               <TouchableOpacity style={styles.avatarContainer} onPress={() => router.push('/profile')}>
@@ -278,51 +296,62 @@ export default function HomeScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 100 }}
         keyboardDismissMode="on-drag"
+        scrollEnabled={!isSearching || searchResultsRestaurants.length > 0 || searchResultsDishes.length > 0}
       >
           {/* 2. Hero Card (Wallet) */}
-          <View style={styles.heroContainer}>
-            <View style={styles.heroCard}>
-                <View style={styles.heroLeft}>
-                    <View style={{flexDirection: 'row', alignItems: 'flex-end'}}>
-                        <Text style={styles.heroPoints}>{points.toLocaleString()}</Text>
-                        <Text style={styles.heroPointsSuffix}> pts</Text>
+          {!isSearching && (
+              <View style={styles.heroContainer}>
+                <View style={styles.heroCard}>
+                    <View style={styles.heroLeft}>
+                        <View style={{flexDirection: 'row', alignItems: 'flex-end'}}>
+                            <Text style={styles.heroPoints}>{points.toLocaleString()}</Text>
+                            <Text style={styles.heroPointsSuffix}> pts</Text>
+                        </View>
+                        <View style={styles.heroLabelContainer}>
+                            <Ionicons name="wallet-outline" size={14} color="#6E7278" style={{ marginRight: 4 }} />
+                            <Text style={styles.heroLabel}>Saldo disponible</Text>
+                        </View>
                     </View>
-                    <View style={styles.heroLabelContainer}>
-                        <Ionicons name="wallet-outline" size={14} color="#6E7278" style={{ marginRight: 4 }} />
-                        <Text style={styles.heroLabel}>Saldo disponible</Text>
-                    </View>
+                    <TouchableOpacity
+                        style={styles.heroButton}
+                        activeOpacity={0.8}
+                        onPress={() => handlePress(() => router.push('/scan'))}
+                    >
+                        <Ionicons name="qr-code-outline" size={18} color="#fff" style={{marginRight: 8}} />
+                        <Text style={styles.heroButtonText}>Escanear</Text>
+                    </TouchableOpacity>
                 </View>
-                <TouchableOpacity
-                    style={styles.heroButton}
-                    activeOpacity={0.8}
-                    onPress={() => handlePress(() => router.push('/scan'))}
-                >
-                    <Ionicons name="qr-code-outline" size={18} color="#fff" style={{marginRight: 8}} />
-                    <Text style={styles.heroButtonText}>Escanear</Text>
-                </TouchableOpacity>
-            </View>
-          </View>
+              </View>
+          )}
 
           {/* 3. Search & Filters */}
           <View style={styles.searchSection}>
-              <View style={[styles.searchBar, isFocused && styles.searchBarFocused]}>
-                  <Ionicons name="search-outline" size={20} color={isFocused ? "#121212" : "#6E7278"} style={{marginRight: 10}} />
-                  <TextInput
-                    placeholder="Buscar comercio o oferta..."
-                    placeholderTextColor="#6E7278"
-                    style={styles.searchInput}
-                    value={searchQuery}
-                    onChangeText={setSearchQuery}
-                    onFocus={() => setIsFocused(true)}
-                    onBlur={() => setIsFocused(false)}
-                  />
-                  {searching ? (
-                      <ActivityIndicator size="small" color="#6E7278" style={{ marginLeft: 8 }} />
-                  ) : searchQuery.length > 0 ? (
-                        <TouchableOpacity onPress={() => handlePress(handleClearSearch)} hitSlop={10}>
-                            <Ionicons name="close-circle" size={20} color="#6E7278" />
-                        </TouchableOpacity>
-                  ) : null}
+              <View style={[styles.searchRow, { paddingHorizontal: 20 }]}>
+                  <View style={[styles.searchBar, isFocused && styles.searchBarFocused]}>
+                      <Ionicons name="search-outline" size={20} color={isFocused ? "#121212" : "#6E7278"} style={{marginRight: 10}} />
+                      <TextInput
+                        placeholder="Buscar comercio o oferta..."
+                        placeholderTextColor="#6E7278"
+                        style={styles.searchInput}
+                        value={searchQuery}
+                        onChangeText={setSearchQuery}
+                        onFocus={handleFocus}
+                        // onBlur handled by cancel button or manual dismiss
+                      />
+                      {searching ? (
+                          <ActivityIndicator size="small" color="#6E7278" style={{ marginLeft: 8 }} />
+                      ) : searchQuery.length > 0 ? (
+                            <TouchableOpacity onPress={() => setSearchQuery("")} hitSlop={10}>
+                                <Ionicons name="close-circle" size={18} color="#CCCCCC" />
+                            </TouchableOpacity>
+                      ) : null}
+                  </View>
+
+                  {isSearching && (
+                      <TouchableOpacity onPress={handleCancelSearch} style={styles.cancelButton}>
+                          <Text style={styles.cancelButtonText}>Cancelar</Text>
+                      </TouchableOpacity>
+                  )}
               </View>
 
               {!isSearching && (
@@ -352,7 +381,7 @@ export default function HomeScreen() {
              <View style={styles.sectionContainer}>
                   {searchResultsRestaurants.length > 0 || searchResultsDishes.length > 0 ? (
                       <>
-                        <Text style={styles.sectionTitle}>Resultados</Text>
+                        <Text style={[styles.sectionTitle, { marginLeft: 20, marginBottom: 10 }]}>Resultados</Text>
                         {searchResultsRestaurants.map(item => (
                             <BusinessRow key={`rest-${item.id}`} restaurant={item} />
                         ))}
@@ -360,11 +389,15 @@ export default function HomeScreen() {
                             <DishResultCard key={`dish-${item.id}`} item={item} />
                         ))}
                       </>
-                  ) : !searching ? (
+                  ) : !searching && searchQuery.length >= 3 ? (
                       <View style={styles.noResultsContainer}>
                           <Ionicons name="search" size={48} color="#E0E0E0" />
                           <Text style={styles.noResultsText}>No se encontraron resultados</Text>
                           <Text style={styles.noResultsSubtext}>Intenta con otro término de búsqueda</Text>
+                      </View>
+                  ) : !searching ? (
+                      <View style={styles.recentSearchesContainer}>
+                          <Text style={styles.recentSearchesTitle}>Empieza a escribir...</Text>
                       </View>
                   ) : null}
              </View>
@@ -395,7 +428,7 @@ export default function HomeScreen() {
                     )}
                 </View>
 
-                {/* 5. Local Businesses List */}
+                {/* 5. Local Businesses List - SORTED */}
                 <View style={styles.sectionContainer}>
                     <View style={{ paddingHorizontal: 20, marginBottom: 16 }}>
                         <Text style={styles.sectionTitle}>Comercios Nexe</Text>
@@ -404,16 +437,16 @@ export default function HomeScreen() {
                         <ActivityIndicator color="#000" />
                     ) : (
                         <View style={styles.listContainer}>
-                            {popularRestaurants.map((restaurant, index) => {
+                            {sortedRestaurants.map((restaurant, index) => {
                                 const distance = (userLocation && restaurant.latitude && restaurant.longitude)
-                                    ? calculateDistance(userLocation.latitude, userLocation.longitude, restaurant.latitude, restaurant.longitude)
+                                    ? formatDistance(userLocation.latitude, userLocation.longitude, restaurant.latitude, restaurant.longitude)
                                     : undefined;
 
                                 return (
                                     <BusinessRow
                                         key={restaurant.id}
                                         restaurant={restaurant}
-                                        isLast={index === popularRestaurants.length - 1}
+                                        isLast={index === sortedRestaurants.length - 1}
                                         distance={distance}
                                     />
                                 );
@@ -483,7 +516,7 @@ function BusinessRow({ restaurant, isLast, distance }: { restaurant: Restaurant,
             <Image source={{ uri: restaurant.image_url }} style={styles.businessImage} contentFit="cover" />
             <View style={styles.businessInfo}>
                 <Text style={styles.businessName} numberOfLines={1}>{restaurant.name}</Text>
-                <Text style={styles.businessMeta} numberOfLines={1}>{restaurant.cuisine_type} • {distance || '200m'}</Text>
+                <Text style={styles.businessMeta} numberOfLines={1}>{restaurant.cuisine_type} • {distance || '...'}</Text>
             </View>
             <Ionicons name="chevron-forward" size={20} color="#ccc" />
         </TouchableOpacity>
@@ -626,11 +659,15 @@ const styles = StyleSheet.create({
   searchSection: {
       marginBottom: 32,
   },
+  searchRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+  },
   searchBar: {
+      flex: 1,
       flexDirection: 'row',
       alignItems: 'center',
       backgroundColor: '#F5F6F8',
-      marginHorizontal: 20,
       paddingHorizontal: 16,
       height: 56, // Increased height for better touch target
       borderRadius: 12, // Professional Squircle
@@ -652,6 +689,16 @@ const styles = StyleSheet.create({
       fontSize: 16,
       color: '#121212',
       height: '100%', // Fill container
+  },
+  cancelButton: {
+      marginLeft: 12,
+      marginBottom: 16,
+      padding: 8,
+  },
+  cancelButtonText: {
+      fontSize: 16,
+      color: '#007AFF', // System Blue or Corporate
+      fontWeight: '600',
   },
   filterScroll: {
       paddingLeft: 20,
@@ -726,6 +773,15 @@ const styles = StyleSheet.create({
       marginTop: 8,
       fontSize: 14,
       color: '#6E7278',
+  },
+  recentSearchesContainer: {
+    paddingHorizontal: 20,
+    marginTop: 10,
+  },
+  recentSearchesTitle: {
+      fontSize: 14,
+      color: '#6E7278',
+      fontWeight: '600',
   },
 
   // Reward Card (Uber Eats Style)
