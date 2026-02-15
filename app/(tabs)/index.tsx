@@ -1,4 +1,4 @@
-import { View, StyleSheet, Text, TextInput, ScrollView, TouchableOpacity, FlatList, ListRenderItem, ActivityIndicator } from 'react-native';
+import { View, StyleSheet, Text, TextInput, ScrollView, TouchableOpacity, FlatList, ListRenderItem, ActivityIndicator, LayoutAnimation, Platform, UIManager, Keyboard } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
@@ -10,6 +10,12 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import * as Location from 'expo-location';
 import { StatusBar } from 'expo-status-bar';
+import { useDebounce } from '@/hooks/useDebounce';
+
+// Enable LayoutAnimation on Android
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
 
 // Interface matching the database schema
 interface Restaurant {
@@ -55,10 +61,12 @@ export default function HomeScreen() {
 
   // Search State
   const [searchQuery, setSearchQuery] = useState<string>("");
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
   const [searchResultsRestaurants, setSearchResultsRestaurants] = useState<Restaurant[]>([]);
   const [searchResultsDishes, setSearchResultsDishes] = useState<MenuItemResult[]>([]);
   const [isSearching, setIsSearching] = useState<boolean>(false);
   const [searching, setSearching] = useState<boolean>(false);
+  const [isFocused, setIsFocused] = useState<boolean>(false);
 
   // Filter State
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
@@ -84,6 +92,11 @@ export default function HomeScreen() {
     fetchData();
     getUserLocation();
   }, []);
+
+  // Effect to handle search when debounced query changes
+  useEffect(() => {
+      handleSearch(debouncedSearchQuery);
+  }, [debouncedSearchQuery]);
 
   async function getUserLocation() {
     try {
@@ -131,16 +144,29 @@ export default function HomeScreen() {
       action();
   }
 
+  function handleClearSearch() {
+      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+      setSearchQuery("");
+      setSearchResultsRestaurants([]);
+      setSearchResultsDishes([]);
+      setIsSearching(false);
+      Keyboard.dismiss();
+  }
+
   async function handleSearch(query: string) {
-      setSearchQuery(query);
       if (query.length < 3) {
-          setIsSearching(false);
-          setSearchResultsRestaurants([]);
-          setSearchResultsDishes([]);
+          if (isSearching && query.length === 0) {
+             LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+             setIsSearching(false);
+          }
           return;
       }
 
-      setIsSearching(true);
+      if (!isSearching) {
+          LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+          setIsSearching(true);
+      }
+
       setSearching(true);
 
       try {
@@ -251,6 +277,7 @@ export default function HomeScreen() {
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 100 }}
+        keyboardDismissMode="on-drag"
       >
           {/* 2. Hero Card (Wallet) */}
           <View style={styles.heroContainer}>
@@ -278,20 +305,24 @@ export default function HomeScreen() {
 
           {/* 3. Search & Filters */}
           <View style={styles.searchSection}>
-              <View style={styles.searchBar}>
-                  <Ionicons name="search-outline" size={20} color="#6E7278" style={{marginRight: 10}} />
+              <View style={[styles.searchBar, isFocused && styles.searchBarFocused]}>
+                  <Ionicons name="search-outline" size={20} color={isFocused ? "#121212" : "#6E7278"} style={{marginRight: 10}} />
                   <TextInput
                     placeholder="Buscar comercio o oferta..."
                     placeholderTextColor="#6E7278"
                     style={styles.searchInput}
                     value={searchQuery}
-                    onChangeText={handleSearch}
+                    onChangeText={setSearchQuery}
+                    onFocus={() => setIsFocused(true)}
+                    onBlur={() => setIsFocused(false)}
                   />
-                  {isSearching && (
-                        <TouchableOpacity onPress={() => handlePress(() => handleSearch(""))}>
-                            <Ionicons name="close-circle" size={18} color="#6E7278" />
+                  {searching ? (
+                      <ActivityIndicator size="small" color="#6E7278" style={{ marginLeft: 8 }} />
+                  ) : searchQuery.length > 0 ? (
+                        <TouchableOpacity onPress={() => handlePress(handleClearSearch)} hitSlop={10}>
+                            <Ionicons name="close-circle" size={20} color="#6E7278" />
                         </TouchableOpacity>
-                  )}
+                  ) : null}
               </View>
 
               {!isSearching && (
@@ -301,6 +332,7 @@ export default function HomeScreen() {
                             key={cat.id}
                             style={[styles.filterPill, activeCategory === cat.id && styles.filterPillActive]}
                             onPress={() => setActiveCategory(activeCategory === cat.id ? null : cat.id)}
+                            activeOpacity={0.7}
                           >
                               <Ionicons
                                 name={cat.icon as any}
@@ -318,9 +350,7 @@ export default function HomeScreen() {
           {/* Search Results */}
           {isSearching ? (
              <View style={styles.sectionContainer}>
-                 {searching ? (
-                      <ActivityIndicator size="large" color="#000" style={{marginTop: 20}} />
-                  ) : (
+                  {searchResultsRestaurants.length > 0 || searchResultsDishes.length > 0 ? (
                       <>
                         <Text style={styles.sectionTitle}>Resultados</Text>
                         {searchResultsRestaurants.map(item => (
@@ -329,11 +359,14 @@ export default function HomeScreen() {
                          {searchResultsDishes.map(item => (
                             <DishResultCard key={`dish-${item.id}`} item={item} />
                         ))}
-                        {searchResultsRestaurants.length === 0 && searchResultsDishes.length === 0 && (
-                            <Text style={{textAlign: 'center', marginTop: 20, color: '#6E7278'}}>No se encontraron resultados.</Text>
-                        )}
                       </>
-                  )}
+                  ) : !searching ? (
+                      <View style={styles.noResultsContainer}>
+                          <Ionicons name="search" size={48} color="#E0E0E0" />
+                          <Text style={styles.noResultsText}>No se encontraron resultados</Text>
+                          <Text style={styles.noResultsSubtext}>Intenta con otro término de búsqueda</Text>
+                      </View>
+                  ) : null}
              </View>
           ) : (
             <>
@@ -599,14 +632,26 @@ const styles = StyleSheet.create({
       backgroundColor: '#F5F6F8',
       marginHorizontal: 20,
       paddingHorizontal: 16,
-      height: 50,
+      height: 56, // Increased height for better touch target
       borderRadius: 12, // Professional Squircle
       marginBottom: 16,
+      borderWidth: 1,
+      borderColor: 'transparent', // Default no border
+  },
+  searchBarFocused: {
+      backgroundColor: '#FFFFFF',
+      borderColor: '#E0E0E0', // Subtle border on focus
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.05,
+      shadowRadius: 4,
+      elevation: 2,
   },
   searchInput: {
       flex: 1,
       fontSize: 16,
       color: '#121212',
+      height: '100%', // Fill container
   },
   filterScroll: {
       paddingLeft: 20,
@@ -663,6 +708,24 @@ const styles = StyleSheet.create({
   carouselContent: {
       paddingHorizontal: 20,
       paddingRight: 8, // Adjust for last item spacing
+  },
+
+  // No Results State
+  noResultsContainer: {
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingVertical: 40,
+  },
+  noResultsText: {
+      marginTop: 16,
+      fontSize: 18,
+      fontWeight: 'bold',
+      color: '#121212',
+  },
+  noResultsSubtext: {
+      marginTop: 8,
+      fontSize: 14,
+      color: '#6E7278',
   },
 
   // Reward Card (Uber Eats Style)
