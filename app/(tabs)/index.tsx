@@ -11,6 +11,7 @@ import * as Haptics from 'expo-haptics';
 import * as Location from 'expo-location';
 import { StatusBar } from 'expo-status-bar';
 import { useDebounce } from '@/hooks/useDebounce';
+import { HomeScreenSkeleton } from '@/components/HomeScreenSkeleton';
 
 // Enable LayoutAnimation on Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -271,6 +272,10 @@ export default function HomeScreen() {
       return name.charAt(0).toUpperCase();
   };
 
+  if (loading) {
+    return <HomeScreenSkeleton />;
+  }
+
   return (
     <View style={styles.container}>
       <StatusBar style="dark" />
@@ -414,18 +419,14 @@ export default function HomeScreen() {
                             <Ionicons name="arrow-forward" size={20} color="#000" />
                         </TouchableOpacity>
                     </View>
-                    {loading ? (
-                        <ActivityIndicator color="#000" />
-                    ) : (
-                        <FlatList
-                            data={rewardItems}
-                            renderItem={renderRewardItem}
-                            keyExtractor={(item) => item.id.toString()}
-                            horizontal
-                            showsHorizontalScrollIndicator={false}
-                            contentContainerStyle={styles.carouselContent}
-                        />
-                    )}
+                    <FlatList
+                        data={rewardItems}
+                        renderItem={renderRewardItem}
+                        keyExtractor={(item) => item.id.toString()}
+                        horizontal
+                        showsHorizontalScrollIndicator={false}
+                        contentContainerStyle={styles.carouselContent}
+                    />
                 </View>
 
                 {/* 5. Local Businesses List - SORTED */}
@@ -433,26 +434,22 @@ export default function HomeScreen() {
                     <View style={{ paddingHorizontal: 20, marginBottom: 16 }}>
                         <Text style={styles.sectionTitle}>Comercios Nexe</Text>
                     </View>
-                    {loading ? (
-                        <ActivityIndicator color="#000" />
-                    ) : (
-                        <View style={styles.listContainer}>
-                            {sortedRestaurants.map((restaurant, index) => {
-                                const distance = (userLocation && restaurant.latitude && restaurant.longitude)
-                                    ? formatDistance(userLocation.latitude, userLocation.longitude, restaurant.latitude, restaurant.longitude)
-                                    : undefined;
+                    <View style={styles.listContainer}>
+                        {sortedRestaurants.map((restaurant, index) => {
+                            const distance = (userLocation && restaurant.latitude && restaurant.longitude)
+                                ? formatDistance(userLocation.latitude, userLocation.longitude, restaurant.latitude, restaurant.longitude)
+                                : undefined;
 
-                                return (
-                                    <BusinessRow
-                                        key={restaurant.id}
-                                        restaurant={restaurant}
-                                        isLast={index === sortedRestaurants.length - 1}
-                                        distance={distance}
-                                    />
-                                );
-                            })}
-                        </View>
-                    )}
+                            return (
+                                <BusinessRow
+                                    key={restaurant.id}
+                                    restaurant={restaurant}
+                                    isLast={index === sortedRestaurants.length - 1}
+                                    distance={distance}
+                                />
+                            );
+                        })}
+                    </View>
                 </View>
             </>
           )}
