@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
@@ -35,39 +35,39 @@ export default function RestaurantDetailScreen() {
   const [cart, setCart] = useState<{ [key: number]: number }>({});
 
   useEffect(() => {
+    async function fetchRestaurantDetails() {
+      try {
+        setLoading(true);
+        // Fetch restaurant info
+        const { data: restaurantData, error: restaurantError } = await supabase
+          .from('restaurants')
+          .select('*')
+          .eq('id', id)
+          .single();
+
+        if (restaurantError) throw restaurantError;
+        setRestaurant(restaurantData);
+
+        // Fetch menu items
+        const { data: menuData, error: menuError } = await supabase
+          .from('menu_items')
+          .select('*')
+          .eq('restaurant_id', id);
+
+        if (menuError) throw menuError;
+        setMenuItems(menuData || []);
+
+      } catch (error) {
+        console.error('Error fetching details:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
     if (id) {
       fetchRestaurantDetails();
     }
   }, [id]);
-
-  async function fetchRestaurantDetails() {
-    try {
-      setLoading(true);
-      // Fetch restaurant info
-      const { data: restaurantData, error: restaurantError } = await supabase
-        .from('restaurants')
-        .select('*')
-        .eq('id', id)
-        .single();
-
-      if (restaurantError) throw restaurantError;
-      setRestaurant(restaurantData);
-
-      // Fetch menu items
-      const { data: menuData, error: menuError } = await supabase
-        .from('menu_items')
-        .select('*')
-        .eq('restaurant_id', id);
-
-      if (menuError) throw menuError;
-      setMenuItems(menuData || []);
-
-    } catch (error) {
-      console.error('Error fetching details:', error);
-    } finally {
-      setLoading(false);
-    }
-  }
 
   const handleAddToCart = (itemId: number) => {
     setCart((prev) => ({
