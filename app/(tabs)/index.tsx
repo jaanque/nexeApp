@@ -270,9 +270,7 @@ export default function HomeScreen() {
                     activeOpacity={0.8}
                     onPress={() => handlePress(() => router.push('/scan'))}
                 >
-                    <View style={styles.scanIconContainer}>
-                         <Ionicons name="qr-code-outline" size={20} color="#fff" />
-                    </View>
+                    <Ionicons name="qr-code-outline" size={18} color="#fff" style={{marginRight: 8}} />
                     <Text style={styles.heroButtonText}>Escanear</Text>
                 </TouchableOpacity>
             </View>
@@ -524,7 +522,7 @@ const styles = StyleSheet.create({
   avatarContainer: {
       width: 40,
       height: 40,
-      borderRadius: 14, // Squircle-ish
+      borderRadius: 12, // Professional Squircle
       backgroundColor: '#F5F6F8',
       justifyContent: 'center',
       alignItems: 'center',
@@ -543,7 +541,7 @@ const styles = StyleSheet.create({
   },
   heroCard: {
       backgroundColor: '#F5F6F8', // Smoke Gray
-      borderRadius: 24,
+      borderRadius: 16, // Professional Squircle
       padding: 24,
       flexDirection: 'row',
       justifyContent: 'space-between',
@@ -580,19 +578,10 @@ const styles = StyleSheet.create({
       flexDirection: 'row',
       alignItems: 'center',
       paddingRight: 20,
-      paddingLeft: 6,
-      paddingVertical: 6,
-      borderRadius: 24, // Full pill for button inside card
+      paddingLeft: 16,
+      paddingVertical: 12,
+      borderRadius: 12, // Professional Squircle
       height: 48,
-  },
-  scanIconContainer: {
-      width: 36,
-      height: 36,
-      borderRadius: 18,
-      backgroundColor: 'rgba(255,255,255,0.2)',
-      justifyContent: 'center',
-      alignItems: 'center',
-      marginRight: 10,
   },
   heroButtonText: {
       color: '#FFFFFF',
@@ -611,7 +600,7 @@ const styles = StyleSheet.create({
       marginHorizontal: 20,
       paddingHorizontal: 16,
       height: 50,
-      borderRadius: 16,
+      borderRadius: 12, // Professional Squircle
       marginBottom: 16,
   },
   searchInput: {
@@ -630,7 +619,7 @@ const styles = StyleSheet.create({
       alignItems: 'center',
       paddingHorizontal: 16,
       paddingVertical: 10,
-      borderRadius: 20,
+      borderRadius: 12, // Professional Squircle (was 20)
       backgroundColor: '#F5F6F8',
       marginRight: 10,
   },
@@ -666,7 +655,7 @@ const styles = StyleSheet.create({
   arrowButton: {
       width: 32,
       height: 32,
-      borderRadius: 16,
+      borderRadius: 12, // Squircle
       backgroundColor: '#F5F6F8',
       justifyContent: 'center',
       alignItems: 'center',
@@ -685,7 +674,7 @@ const styles = StyleSheet.create({
   },
   rewardImageContainer: {
       height: 160,
-      borderRadius: 16,
+      borderRadius: 16, // Professional Squircle
       overflow: 'hidden',
       position: 'relative',
       backgroundColor: '#f0f0f0',
@@ -701,7 +690,7 @@ const styles = StyleSheet.create({
       backgroundColor: '#16a34a', // Green
       paddingHorizontal: 10,
       paddingVertical: 6,
-      borderRadius: 20,
+      borderRadius: 12, // Squircle
       flexDirection: 'row',
       alignItems: 'center',
   },
@@ -751,7 +740,7 @@ const styles = StyleSheet.create({
   businessImage: {
       width: 50,
       height: 50,
-      borderRadius: 16, // Squircle 16px
+      borderRadius: 12, // Squircle 12px (Professional)
       backgroundColor: '#F5F6F8',
       marginRight: 16,
   },
