@@ -67,6 +67,20 @@ export default function CheckoutScreen() {
 
       if (error) throw error;
 
+      // Insert movement record
+      const restName = Array.isArray(restaurantName) ? restaurantName[0] : restaurantName;
+      const { error: movementError } = await supabase.from('movements').insert({
+        user_id: session.user.id,
+        amount: -totalCost,
+        description: `Pedido en ${restName || 'Restaurante'}`,
+        type: 'spend'
+      });
+
+      if (movementError) {
+        console.error("Error saving movement:", movementError);
+        // We don't throw here to avoid failing the whole transaction from user perspective if points were already deducted
+      }
+
       // Optimistically update local state or just finish
       Alert.alert("¡Pedido Confirmado!", "Tus puntos han sido canjeados correctamente.", [
         { text: "OK", onPress: () => router.dismissAll() } // Go back to root/home
