@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, StatusBar as RNStatusBar, ScrollView, Dimensions, LayoutChangeEvent } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, StatusBar as RNStatusBar, ScrollView, Dimensions, LayoutChangeEvent, Modal } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { useEffect, useState, useMemo, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
@@ -7,6 +7,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
+import * as Location from 'expo-location';
+import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
+import { customMapStyle } from '@/constants/mapStyle';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -18,7 +21,7 @@ import Animated, {
   runOnJS
 } from 'react-native-reanimated';
 
-const { width } = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
 const PARALLAX_HEADER_HEIGHT = 300;
 const STICKY_HEADER_HEIGHT = 60;
 
@@ -54,6 +57,10 @@ export default function RestaurantDetailScreen() {
   const [loading, setLoading] = useState(true);
   const [cart, setCart] = useState<{ [key: number]: number }>({});
   const [isOpen, setIsOpen] = useState(true);
+
+  // Info Modal & Location
+  const [showInfo, setShowInfo] = useState(false);
+  const [userLocation, setUserLocation] = useState<{ latitude: number, longitude: number } | null>(null);
 
   // Tabs & Scrolling
   const [activeCategory, setActiveCategory] = useState<string>('');
@@ -98,8 +105,43 @@ export default function RestaurantDetailScreen() {
 
     if (id) {
       fetchRestaurantDetails();
+      getUserLocation();
     }
   }, [id]);
+
+  async function getUserLocation() {
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') return;
+      const location = await Location.getCurrentPositionAsync({});
+      setUserLocation(location.coords);
+    } catch (error) {
+      console.error("Error getting location:", error);
+    }
+  }
+
+  function getDistanceInMeters(lat1: number, lon1: number, lat2: number, lon2: number) {
+    const R = 6371e3; // metres
+    const φ1 = lat1 * Math.PI/180;
+    const φ2 = lat2 * Math.PI/180;
+    const Δφ = (lat2-lat1) * Math.PI/180;
+    const Δλ = (lon2-lon1) * Math.PI/180;
+
+    const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+            Math.cos(φ1) * Math.cos(φ2) *
+            Math.sin(Δλ/2) * Math.sin(Δλ/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+
+    return R * c;
+  }
+
+  function formatDistance(lat1: number, lon1: number, lat2: number, lon2: number) {
+    const d = getDistanceInMeters(lat1, lon1, lat2, lon2);
+    if (d < 1000) {
+        return `${Math.round(d)}m`;
+    }
+    return `${(d / 1000).toFixed(1)} km`;
+  }
 
   const sections = useMemo(() => {
     if (!menuItems.length) return [];
@@ -339,6 +381,11 @@ export default function RestaurantDetailScreen() {
                     <Text style={styles.hoursText}>
                         {formatTime(restaurant.opening_time)} - {formatTime(restaurant.closing_time)}
                     </Text>
+
+                    <TouchableOpacity onPress={() => setShowInfo(true)} style={styles.moreInfoButton}>
+                        <Text style={styles.moreInfoText}>Más información</Text>
+                        <Ionicons name="chevron-forward" size={14} color="#6E7278" />
+                    </TouchableOpacity>
                 </View>
 
                 {/* Divider */}
@@ -420,6 +467,80 @@ export default function RestaurantDetailScreen() {
               </TouchableOpacity>
           </Animated.View>
       )}
+
+      {/* Info Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={showInfo}
+        onRequestClose={() => setShowInfo(false)}
+      >
+        <View style={styles.modalOverlay}>
+            <TouchableOpacity style={styles.modalBackdrop} onPress={() => setShowInfo(false)} />
+            <View style={[styles.modalContent, { paddingBottom: insets.bottom + 20 }]}>
+                <View style={styles.modalHeader}>
+                    <Text style={styles.modalTitle}>Ubicación y Horarios</Text>
+                    <TouchableOpacity onPress={() => setShowInfo(false)} style={styles.closeButton}>
+                        <Ionicons name="close" size={24} color="#000" />
+                    </TouchableOpacity>
+                </View>
+
+                <View style={styles.mapContainer}>
+                     <MapView
+                        style={styles.map}
+                        customMapStyle={customMapStyle}
+                        provider={PROVIDER_GOOGLE}
+                        initialRegion={{
+                            latitude: restaurant.latitude || 19.432608,
+                            longitude: restaurant.longitude || -99.133209,
+                            latitudeDelta: 0.01,
+                            longitudeDelta: 0.01,
+                        }}
+                     >
+                        {restaurant.latitude && restaurant.longitude && (
+                            <Marker
+                                coordinate={{
+                                    latitude: restaurant.latitude,
+                                    longitude: restaurant.longitude
+                                }}
+                            />
+                        )}
+                        {userLocation && (
+                             <Marker
+                                coordinate={{
+                                    latitude: userLocation.latitude,
+                                    longitude: userLocation.longitude
+                                }}
+                                pinColor="blue"
+                            />
+                        )}
+                     </MapView>
+                </View>
+
+                <View style={styles.modalInfo}>
+                    <View style={styles.modalRow}>
+                        <Ionicons name="location-outline" size={20} color="#666" style={{marginRight: 10}} />
+                        <View style={{flex: 1}}>
+                            <Text style={styles.modalLabel}>Dirección</Text>
+                            <Text style={styles.modalValue}>{restaurant.address}</Text>
+                        </View>
+                    </View>
+
+                    <View style={styles.modalRow}>
+                         <Ionicons name="navigate-outline" size={20} color="#666" style={{marginRight: 10}} />
+                         <View style={{flex: 1}}>
+                            <Text style={styles.modalLabel}>Distancia</Text>
+                            <Text style={styles.modalValue}>
+                                {userLocation && restaurant.latitude && restaurant.longitude
+                                    ? formatDistance(userLocation.latitude, userLocation.longitude, restaurant.latitude, restaurant.longitude)
+                                    : 'Calculando...'}
+                            </Text>
+                        </View>
+                    </View>
+                </View>
+            </View>
+        </View>
+      </Modal>
 
     </View>
   );
@@ -618,6 +739,17 @@ const styles = StyleSheet.create({
       fontSize: 13,
       color: '#6E7278',
   },
+  moreInfoButton: {
+      marginLeft: 'auto', // Push to right
+      flexDirection: 'row',
+      alignItems: 'center',
+  },
+  moreInfoText: {
+      fontSize: 13,
+      color: '#6E7278',
+      marginRight: 2,
+      fontWeight: '500',
+  },
   divider: {
       height: 1,
       backgroundColor: '#F5F6F8',
@@ -786,5 +918,71 @@ const styles = StyleSheet.create({
       color: '#fff',
       fontSize: 16,
       fontWeight: '700',
+  },
+
+  // Modal
+  modalOverlay: {
+      flex: 1,
+      backgroundColor: 'rgba(0,0,0,0.5)',
+      justifyContent: 'flex-end',
+  },
+  modalBackdrop: {
+      flex: 1,
+  },
+  modalContent: {
+      backgroundColor: '#fff',
+      borderTopLeftRadius: 24,
+      borderTopRightRadius: 24,
+      padding: 24,
+      minHeight: 400,
+  },
+  modalHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: 20,
+  },
+  modalTitle: {
+      fontSize: 20,
+      fontWeight: 'bold',
+      color: '#121212',
+  },
+  closeButton: {
+      padding: 4,
+      backgroundColor: '#f5f5f5',
+      borderRadius: 16,
+  },
+  mapContainer: {
+      height: 200,
+      borderRadius: 16,
+      overflow: 'hidden',
+      marginBottom: 20,
+      backgroundColor: '#f0f0f0',
+  },
+  map: {
+      width: '100%',
+      height: '100%',
+  },
+  modalInfo: {
+      gap: 16,
+  },
+  modalRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: '#F9FAFB',
+      padding: 16,
+      borderRadius: 12,
+  },
+  modalLabel: {
+      fontSize: 12,
+      color: '#6E7278',
+      marginBottom: 2,
+      textTransform: 'uppercase',
+      letterSpacing: 0.5,
+  },
+  modalValue: {
+      fontSize: 16,
+      fontWeight: '600',
+      color: '#121212',
   },
 });
