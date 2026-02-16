@@ -2,10 +2,11 @@ import { View, StyleSheet, Text, FlatList, TouchableOpacity, ListRenderItem, Act
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { useState, useEffect } from 'react';
-import { supabase } from '../../lib/supabase';
-import RestaurantMap from '../../components/RestaurantMap';
+import { supabase } from '@/lib/supabase';
+import RestaurantMap from '@/components/RestaurantMap';
 import * as Location from 'expo-location';
-import BottomSheet from '../../components/BottomSheet';
+import BottomSheet from '@/components/BottomSheet';
+import RestaurantMapCard from '@/components/RestaurantMapCard';
 import { useRouter } from 'expo-router';
 
 // Interface matching the database schema
@@ -54,6 +55,7 @@ export default function ExploreScreen() {
   const [selectedRestaurant, setSelectedRestaurant] = useState<Restaurant | null>(null);
   const [userLocation, setUserLocation] = useState<{ latitude: number, longitude: number } | null>(null);
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
   useEffect(() => {
     fetchRestaurants();
@@ -113,32 +115,43 @@ export default function ExploreScreen() {
             />
         </View>
 
-        {/* Bottom Sheet Overlay */}
-        <BottomSheet
-            header={
-                <View style={styles.sheetHeader}>
-                    <Text style={styles.sheetTitle}>Restaurantes</Text>
-                    <View style={styles.searchBar}>
-                         <Ionicons name="search" size={20} color="#666" style={{marginRight: 8}} />
-                         <Text style={styles.searchText}>Buscar restaurante...</Text>
+        {/* Floating Card (Popup) */}
+        {selectedRestaurant && (
+            <RestaurantMapCard
+                restaurant={selectedRestaurant}
+                onPress={() => router.push(`/restaurant/${selectedRestaurant.id}`)}
+                onClose={() => setSelectedRestaurant(null)}
+            />
+        )}
+
+        {/* Bottom Sheet Overlay - Only show if NO restaurant is selected */}
+        {!selectedRestaurant && (
+            <BottomSheet
+                header={
+                    <View style={styles.sheetHeader}>
+                        <Text style={styles.sheetTitle}>Restaurantes</Text>
+                        <View style={styles.searchBar}>
+                            <Ionicons name="search" size={20} color="#666" style={{marginRight: 8}} />
+                            <Text style={styles.searchText}>Buscar restaurante...</Text>
+                        </View>
                     </View>
-                </View>
-            }
-        >
-            {loading ? (
-                <View style={styles.loadingContainer}>
-                    <ActivityIndicator size="large" color="#333" />
-                </View>
-            ) : (
-                <FlatList
-                    data={restaurants}
-                    renderItem={renderItem}
-                    keyExtractor={(item) => item.id.toString()}
-                    contentContainerStyle={styles.listContent}
-                    showsVerticalScrollIndicator={false}
-                />
-            )}
-        </BottomSheet>
+                }
+            >
+                {loading ? (
+                    <View style={styles.loadingContainer}>
+                        <ActivityIndicator size="large" color="#333" />
+                    </View>
+                ) : (
+                    <FlatList
+                        data={restaurants}
+                        renderItem={renderItem}
+                        keyExtractor={(item) => item.id.toString()}
+                        contentContainerStyle={styles.listContent}
+                        showsVerticalScrollIndicator={false}
+                    />
+                )}
+            </BottomSheet>
+        )}
     </View>
   );
 }
