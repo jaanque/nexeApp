@@ -49,6 +49,7 @@ interface MenuItemResult {
     restaurants?: {
         name: string;
     };
+    category_id?: number;
 }
 
 export default function HomeScreen() {
@@ -248,25 +249,29 @@ export default function HomeScreen() {
   async function fetchData(categoryId?: number | null) {
     try {
       setLoading(true);
+
       // Fetch popular restaurants
-      let query = supabase.from('restaurants').select('*');
+      let restQuery = supabase.from('restaurants').select('*');
 
       if (categoryId) {
-          query = query.eq('category_id', categoryId);
+          restQuery = restQuery.eq('category_id', categoryId);
       } else {
-          query = query.limit(20);
+          restQuery = restQuery.limit(20);
       }
 
-      const { data: restData } = await query;
-
+      const { data: restData } = await restQuery;
       if (restData) setPopularRestaurants(restData);
 
-      // Fetch reward items (menu items)
-      // Since we don't have a "rewards" flag, we'll just take some items
-      const { data: menuData } = await supabase
+      // Fetch menu items (rewards/dishes)
+      let menuQuery = supabase
         .from('menu_items')
-        .select('*, restaurants(name)')
-        .limit(10);
+        .select('*, restaurants(name)');
+
+      if (categoryId) {
+        menuQuery = menuQuery.eq('category_id', categoryId);
+      }
+
+      const { data: menuData } = await menuQuery.limit(10);
 
       if (menuData) setRewardItems(menuData as any);
 

@@ -33,6 +33,22 @@ ON DELETE SET NULL;
 -- Optional: Create an index for faster filtering
 CREATE INDEX IF NOT EXISTS idx_restaurants_category_id ON restaurants(category_id);
 
+-- Modify Menu Items Table
+-- Add category_id column to menu_items
+ALTER TABLE menu_items
+ADD COLUMN IF NOT EXISTS category_id BIGINT;
+
+-- Add Foreign Key Constraint for menu_items
+ALTER TABLE menu_items
+ADD CONSTRAINT fk_menu_item_category
+FOREIGN KEY (category_id)
+REFERENCES categories(id)
+ON DELETE SET NULL;
+
+-- Optional: Create an index for faster filtering
+CREATE INDEX IF NOT EXISTS idx_menu_items_category_id ON menu_items(category_id);
+
+
 -- Migration Note:
 -- You will need to update existing restaurant records to set the category_id based on the old 'cuisine_type' column.
 -- Example:
