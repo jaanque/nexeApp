@@ -41,6 +41,8 @@ interface Restaurant {
   delivery_fee?: number;
   min_order?: number;
   delivery_time?: string;
+  opening_time?: string;
+  closing_time?: string;
 }
 
 export default function RestaurantDetailScreen() {
@@ -51,6 +53,7 @@ export default function RestaurantDetailScreen() {
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [cart, setCart] = useState<{ [key: number]: number }>({});
+  const [isOpen, setIsOpen] = useState(true);
 
   // Tabs & Scrolling
   const [activeCategory, setActiveCategory] = useState<string>('');
@@ -70,6 +73,7 @@ export default function RestaurantDetailScreen() {
 
         if (restaurantError) throw restaurantError;
         setRestaurant(restaurantData);
+        checkIfOpen(restaurantData.opening_time, restaurantData.closing_time);
 
         const { data: menuData, error: menuError } = await supabase
           .from('menu_items')
@@ -163,6 +167,39 @@ export default function RestaurantDetailScreen() {
       const layout = event.nativeEvent.layout;
       setCategoryLayouts(prev => ({ ...prev, [category]: layout.y }));
   };
+
+  function checkIfOpen(openTime: string | undefined, closeTime: string | undefined) {
+      if (!openTime || !closeTime) {
+          setIsOpen(true); // Default to open if no times
+          return;
+      }
+
+      const now = new Date();
+      const currentMinutes = now.getHours() * 60 + now.getMinutes();
+
+      const [openHour, openMinute] = openTime.split(':').map(Number);
+      const [closeHour, closeMinute] = closeTime.split(':').map(Number);
+
+      const openMinutes = openHour * 60 + openMinute;
+      const closeMinutes = closeHour * 60 + closeMinute;
+
+      if (closeMinutes < openMinutes) {
+          // Crosses midnight (e.g. 18:00 to 02:00)
+          setIsOpen(currentMinutes >= openMinutes || currentMinutes <= closeMinutes);
+      } else {
+          setIsOpen(currentMinutes >= openMinutes && currentMinutes <= closeMinutes);
+      }
+  }
+
+  function formatTime(timeString: string | undefined) {
+      if (!timeString) return '';
+      const [hour, minute] = timeString.split(':');
+      const h = parseInt(hour, 10);
+      const m = parseInt(minute, 10);
+      const suffix = h >= 12 ? 'PM' : 'AM';
+      const formattedHour = h % 12 || 12;
+      return `${formattedHour}:${m < 10 ? '0' + m : m} ${suffix}`;
+  }
 
   // Cart Logic
   const handleAddToCart = (itemId: number) => {
@@ -289,6 +326,19 @@ export default function RestaurantDetailScreen() {
                         <Ionicons name="bicycle-outline" size={14} color="#121212" style={{marginRight: 4}} />
                         <Text style={styles.deliveryText}>Entrega Gratis</Text>
                     </View>
+                </View>
+
+                {/* Opening Hours Status */}
+                <View style={styles.statusRow}>
+                    <View style={[styles.statusBadge, { backgroundColor: isOpen ? '#E8F5E9' : '#FFEBEE' }]}>
+                        <View style={[styles.statusDot, { backgroundColor: isOpen ? '#4CAF50' : '#F44336' }]} />
+                        <Text style={[styles.statusText, { color: isOpen ? '#2E7D32' : '#C62828' }]}>
+                            {isOpen ? 'Abierto' : 'Cerrado'}
+                        </Text>
+                    </View>
+                    <Text style={styles.hoursText}>
+                        {formatTime(restaurant.opening_time)} - {formatTime(restaurant.closing_time)}
+                    </Text>
                 </View>
 
                 {/* Divider */}
@@ -540,6 +590,33 @@ const styles = StyleSheet.create({
       fontSize: 13,
       fontWeight: '600',
       color: '#121212',
+  },
+  statusRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginTop: 12,
+  },
+  statusBadge: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: 8,
+      paddingVertical: 4,
+      borderRadius: 8,
+      marginRight: 8,
+  },
+  statusDot: {
+      width: 6,
+      height: 6,
+      borderRadius: 3,
+      marginRight: 6,
+  },
+  statusText: {
+      fontSize: 12,
+      fontWeight: '700',
+  },
+  hoursText: {
+      fontSize: 13,
+      color: '#6E7278',
   },
   divider: {
       height: 1,
