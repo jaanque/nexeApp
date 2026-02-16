@@ -32,6 +32,9 @@ interface MenuItem {
   price: number;
   image_url: string;
   category: string;
+  categories?: {
+      name: string;
+  };
 }
 
 interface Restaurant {
@@ -84,7 +87,7 @@ export default function RestaurantDetailScreen() {
 
         const { data: menuData, error: menuError } = await supabase
           .from('menu_items')
-          .select('*')
+          .select('*, categories(name)')
           .eq('restaurant_id', id);
 
         if (menuError) throw menuError;
@@ -92,7 +95,7 @@ export default function RestaurantDetailScreen() {
 
         // Set initial active category
         if (menuData && menuData.length > 0) {
-            const firstCat = menuData[0].category || 'Otros';
+            const firstCat = menuData[0].categories?.name || 'Otros';
             setActiveCategory(firstCat);
         }
 
@@ -147,7 +150,7 @@ export default function RestaurantDetailScreen() {
     if (!menuItems.length) return [];
     const groups: { [key: string]: MenuItem[] } = {};
     menuItems.forEach(item => {
-      const cat = item.category || 'Otros';
+      const cat = item.categories?.name || 'Otros';
       if (!groups[cat]) groups[cat] = [];
       groups[cat].push(item);
     });
@@ -348,26 +351,9 @@ export default function RestaurantDetailScreen() {
                 <Text style={styles.title}>{restaurant.name}</Text>
 
                 <View style={styles.metaRow}>
-                    <View style={styles.ratingContainer}>
-                        <Ionicons name="star" size={14} color="#000" />
-                        <Text style={styles.ratingText}>{restaurant.rating}</Text>
-                        <Text style={styles.ratingCount}>(500+)</Text>
-                    </View>
-                    <Text style={styles.metaDot}>•</Text>
                     <Text style={styles.cuisineText}>{restaurant.cuisine_type}</Text>
                     <Text style={styles.metaDot}>•</Text>
                     <Text style={styles.priceTier}>$$</Text>
-                </View>
-
-                <View style={styles.deliveryRow}>
-                    <View style={styles.deliveryPill}>
-                        <Ionicons name="time-outline" size={14} color="#121212" style={{marginRight: 4}} />
-                        <Text style={styles.deliveryText}>20-30 min</Text>
-                    </View>
-                    <View style={[styles.deliveryPill, { marginLeft: 10 }]}>
-                        <Ionicons name="bicycle-outline" size={14} color="#121212" style={{marginRight: 4}} />
-                        <Text style={styles.deliveryText}>Entrega Gratis</Text>
-                    </View>
                 </View>
 
                 {/* Opening Hours Status */}
