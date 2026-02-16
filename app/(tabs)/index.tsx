@@ -13,7 +13,7 @@ import { StatusBar } from 'expo-status-bar';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useDebounce } from '@/hooks/useDebounce';
 import { HomeScreenSkeleton } from '@/components/HomeScreenSkeleton';
-import { getCategoryColor, hexToRgba } from '@/lib/colorGenerator';
+import { CategoryFilterItem } from '@/components/CategoryFilterItem';
 
 // Enable LayoutAnimation on Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -407,34 +407,14 @@ export default function HomeScreen() {
 
               {!isSearching && (
                   <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterScroll} contentContainerStyle={styles.filterContent}>
-                      {categories.map((cat) => {
-                          const categoryColor = getCategoryColor(cat.emoji);
-                          return (
-                            <TouchableOpacity
-                                key={cat.id}
-                                style={[styles.filterItem, activeCategory === cat.id && styles.filterItemActive]}
-                                onPress={() => setActiveCategory(activeCategory === cat.id ? null : cat.id)}
-                                activeOpacity={0.7}
-                            >
-                                <View style={[
-                                    styles.filterIconContainer,
-                                    activeCategory === cat.id && {
-                                        backgroundColor: hexToRgba(categoryColor, 0.15), // Subtle tinted background
-                                        borderColor: categoryColor,
-                                        shadowColor: categoryColor,
-                                    },
-                                    activeCategory === cat.id && styles.filterIconContainerActive
-                                ]}>
-                                    <Text style={styles.filterEmoji}>{cat.emoji}</Text>
-                                </View>
-                                <Text style={[
-                                    styles.filterLabel,
-                                    activeCategory === cat.id && styles.filterLabelActive,
-                                    activeCategory === cat.id && { color: categoryColor }
-                                ]}>{cat.name}</Text>
-                            </TouchableOpacity>
-                          );
-                      })}
+                      {categories.map((cat) => (
+                          <CategoryFilterItem
+                              key={cat.id}
+                              item={cat}
+                              isActive={activeCategory === cat.id}
+                              onPress={() => setActiveCategory(activeCategory === cat.id ? null : cat.id)}
+                          />
+                      ))}
                   </ScrollView>
               )}
           </View>
@@ -764,44 +744,6 @@ const styles = StyleSheet.create({
   },
   filterContent: {
       paddingRight: 20,
-  },
-  filterItem: {
-      alignItems: 'center',
-      marginRight: 20,
-      minWidth: 70, // Ensure touch target
-  },
-  filterItemActive: {
-      // No background change on container
-  },
-  filterIconContainer: {
-      width: 64,
-      height: 64,
-      borderRadius: 24, // Squircle
-      backgroundColor: 'transparent', // No background for inactive
-      justifyContent: 'center',
-      alignItems: 'center',
-      marginBottom: 8,
-      // Removed borders and shadows for inactive state
-  },
-  filterIconContainerActive: {
-      borderWidth: 1,
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.2,
-      shadowRadius: 8,
-      elevation: 4,
-  },
-  filterEmoji: {
-      fontSize: 32,
-  },
-  filterLabel: {
-      fontSize: 12,
-      fontWeight: '600',
-      color: '#121212',
-      textAlign: 'center',
-  },
-  filterLabelActive: {
-      color: '#121212', // Keep text black
-      fontWeight: 'bold',
   },
 
   // Sections
