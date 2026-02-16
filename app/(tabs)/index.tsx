@@ -29,6 +29,13 @@ interface Restaurant {
   address: string;
   latitude?: number;
   longitude?: number;
+  category_id?: number;
+}
+
+interface Category {
+  id: number;
+  name: string;
+  emoji: string;
 }
 
 // Interface for MenuItem search results
@@ -44,13 +51,6 @@ interface MenuItemResult {
     };
 }
 
-const CATEGORIES = [
-  { id: 'Restauración', label: 'Restauración', emoji: '🍔' },
-  { id: 'Moda', label: 'Moda', emoji: '🛍️' },
-  { id: 'Servicios', label: 'Servicios', emoji: '✨' },
-  { id: 'Ocio', label: 'Ocio', emoji: '🍿' },
-];
-
 export default function HomeScreen() {
   const [session, setSession] = useState<Session | null>(null);
   const [points, setPoints] = useState<number>(0);
@@ -58,6 +58,7 @@ export default function HomeScreen() {
   const [sortedRestaurants, setSortedRestaurants] = useState<Restaurant[]>([]);
   const [rewardItems, setRewardItems] = useState<MenuItemResult[]>([]);
   const [loading, setLoading] = useState(true);
+  const [categories, setCategories] = useState<Category[]>([]);
 
   // Location State
   const [userLocation, setUserLocation] = useState<{ latitude: number, longitude: number } | null>(null);
@@ -72,7 +73,7 @@ export default function HomeScreen() {
   const [isFocused, setIsFocused] = useState<boolean>(false);
 
   // Filter State
-  const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  const [activeCategory, setActiveCategory] = useState<number | null>(null);
 
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -92,9 +93,15 @@ export default function HomeScreen() {
       }
     });
 
+    fetchCategories();
     fetchData();
     getUserLocation();
   }, []);
+
+  // Re-fetch restaurants when category changes
+  useEffect(() => {
+      fetchData(activeCategory);
+  }, [activeCategory]);
 
   // Effect to handle search when debounced query changes
   useEffect(() => {
@@ -226,16 +233,31 @@ export default function HomeScreen() {
     }
   }
 
-  async function fetchData() {
+  async function fetchCategories() {
+      try {
+          const { data, error } = await supabase.from('categories').select('*').order('name');
+          if (error) throw error;
+          if (data) {
+              setCategories(data);
+          }
+      } catch (e) {
+          console.error("Error fetching categories:", e);
+      }
+  }
+
+  async function fetchData(categoryId?: number | null) {
     try {
       setLoading(true);
       // Fetch popular restaurants
-      const { data: restData } = await supabase
-        .from('restaurants')
-        .select('*')
-        //.gte('rating', 4.5) // Removed rating filter to show more businesses
-        //.order('rating', { ascending: false })
-        .limit(20);
+      let query = supabase.from('restaurants').select('*');
+
+      if (categoryId) {
+          query = query.eq('category_id', categoryId);
+      } else {
+          query = query.limit(20);
+      }
+
+      const { data: restData } = await query;
 
       if (restData) setPopularRestaurants(restData);
 
@@ -367,7 +389,7 @@ export default function HomeScreen() {
 
               {!isSearching && (
                   <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterScroll} contentContainerStyle={styles.filterContent}>
-                      {CATEGORIES.map((cat) => (
+                      {categories.map((cat) => (
                           <TouchableOpacity
                             key={cat.id}
                             style={[styles.filterItem, activeCategory === cat.id && styles.filterItemActive]}
@@ -377,7 +399,7 @@ export default function HomeScreen() {
                               <View style={[styles.filterIconContainer, activeCategory === cat.id && styles.filterIconContainerActive]}>
                                 <Text style={styles.filterEmoji}>{cat.emoji}</Text>
                               </View>
-                              <Text style={[styles.filterLabel, activeCategory === cat.id && styles.filterLabelActive]}>{cat.label}</Text>
+                              <Text style={[styles.filterLabel, activeCategory === cat.id && styles.filterLabelActive]}>{cat.name}</Text>
                           </TouchableOpacity>
                       ))}
                   </ScrollView>
