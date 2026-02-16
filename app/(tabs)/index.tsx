@@ -293,19 +293,6 @@ export default function HomeScreen() {
     }
   }
 
-  const getCategoryColor = (name: string) => {
-      switch (name) {
-        case 'Hamburguesas': return '#FFEDD5'; // Light Orange
-        case 'Pizza': return '#FEE2E2'; // Light Red
-        case 'Sushi': return '#DBEAFE'; // Light Blue
-        case 'Asiática': return '#FEF3C7'; // Light Yellow
-        case 'Mexicana': return '#DCFCE7'; // Light Green
-        case 'Café & Postres': return '#F3E8FF'; // Light Purple
-        case 'Saludable': return '#D1FAE5'; // Mint
-        case 'Bebidas': return '#E0F2FE'; // Sky Blue
-        default: return '#F3F4F6'; // Default Gray
-      }
-  };
 
   const renderRewardItem: ListRenderItem<MenuItemResult> = ({ item }) => (
       <RewardCard item={item} />
@@ -428,12 +415,20 @@ export default function HomeScreen() {
                           >
                               <View style={[
                                   styles.filterIconContainer,
-                                  activeCategory === cat.id && { backgroundColor: getCategoryColor(cat.name), borderColor: getCategoryColor(cat.name) },
+                                  activeCategory === cat.id && {
+                                      backgroundColor: cat.color ? hexToRgba(cat.color, 0.15) : '#F5F6F8', // Subtle tinted background
+                                      borderColor: cat.color || '#E0E0E0',
+                                      shadowColor: cat.color || '#000',
+                                  },
                                   activeCategory === cat.id && styles.filterIconContainerActive
                               ]}>
                                 <Text style={styles.filterEmoji}>{cat.emoji}</Text>
                               </View>
-                              <Text style={[styles.filterLabel, activeCategory === cat.id && styles.filterLabelActive]}>{cat.name}</Text>
+                              <Text style={[
+                                  styles.filterLabel,
+                                  activeCategory === cat.id && styles.filterLabelActive,
+                                  activeCategory === cat.id && { color: cat.color || '#121212' }
+                              ]}>{cat.name}</Text>
                           </TouchableOpacity>
                       ))}
                   </ScrollView>
@@ -785,12 +780,9 @@ const styles = StyleSheet.create({
       // Removed borders and shadows for inactive state
   },
   filterIconContainerActive: {
-      backgroundColor: '#FFFFFF',
       borderWidth: 1,
-      borderColor: '#E0E0E0',
-      shadowColor: '#000',
       shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.1,
+      shadowOpacity: 0.2,
       shadowRadius: 8,
       elevation: 4,
   },
