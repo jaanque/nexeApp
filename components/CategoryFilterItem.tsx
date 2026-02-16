@@ -1,12 +1,5 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { TouchableOpacity, Text, StyleSheet, View } from 'react-native';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withTiming,
-  interpolateColor,
-  interpolate
-} from 'react-native-reanimated';
 import { getCategoryColor, hexToRgba } from '@/lib/colorGenerator';
 
 interface CategoryFilterItemProps {
@@ -17,52 +10,8 @@ interface CategoryFilterItemProps {
 
 export function CategoryFilterItem({ item, isActive, onPress }: CategoryFilterItemProps) {
   const categoryColor = getCategoryColor(item.emoji);
-  const activeValue = useSharedValue(isActive ? 1 : 0);
-
-  useEffect(() => {
-    activeValue.value = withTiming(isActive ? 1 : 0, { duration: 300 });
-  }, [isActive]);
-
-  const animatedContainerStyle = useAnimatedStyle(() => {
-    const backgroundColor = interpolateColor(
-      activeValue.value,
-      [0, 1],
-      ['rgba(245, 246, 248, 1)', hexToRgba(categoryColor, 0.25)] // From #F5F6F8 (Surface) to Pastel Tint
-    );
-
-    const borderColor = interpolateColor(
-      activeValue.value,
-      [0, 1],
-      ['rgba(0,0,0,0)', categoryColor]
-    );
-
-    const scale = interpolate(activeValue.value, [0, 1], [1, 1.05]);
-
-    return {
-      backgroundColor,
-      borderColor,
-      transform: [{ scale }],
-      borderWidth: 1, // Constant border width to prevent layout shifts
-      shadowColor: categoryColor,
-      shadowOpacity: interpolate(activeValue.value, [0, 1], [0, 0.2]),
-      shadowRadius: interpolate(activeValue.value, [0, 1], [0, 8]),
-      shadowOffset: { width: 0, height: 4 },
-      elevation: interpolate(activeValue.value, [0, 1], [0, 4]),
-    };
-  });
-
-  const animatedTextStyle = useAnimatedStyle(() => {
-     const color = interpolateColor(
-        activeValue.value,
-        [0, 1],
-        ['#121212', categoryColor] // Text turns to brand color
-     );
-
-     return {
-        color,
-        fontWeight: isActive ? '700' : '600' // Step change for weight
-     };
-  });
+  const activeBackgroundColor = hexToRgba(categoryColor, 0.25);
+  const inactiveBackgroundColor = 'rgba(245, 246, 248, 1)'; // #F5F6F8
 
   return (
     <TouchableOpacity
@@ -70,12 +19,29 @@ export function CategoryFilterItem({ item, isActive, onPress }: CategoryFilterIt
       onPress={onPress}
       activeOpacity={0.7}
     >
-      <Animated.View style={[styles.iconContainer, animatedContainerStyle]}>
+      <View style={[
+        styles.iconContainer,
+        {
+          backgroundColor: isActive ? activeBackgroundColor : inactiveBackgroundColor,
+          borderColor: isActive ? categoryColor : 'transparent',
+          borderWidth: 1, // Keep constant
+          shadowColor: isActive ? categoryColor : 'transparent',
+          shadowOpacity: isActive ? 0.2 : 0,
+          shadowRadius: isActive ? 8 : 0,
+          elevation: isActive ? 4 : 0,
+        }
+      ]}>
         <Text style={styles.emoji}>{item.emoji}</Text>
-      </Animated.View>
-      <Animated.Text style={[styles.label, animatedTextStyle]}>
+      </View>
+      <Text style={[
+        styles.label,
+        {
+          color: isActive ? categoryColor : '#121212',
+          fontWeight: isActive ? '700' : '600'
+        }
+      ]}>
         {item.name}
-      </Animated.Text>
+      </Text>
     </TouchableOpacity>
   );
 }
@@ -93,7 +59,7 @@ const styles = StyleSheet.create({
       justifyContent: 'center',
       alignItems: 'center',
       marginBottom: 8,
-      // Default background is handled in animated style
+      shadowOffset: { width: 0, height: 4 },
   },
   emoji: {
       fontSize: 32,
@@ -101,6 +67,5 @@ const styles = StyleSheet.create({
   label: {
       fontSize: 12,
       textAlign: 'center',
-      // fontWeight handled in animated style
   },
 });
