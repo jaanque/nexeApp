@@ -13,6 +13,7 @@ import { StatusBar } from 'expo-status-bar';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useDebounce } from '@/hooks/useDebounce';
 import { HomeScreenSkeleton } from '@/components/HomeScreenSkeleton';
+import { getCategoryColor, hexToRgba } from '@/lib/colorGenerator';
 
 // Enable LayoutAnimation on Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -250,7 +251,7 @@ export default function HomeScreen() {
 
   async function fetchCategories() {
       try {
-          const { data, error } = await supabase.from('categories').select('*').order('name');
+          const { data, error } = await supabase.from('categories').select('*').order('id', { ascending: true });
           if (error) throw error;
           if (data) {
               setCategories(data);
@@ -406,31 +407,34 @@ export default function HomeScreen() {
 
               {!isSearching && (
                   <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterScroll} contentContainerStyle={styles.filterContent}>
-                      {categories.map((cat) => (
-                          <TouchableOpacity
-                            key={cat.id}
-                            style={[styles.filterItem, activeCategory === cat.id && styles.filterItemActive]}
-                            onPress={() => setActiveCategory(activeCategory === cat.id ? null : cat.id)}
-                            activeOpacity={0.7}
-                          >
-                              <View style={[
-                                  styles.filterIconContainer,
-                                  activeCategory === cat.id && {
-                                      backgroundColor: cat.color ? hexToRgba(cat.color, 0.15) : '#F5F6F8', // Subtle tinted background
-                                      borderColor: cat.color || '#E0E0E0',
-                                      shadowColor: cat.color || '#000',
-                                  },
-                                  activeCategory === cat.id && styles.filterIconContainerActive
-                              ]}>
-                                <Text style={styles.filterEmoji}>{cat.emoji}</Text>
-                              </View>
-                              <Text style={[
-                                  styles.filterLabel,
-                                  activeCategory === cat.id && styles.filterLabelActive,
-                                  activeCategory === cat.id && { color: cat.color || '#121212' }
-                              ]}>{cat.name}</Text>
-                          </TouchableOpacity>
-                      ))}
+                      {categories.map((cat) => {
+                          const categoryColor = getCategoryColor(cat.emoji);
+                          return (
+                            <TouchableOpacity
+                                key={cat.id}
+                                style={[styles.filterItem, activeCategory === cat.id && styles.filterItemActive]}
+                                onPress={() => setActiveCategory(activeCategory === cat.id ? null : cat.id)}
+                                activeOpacity={0.7}
+                            >
+                                <View style={[
+                                    styles.filterIconContainer,
+                                    activeCategory === cat.id && {
+                                        backgroundColor: hexToRgba(categoryColor, 0.15), // Subtle tinted background
+                                        borderColor: categoryColor,
+                                        shadowColor: categoryColor,
+                                    },
+                                    activeCategory === cat.id && styles.filterIconContainerActive
+                                ]}>
+                                    <Text style={styles.filterEmoji}>{cat.emoji}</Text>
+                                </View>
+                                <Text style={[
+                                    styles.filterLabel,
+                                    activeCategory === cat.id && styles.filterLabelActive,
+                                    activeCategory === cat.id && { color: categoryColor }
+                                ]}>{cat.name}</Text>
+                            </TouchableOpacity>
+                          );
+                      })}
                   </ScrollView>
               )}
           </View>
