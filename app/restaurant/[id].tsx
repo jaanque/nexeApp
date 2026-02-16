@@ -49,6 +49,9 @@ interface Restaurant {
   delivery_time?: string;
   opening_time?: string;
   closing_time?: string;
+  categories?: {
+      name: string;
+  };
 }
 
 export default function RestaurantDetailScreen() {
@@ -77,7 +80,7 @@ export default function RestaurantDetailScreen() {
         setLoading(true);
         const { data: restaurantData, error: restaurantError } = await supabase
           .from('restaurants')
-          .select('*')
+          .select('*, categories(name)')
           .eq('id', id)
           .single();
 
@@ -351,9 +354,7 @@ export default function RestaurantDetailScreen() {
                 <Text style={styles.title}>{restaurant.name}</Text>
 
                 <View style={styles.metaRow}>
-                    <Text style={styles.cuisineText}>{restaurant.cuisine_type}</Text>
-                    <Text style={styles.metaDot}>•</Text>
-                    <Text style={styles.priceTier}>$$</Text>
+                    <Text style={styles.cuisineText}>{restaurant.categories?.name || restaurant.cuisine_type}</Text>
                 </View>
 
                 {/* Opening Hours Status */}
