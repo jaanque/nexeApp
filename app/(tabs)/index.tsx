@@ -37,6 +37,7 @@ interface Category {
   id: number;
   name: string;
   emoji: string;
+  color?: string;
 }
 
 // Interface for MenuItem search results
