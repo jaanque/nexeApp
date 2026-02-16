@@ -3,13 +3,13 @@ import { TouchableOpacity, Text, StyleSheet, View } from 'react-native';
 import { getCategoryColor, hexToRgba } from '@/lib/colorGenerator';
 
 interface CategoryFilterItemProps {
-  item: { id: number; name: string; emoji: string };
+  item: { id: number; name: string; emoji: string; color?: string };
   isActive: boolean;
   onPress: () => void;
 }
 
 export function CategoryFilterItem({ item, isActive, onPress }: CategoryFilterItemProps) {
-  const categoryColor = getCategoryColor(item.emoji);
+  const categoryColor = item.color || getCategoryColor(item.emoji);
   const activeBackgroundColor = hexToRgba(categoryColor, 0.25);
   const inactiveBackgroundColor = 'rgba(245, 246, 248, 1)'; // #F5F6F8
 
