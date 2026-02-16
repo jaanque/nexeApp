@@ -44,10 +44,10 @@ interface MenuItemResult {
 }
 
 const CATEGORIES = [
-  { id: 'Restauración', label: 'Restauración', icon: 'restaurant-outline' },
-  { id: 'Moda', label: 'Moda', icon: 'shirt-outline' },
-  { id: 'Servicios', label: 'Servicios', icon: 'briefcase-outline' },
-  { id: 'Ocio', label: 'Ocio', icon: 'ticket-outline' },
+  { id: 'Restauración', label: 'Restauración', emoji: '🍔' },
+  { id: 'Moda', label: 'Moda', emoji: '🛍️' },
+  { id: 'Servicios', label: 'Servicios', emoji: '✨' },
+  { id: 'Ocio', label: 'Ocio', emoji: '🍿' },
 ];
 
 export default function HomeScreen() {
@@ -364,17 +364,14 @@ export default function HomeScreen() {
                       {CATEGORIES.map((cat) => (
                           <TouchableOpacity
                             key={cat.id}
-                            style={[styles.filterPill, activeCategory === cat.id && styles.filterPillActive]}
+                            style={[styles.filterItem, activeCategory === cat.id && styles.filterItemActive]}
                             onPress={() => setActiveCategory(activeCategory === cat.id ? null : cat.id)}
                             activeOpacity={0.7}
                           >
-                              <Ionicons
-                                name={cat.icon as any}
-                                size={16}
-                                color={activeCategory === cat.id ? "#FFFFFF" : "#121212"}
-                                style={{marginRight: 6}}
-                              />
-                              <Text style={[styles.filterText, activeCategory === cat.id && styles.filterTextActive]}>{cat.label}</Text>
+                              <View style={[styles.filterIconContainer, activeCategory === cat.id && styles.filterIconContainerActive]}>
+                                <Text style={styles.filterEmoji}>{cat.emoji}</Text>
+                              </View>
+                              <Text style={[styles.filterLabel, activeCategory === cat.id && styles.filterLabelActive]}>{cat.label}</Text>
                           </TouchableOpacity>
                       ))}
                   </ScrollView>
@@ -668,7 +665,7 @@ const styles = StyleSheet.create({
       paddingHorizontal: 16,
       height: 56, // Increased height for better touch target
       borderRadius: 12, // Professional Squircle
-      marginBottom: 16,
+      marginBottom: 24, // Increased spacing
       borderWidth: 1,
       borderColor: 'transparent', // Default no border
   },
@@ -703,25 +700,46 @@ const styles = StyleSheet.create({
   filterContent: {
       paddingRight: 20,
   },
-  filterPill: {
-      flexDirection: 'row',
+  filterItem: {
       alignItems: 'center',
-      paddingHorizontal: 16,
-      paddingVertical: 10,
-      borderRadius: 12, // Professional Squircle (was 20)
+      marginRight: 20,
+      minWidth: 70, // Ensure touch target
+  },
+  filterItemActive: {
+      // No background change on container
+  },
+  filterIconContainer: {
+      width: 64,
+      height: 64,
+      borderRadius: 24, // Squircle
+      backgroundColor: '#FFFFFF', // White background
+      borderWidth: 1,
+      borderColor: '#F0F0F0', // Subtle border
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginBottom: 8,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.05,
+      shadowRadius: 4,
+      elevation: 2,
+  },
+  filterIconContainerActive: {
       backgroundColor: '#F5F6F8',
-      marginRight: 10,
+      borderColor: '#121212', // Active border
   },
-  filterPillActive: {
-      backgroundColor: '#121212',
+  filterEmoji: {
+      fontSize: 32,
   },
-  filterText: {
-      fontSize: 14,
-      color: '#121212',
+  filterLabel: {
+      fontSize: 12,
       fontWeight: '600',
+      color: '#121212',
+      textAlign: 'center',
   },
-  filterTextActive: {
-      color: '#FFFFFF',
+  filterLabelActive: {
+      color: '#121212', // Keep text black
+      fontWeight: 'bold',
   },
 
   // Sections
