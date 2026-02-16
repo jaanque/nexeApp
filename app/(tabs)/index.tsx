@@ -58,6 +58,11 @@ export default function HomeScreen() {
   const [popularRestaurants, setPopularRestaurants] = useState<Restaurant[]>([]);
   const [sortedRestaurants, setSortedRestaurants] = useState<Restaurant[]>([]);
   const [rewardItems, setRewardItems] = useState<MenuItemResult[]>([]);
+
+  // Data Store for Client-Side Filtering
+  const [allRestaurants, setAllRestaurants] = useState<Restaurant[]>([]);
+  const [allRewards, setAllRewards] = useState<MenuItemResult[]>([]);
+
   const [loading, setLoading] = useState(true);
   const [categories, setCategories] = useState<Category[]>([]);
 
@@ -99,10 +104,19 @@ export default function HomeScreen() {
     getUserLocation();
   }, []);
 
-  // Re-fetch restaurants when category changes
+  // Filter data when category changes (Client-Side)
   useEffect(() => {
-      fetchData(activeCategory);
-  }, [activeCategory]);
+      if (activeCategory === null) {
+          setPopularRestaurants(allRestaurants);
+          setRewardItems(allRewards);
+      } else {
+          const filteredRest = allRestaurants.filter(r => r.category_id === activeCategory);
+          setPopularRestaurants(filteredRest);
+
+          const filteredRewards = allRewards.filter(i => i.category_id === activeCategory);
+          setRewardItems(filteredRewards);
+      }
+  }, [activeCategory, allRestaurants, allRewards]);
 
   // Effect to handle search when debounced query changes
   useEffect(() => {
@@ -246,34 +260,31 @@ export default function HomeScreen() {
       }
   }
 
-  async function fetchData(categoryId?: number | null) {
+  async function fetchData() {
     try {
       setLoading(true);
 
-      // Fetch popular restaurants
-      let restQuery = supabase.from('restaurants').select('*');
+      // Fetch ALL restaurants (or a large limit)
+      const { data: restData } = await supabase
+        .from('restaurants')
+        .select('*')
+        .limit(100);
 
-      if (categoryId) {
-          restQuery = restQuery.eq('category_id', categoryId);
-      } else {
-          restQuery = restQuery.limit(20);
+      if (restData) {
+          setAllRestaurants(restData);
+          setPopularRestaurants(restData);
       }
 
-      const { data: restData } = await restQuery;
-      if (restData) setPopularRestaurants(restData);
-
-      // Fetch menu items (rewards/dishes)
-      let menuQuery = supabase
+      // Fetch ALL menu items (or a large limit)
+      const { data: menuData } = await supabase
         .from('menu_items')
-        .select('*, restaurants(name)');
+        .select('*, restaurants(name)')
+        .limit(50);
 
-      if (categoryId) {
-        menuQuery = menuQuery.eq('category_id', categoryId);
+      if (menuData) {
+          setAllRewards(menuData as any);
+          setRewardItems(menuData as any);
       }
-
-      const { data: menuData } = await menuQuery.limit(10);
-
-      if (menuData) setRewardItems(menuData as any);
 
     } catch (error) {
        console.error("Error fetching data", error);
@@ -281,6 +292,20 @@ export default function HomeScreen() {
         setLoading(false);
     }
   }
+
+  const getCategoryColor = (name: string) => {
+      switch (name) {
+        case 'Hamburguesas': return '#FFEDD5'; // Light Orange
+        case 'Pizza': return '#FEE2E2'; // Light Red
+        case 'Sushi': return '#DBEAFE'; // Light Blue
+        case 'Asiática': return '#FEF3C7'; // Light Yellow
+        case 'Mexicana': return '#DCFCE7'; // Light Green
+        case 'Café & Postres': return '#F3E8FF'; // Light Purple
+        case 'Saludable': return '#D1FAE5'; // Mint
+        case 'Bebidas': return '#E0F2FE'; // Sky Blue
+        default: return '#F3F4F6'; // Default Gray
+      }
+  };
 
   const renderRewardItem: ListRenderItem<MenuItemResult> = ({ item }) => (
       <RewardCard item={item} />
@@ -401,7 +426,11 @@ export default function HomeScreen() {
                             onPress={() => setActiveCategory(activeCategory === cat.id ? null : cat.id)}
                             activeOpacity={0.7}
                           >
-                              <View style={[styles.filterIconContainer, activeCategory === cat.id && styles.filterIconContainerActive]}>
+                              <View style={[
+                                  styles.filterIconContainer,
+                                  activeCategory === cat.id && { backgroundColor: getCategoryColor(cat.name), borderColor: getCategoryColor(cat.name) },
+                                  activeCategory === cat.id && styles.filterIconContainerActive
+                              ]}>
                                 <Text style={styles.filterEmoji}>{cat.emoji}</Text>
                               </View>
                               <Text style={[styles.filterLabel, activeCategory === cat.id && styles.filterLabelActive]}>{cat.name}</Text>
