@@ -1,10 +1,12 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, SectionList, StatusBar as RNStatusBar } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
-import { useEffect, useState } from 'react';
-import { supabase } from '../../lib/supabase';
+import { useEffect, useState, useMemo } from 'react';
+import { supabase } from '@/lib/supabase';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import * as Haptics from 'expo-haptics';
 
 interface MenuItem {
   id: number;
@@ -22,6 +24,9 @@ interface Restaurant {
   rating: number;
   cuisine_type: string;
   address: string;
+  delivery_fee?: number;
+  min_order?: number;
+  delivery_time?: string;
 }
 
 const PARALLAX_HEADER_HEIGHT = 250;
@@ -29,6 +34,7 @@ const PARALLAX_HEADER_HEIGHT = 250;
 export default function RestaurantDetailScreen() {
   const { id } = useLocalSearchParams();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -69,7 +75,26 @@ export default function RestaurantDetailScreen() {
     }
   }, [id]);
 
+  // Group items by category for SectionList
+  const sections = useMemo(() => {
+    if (!menuItems.length) return [];
+
+    const groups: { [key: string]: MenuItem[] } = {};
+    menuItems.forEach(item => {
+      const cat = item.category || 'Otros';
+      if (!groups[cat]) groups[cat] = [];
+      groups[cat].push(item);
+    });
+
+    // Sort categories alphabetically or by predefined order if needed
+    return Object.keys(groups).sort().map(category => ({
+      title: category,
+      data: groups[category],
+    }));
+  }, [menuItems]);
+
   const handleAddToCart = (itemId: number) => {
+    if (process.env.EXPO_OS === 'ios') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setCart((prev) => ({
       ...prev,
       [itemId]: (prev[itemId] || 0) + 1,
@@ -77,6 +102,7 @@ export default function RestaurantDetailScreen() {
   };
 
   const handleRemoveFromCart = (itemId: number) => {
+    if (process.env.EXPO_OS === 'ios') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setCart((prev) => {
       const newCart = { ...prev };
       if (newCart[itemId] > 1) {
@@ -92,7 +118,6 @@ export default function RestaurantDetailScreen() {
     let total = 0;
     menuItems.forEach((item) => {
       if (cart[item.id]) {
-        // Assume price * 10 is the points cost
         total += Math.round(item.price * 10) * cart[item.id];
       }
     });
@@ -100,8 +125,6 @@ export default function RestaurantDetailScreen() {
   };
 
   const handleCheckout = () => {
-    // Pass cart data as a stringified object
-    // We only need the items in the cart
     const cartItems = menuItems.filter(item => cart[item.id]).map(item => ({
         ...item,
         quantity: cart[item.id],
@@ -120,7 +143,7 @@ export default function RestaurantDetailScreen() {
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#000" />
+        <ActivityIndicator size="large" color="#121212" />
       </View>
     );
   }
@@ -135,11 +158,57 @@ export default function RestaurantDetailScreen() {
 
   const totalPoints = calculateTotalPoints();
 
-  return (
-    <View style={styles.container}>
-      <Stack.Screen options={{ headerShown: false }} />
+  const renderSectionHeader = ({ section: { title } }: { section: { title: string } }) => (
+    <View style={styles.sectionHeaderContainer}>
+      <Text style={styles.sectionHeaderTitle}>{title}</Text>
+    </View>
+  );
 
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+  const renderItem = ({ item }: { item: MenuItem }) => {
+    const pointsPrice = Math.round(item.price * 10);
+    const quantity = cart[item.id] || 0;
+
+    return (
+      <View style={styles.menuItem}>
+        {/* Left Side: Info */}
+        <View style={styles.menuItemInfo}>
+            <Text style={styles.itemName}>{item.name}</Text>
+            {item.description ? (
+                <Text style={styles.itemDescription} numberOfLines={2}>{item.description}</Text>
+            ) : null}
+            <Text style={styles.itemPrice}>{pointsPrice} pts</Text>
+        </View>
+
+        {/* Right Side: Image & Add Button */}
+        <View style={styles.menuItemRight}>
+            {item.image_url && (
+                <Image source={{ uri: item.image_url }} style={styles.itemImage} contentFit="cover" />
+            )}
+
+            <View style={styles.actionContainer}>
+                {quantity > 0 ? (
+                    <View style={styles.qtyControls}>
+                        <TouchableOpacity onPress={() => handleRemoveFromCart(item.id)} style={styles.qtyButton} hitSlop={10}>
+                            <Ionicons name="remove" size={16} color="#000" />
+                        </TouchableOpacity>
+                        <Text style={styles.qtyText}>{quantity}</Text>
+                        <TouchableOpacity onPress={() => handleAddToCart(item.id)} style={styles.qtyButton} hitSlop={10}>
+                            <Ionicons name="add" size={16} color="#000" />
+                        </TouchableOpacity>
+                    </View>
+                ) : (
+                    <TouchableOpacity onPress={() => handleAddToCart(item.id)} style={styles.addButton} hitSlop={10}>
+                        <Ionicons name="add" size={20} color="#121212" />
+                    </TouchableOpacity>
+                )}
+            </View>
+        </View>
+      </View>
+    );
+  };
+
+  const ListHeaderComponent = () => (
+    <View style={{ backgroundColor: '#fff' }}>
         {/* Hero Image */}
         <View style={styles.heroContainer}>
           <Image
@@ -149,82 +218,83 @@ export default function RestaurantDetailScreen() {
             transition={300}
           />
           <LinearGradient
-            colors={['rgba(0,0,0,0.5)', 'transparent', 'rgba(0,0,0,0.1)']}
-            style={styles.gradientOverlay}
+            colors={['rgba(0,0,0,0.4)', 'transparent']}
+            style={styles.gradientOverlayTop}
           />
-          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-            <Ionicons name="arrow-back" size={24} color="#fff" />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.favoriteButton}>
-            <Ionicons name="heart-outline" size={24} color="#fff" />
-          </TouchableOpacity>
+
+          {/* Navigation Buttons */}
+          <View style={[styles.navBar, { paddingTop: insets.top }]}>
+             <TouchableOpacity style={styles.iconButton} onPress={() => router.back()}>
+                <Ionicons name="arrow-back" size={24} color="#fff" />
+             </TouchableOpacity>
+             <View style={{flexDirection: 'row'}}>
+                <TouchableOpacity style={[styles.iconButton, { marginRight: 12 }]}>
+                    <Ionicons name="search" size={24} color="#fff" />
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.iconButton}>
+                    <Ionicons name="ellipsis-horizontal" size={24} color="#fff" />
+                </TouchableOpacity>
+             </View>
+          </View>
         </View>
 
         {/* Restaurant Info Header */}
         <View style={styles.infoContainer}>
           <Text style={styles.restaurantName}>{restaurant.name}</Text>
-          <View style={styles.metaRow}>
-             <View style={styles.ratingBadge}>
-                <Ionicons name="star" size={14} color="#000" />
-                <Text style={styles.ratingText}>{restaurant.rating}</Text>
+
+          <View style={styles.metaContainer}>
+             <View style={styles.metaRow}>
+                <Ionicons name="star" size={14} color="#121212" />
+                <Text style={styles.ratingText}>{restaurant.rating} (500+)</Text>
+                <Text style={styles.metaText}> • {restaurant.cuisine_type}</Text>
+                <Text style={styles.metaText}> • $</Text>
              </View>
-             <Text style={styles.metaText}> • {restaurant.cuisine_type} • {restaurant.address}</Text>
+
+             <View style={styles.deliveryInfoRow}>
+                <View style={styles.deliveryPill}>
+                    <Text style={styles.deliveryTime}>20-30 min</Text>
+                </View>
+                <Text style={styles.deliveryFee}> • Entrega: $0.00</Text>
+             </View>
           </View>
+
+          {/* Action Row */}
+          <View style={styles.actionRow}>
+             <TouchableOpacity style={styles.actionButton}>
+                <Ionicons name="heart-outline" size={20} color="#121212" />
+                <Text style={styles.actionButtonText}>Favorito</Text>
+             </TouchableOpacity>
+             <TouchableOpacity style={styles.actionButton}>
+                <Ionicons name="share-social-outline" size={20} color="#121212" />
+                <Text style={styles.actionButtonText}>Compartir</Text>
+             </TouchableOpacity>
+          </View>
+
+          <View style={styles.separator} />
         </View>
+    </View>
+  );
 
-        {/* Menu Section */}
-        <View style={styles.menuContainer}>
-          <Text style={styles.menuTitle}>Menú</Text>
-          {menuItems.map((item) => {
-            const pointsPrice = Math.round(item.price * 10);
-            const quantity = cart[item.id] || 0;
+  return (
+    <View style={styles.container}>
+      <Stack.Screen options={{ headerShown: false }} />
+      <RNStatusBar barStyle="light-content" translucent backgroundColor="transparent" />
 
-            return (
-                <View key={item.id} style={styles.menuItem}>
-                <View style={styles.menuItemInfo}>
-                    <Text style={styles.itemName}>{item.name}</Text>
-                    {item.description && (
-                        <Text style={styles.itemDescription} numberOfLines={2}>{item.description}</Text>
-                    )}
-                    <Text style={styles.itemPrice}>{pointsPrice} pts</Text>
-                </View>
-                <View style={styles.rightSection}>
-                    {item.image_url && (
-                        <Image source={{ uri: item.image_url }} style={styles.itemImage} />
-                    )}
-
-                    {/* Add/Remove Buttons */}
-                    <View style={styles.qtyContainer}>
-                        {quantity > 0 ? (
-                            <View style={styles.qtyControls}>
-                                <TouchableOpacity onPress={() => handleRemoveFromCart(item.id)} style={styles.qtyButton}>
-                                    <Ionicons name="remove" size={16} color="#000" />
-                                </TouchableOpacity>
-                                <Text style={styles.qtyText}>{quantity}</Text>
-                                <TouchableOpacity onPress={() => handleAddToCart(item.id)} style={styles.qtyButton}>
-                                    <Ionicons name="add" size={16} color="#000" />
-                                </TouchableOpacity>
-                            </View>
-                        ) : (
-                            <TouchableOpacity onPress={() => handleAddToCart(item.id)} style={styles.addButton}>
-                                <Ionicons name="add" size={20} color="#fff" />
-                            </TouchableOpacity>
-                        )}
-                    </View>
-                </View>
-                </View>
-            );
-          })}
-        </View>
-
-        {/* Bottom padding for floating button */}
-        <View style={{ height: 100 }} />
-      </ScrollView>
+      <SectionList
+        sections={sections}
+        keyExtractor={(item) => item.id.toString()}
+        renderItem={renderItem}
+        renderSectionHeader={renderSectionHeader}
+        ListHeaderComponent={ListHeaderComponent}
+        stickySectionHeadersEnabled={true}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 100 }}
+      />
 
       {/* Floating Cart Button */}
       {totalPoints > 0 && (
-        <View style={styles.floatingButtonContainer}>
-            <TouchableOpacity style={styles.cartButton} onPress={handleCheckout}>
+        <View style={[styles.floatingButtonContainer, { paddingBottom: insets.bottom > 0 ? insets.bottom : 20 }]}>
+            <TouchableOpacity style={styles.cartButton} onPress={handleCheckout} activeOpacity={0.9}>
                 <View style={styles.cartCountCircle}>
                     <Text style={styles.cartCountText}>{Object.values(cart).reduce((a, b) => a + b, 0)}</Text>
                 </View>
@@ -247,97 +317,147 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  scrollView: {
-    flex: 1,
-  },
+
+  // Hero Section
   heroContainer: {
     height: PARALLAX_HEADER_HEIGHT,
     width: '100%',
     position: 'relative',
+    backgroundColor: '#eee',
   },
   heroImage: {
     width: '100%',
     height: '100%',
   },
-  gradientOverlay: {
+  gradientOverlayTop: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
     height: 100,
   },
-  backButton: {
-    position: 'absolute',
-    top: 50,
-    left: 20,
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(0,0,0,0.3)',
-    justifyContent: 'center',
-    alignItems: 'center',
+  navBar: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      paddingHorizontal: 16,
+      paddingBottom: 10,
+      zIndex: 10,
   },
-  favoriteButton: {
-    position: 'absolute',
-    top: 50,
-    right: 20,
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(0,0,0,0.3)',
-    justifyContent: 'center',
-    alignItems: 'center',
+  iconButton: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      backgroundColor: 'rgba(0,0,0,0.3)', // Semi-transparent black
+      justifyContent: 'center',
+      alignItems: 'center',
   },
+
+  // Info Header
   infoContainer: {
-    padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 24, // Slight curve over image
+    borderTopRightRadius: 24,
+    marginTop: -24, // Pull up over image
   },
   restaurantName: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#111',
+    fontSize: 32, // Large Hero Title
+    fontWeight: '800', // Extra Bold
+    color: '#121212',
     marginBottom: 8,
+    letterSpacing: -0.5,
+  },
+  metaContainer: {
+      marginBottom: 16,
   },
   metaRow: {
     flexDirection: 'row',
     alignItems: 'center',
-  },
-  ratingBadge: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      backgroundColor: '#f6f6f6',
-      paddingHorizontal: 8,
-      paddingVertical: 4,
-      borderRadius: 12,
-      marginRight: 8,
+    marginBottom: 6,
   },
   ratingText: {
       fontWeight: 'bold',
       marginLeft: 4,
       fontSize: 14,
+      color: '#121212',
   },
   metaText: {
-      color: '#666',
+      color: '#6E7278',
       fontSize: 14,
   },
+  deliveryInfoRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+  },
+  deliveryPill: {
+      backgroundColor: '#F5F6F8',
+      paddingHorizontal: 8,
+      paddingVertical: 4,
+      borderRadius: 12,
+  },
+  deliveryTime: {
+      fontSize: 12,
+      fontWeight: '600',
+      color: '#121212',
+  },
+  deliveryFee: {
+      color: '#6E7278',
+      fontSize: 13,
+      marginLeft: 6,
+  },
 
-  // Menu
-  menuContainer: {
-      padding: 20,
-  },
-  menuTitle: {
-      fontSize: 20,
-      fontWeight: 'bold',
+  // Actions
+  actionRow: {
+      flexDirection: 'row',
       marginBottom: 20,
-      color: '#111',
   },
+  actionButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: '#F5F6F8', // Light Gray Pill
+      paddingHorizontal: 16,
+      paddingVertical: 10,
+      borderRadius: 24,
+      marginRight: 12,
+  },
+  actionButtonText: {
+      fontSize: 14,
+      fontWeight: '600',
+      color: '#121212',
+      marginLeft: 8,
+  },
+  separator: {
+      height: 1,
+      backgroundColor: '#F0F0F0',
+      width: '100%',
+  },
+
+  // Section Headers
+  sectionHeaderContainer: {
+      backgroundColor: '#fff',
+      paddingHorizontal: 20,
+      paddingVertical: 16,
+      borderBottomWidth: 1,
+      borderBottomColor: '#F0F0F0',
+  },
+  sectionHeaderTitle: {
+      fontSize: 20,
+      fontWeight: '800',
+      color: '#121212',
+  },
+
+  // Menu Items (Uber Style)
   menuItem: {
       flexDirection: 'row',
-      marginBottom: 24,
+      padding: 20,
       borderBottomWidth: 1,
-      borderBottomColor: '#f9f9f9',
-      paddingBottom: 24,
+      borderBottomColor: '#F0F0F0',
+      backgroundColor: '#fff',
   },
   menuItemInfo: {
       flex: 1,
@@ -346,92 +466,99 @@ const styles = StyleSheet.create({
   },
   itemName: {
       fontSize: 16,
-      fontWeight: 'bold',
-      color: '#111',
-      marginBottom: 4,
+      fontWeight: 'bold', // Strong
+      color: '#121212',
+      marginBottom: 6,
   },
   itemDescription: {
       fontSize: 14,
-      color: '#666',
+      color: '#6E7278', // Secondary Text
       marginBottom: 8,
       lineHeight: 20,
   },
   itemPrice: {
       fontSize: 15,
-      fontWeight: 'bold',
-      color: '#0a7ea4', // Brand color for points
+      fontWeight: '600',
+      color: '#121212', // Black Price
   },
-  rightSection: {
-      alignItems: 'flex-end',
+  menuItemRight: {
+      alignItems: 'flex-end', // Right align image
+      justifyContent: 'space-between',
   },
   itemImage: {
-      width: 100,
-      height: 100,
-      borderRadius: 12,
-      backgroundColor: '#eee',
+      width: 96, // Fixed Size
+      height: 96,
+      borderRadius: 12, // Squircle
+      backgroundColor: '#F5F6F8',
       marginBottom: 8,
   },
-  qtyContainer: {
-      alignItems: 'center',
-      justifyContent: 'center',
-      height: 36,
+  actionContainer: {
+      alignItems: 'flex-end',
+      minWidth: 96, // Match image width for alignment
   },
   addButton: {
-      width: 36,
-      height: 36,
-      borderRadius: 18,
-      backgroundColor: '#000',
+      width: 32,
+      height: 32,
+      borderRadius: 16,
+      backgroundColor: '#F5F6F8', // Subtle button
       justifyContent: 'center',
       alignItems: 'center',
   },
   qtyControls: {
       flexDirection: 'row',
       alignItems: 'center',
-      backgroundColor: '#f0f0f0',
-      borderRadius: 18,
+      backgroundColor: '#fff',
+      borderRadius: 20,
       padding: 2,
+      borderWidth: 1,
+      borderColor: '#E0E0E0',
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.05,
+      shadowRadius: 4,
+      elevation: 2,
   },
   qtyButton: {
       width: 32,
       height: 32,
-      borderRadius: 16,
-      backgroundColor: '#fff',
       justifyContent: 'center',
       alignItems: 'center',
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.1,
-      shadowRadius: 1,
-      elevation: 1,
   },
   qtyText: {
-      marginHorizontal: 12,
+      marginHorizontal: 8,
       fontWeight: 'bold',
       fontSize: 14,
+      minWidth: 16,
+      textAlign: 'center',
   },
 
   // Floating Button
   floatingButtonContainer: {
       position: 'absolute',
-      bottom: 30,
-      left: 20,
-      right: 20,
+      bottom: 0,
+      left: 0,
+      right: 0,
+      paddingHorizontal: 20,
+      paddingTop: 16,
+      backgroundColor: 'rgba(255,255,255,0.9)', // Slight blur background
+      borderTopWidth: 1,
+      borderTopColor: '#F0F0F0',
   },
   cartButton: {
-      backgroundColor: '#222',
+      backgroundColor: '#121212', // Pure Black
       flexDirection: 'row',
       justifyContent: 'space-between',
       padding: 16,
-      borderRadius: 16,
+      borderRadius: 16, // Squircle
       alignItems: 'center',
       shadowColor: '#000',
       shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.25,
+      shadowOpacity: 0.2,
       shadowRadius: 8,
       elevation: 6,
   },
   cartCountCircle: {
-      backgroundColor: '#444',
+      backgroundColor: '#333',
       width: 24,
       height: 24,
       borderRadius: 12,
