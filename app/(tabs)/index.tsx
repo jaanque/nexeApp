@@ -10,6 +10,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import * as Location from 'expo-location';
 import { StatusBar } from 'expo-status-bar';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useDebounce } from '@/hooks/useDebounce';
 import { HomeScreenSkeleton } from '@/components/HomeScreenSkeleton';
 
@@ -306,14 +307,19 @@ export default function HomeScreen() {
           {/* 2. Hero Card (Wallet) */}
           {!isSearching && (
               <View style={styles.heroContainer}>
-                <View style={styles.heroCard}>
+                <LinearGradient
+                    colors={['#252525', '#121212']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={styles.heroCard}
+                >
                     <View style={styles.heroLeft}>
                         <View style={{flexDirection: 'row', alignItems: 'flex-end'}}>
                             <Text style={styles.heroPoints}>{points.toLocaleString()}</Text>
                             <Text style={styles.heroPointsSuffix}> pts</Text>
                         </View>
                         <View style={styles.heroLabelContainer}>
-                            <Ionicons name="wallet-outline" size={14} color="#6E7278" style={{ marginRight: 4 }} />
+                            <Ionicons name="wallet-outline" size={14} color="#9CA3AF" style={{ marginRight: 4 }} />
                             <Text style={styles.heroLabel}>Saldo disponible</Text>
                         </View>
                     </View>
@@ -322,10 +328,10 @@ export default function HomeScreen() {
                         activeOpacity={0.8}
                         onPress={() => handlePress(() => router.push('/scan'))}
                     >
-                        <Ionicons name="qr-code-outline" size={18} color="#fff" style={{marginRight: 8}} />
+                        <Ionicons name="qr-code-outline" size={18} color="#121212" style={{marginRight: 8}} />
                         <Text style={styles.heroButtonText}>Escanear</Text>
                     </TouchableOpacity>
-                </View>
+                </LinearGradient>
               </View>
           )}
 
@@ -600,12 +606,16 @@ const styles = StyleSheet.create({
       marginBottom: 24,
   },
   heroCard: {
-      backgroundColor: '#F5F6F8', // Smoke Gray
-      borderRadius: 16, // Professional Squircle
+      borderRadius: 24, // Larger Radius for premium feel
       padding: 24,
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.1,
+      shadowRadius: 12,
+      elevation: 5,
   },
   heroLeft: {
       flex: 1,
@@ -613,14 +623,14 @@ const styles = StyleSheet.create({
   heroPoints: {
       fontSize: 32,
       fontWeight: '800',
-      color: '#121212',
+      color: '#FFFFFF', // White text
       letterSpacing: -1,
       lineHeight: 34,
   },
   heroPointsSuffix: {
       fontSize: 18,
       fontWeight: '600',
-      color: '#121212',
+      color: '#FFFFFF', // White text
       marginBottom: 4,
   },
   heroLabelContainer: {
@@ -630,11 +640,11 @@ const styles = StyleSheet.create({
   },
   heroLabel: {
       fontSize: 14,
-      color: '#6E7278',
+      color: '#9CA3AF', // Light Gray
       fontWeight: '500',
   },
   heroButton: {
-      backgroundColor: '#121212', // Ink Black
+      backgroundColor: '#FFFFFF', // White button
       flexDirection: 'row',
       alignItems: 'center',
       paddingRight: 20,
@@ -644,7 +654,7 @@ const styles = StyleSheet.create({
       height: 48,
   },
   heroButtonText: {
-      color: '#FFFFFF',
+      color: '#121212', // Black text
       fontWeight: '600',
       fontSize: 14,
   },
@@ -712,21 +722,21 @@ const styles = StyleSheet.create({
       width: 64,
       height: 64,
       borderRadius: 24, // Squircle
-      backgroundColor: '#FFFFFF', // White background
-      borderWidth: 1,
-      borderColor: '#F0F0F0', // Subtle border
+      backgroundColor: 'transparent', // No background for inactive
       justifyContent: 'center',
       alignItems: 'center',
       marginBottom: 8,
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.05,
-      shadowRadius: 4,
-      elevation: 2,
+      // Removed borders and shadows for inactive state
   },
   filterIconContainerActive: {
-      backgroundColor: '#F5F6F8',
-      borderColor: '#121212', // Active border
+      backgroundColor: '#FFFFFF',
+      borderWidth: 1,
+      borderColor: '#E0E0E0',
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.1,
+      shadowRadius: 8,
+      elevation: 4,
   },
   filterEmoji: {
       fontSize: 32,
