@@ -329,9 +329,8 @@ export default function HomeScreen() {
               <Text style={styles.statusText}>Nivel Explorador</Text>
           </View>
           <View style={styles.headerRight}>
-              <TouchableOpacity style={styles.iconButton} onPress={() => {}}>
-                  <IconSymbol name="bell" size={24} color="#121212" />
-                  <View style={styles.notificationDot} />
+              <TouchableOpacity style={styles.iconButton} onPress={() => router.push('/movements')}>
+                  <Ionicons name="wallet-outline" size={24} color="#121212" />
               </TouchableOpacity>
               <TouchableOpacity style={styles.avatarContainer} onPress={() => router.push('/profile')}>
                   <Text style={styles.avatarText}>{getInitials()}</Text>
