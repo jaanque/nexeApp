@@ -74,7 +74,6 @@ export default function HomeScreen() {
   const [searchResultsRestaurants, setSearchResultsRestaurants] = useState<Restaurant[]>([]);
   const [searchResultsDishes, setSearchResultsDishes] = useState<MenuItemResult[]>([]);
   const [isSearching, setIsSearching] = useState<boolean>(false);
-  const [showSearchInput, setShowSearchInput] = useState<boolean>(false);
   const [searching, setSearching] = useState<boolean>(false);
   const [activeCategory, setActiveCategory] = useState<number | null>(null);
   const [refreshing, setRefreshing] = useState(false); // Pull to refresh
@@ -194,18 +193,7 @@ export default function HomeScreen() {
       setSearchResultsRestaurants([]);
       setSearchResultsDishes([]);
       setIsSearching(false);
-      setShowSearchInput(false);
       Keyboard.dismiss();
-  }
-
-  function toggleSearch() {
-      Haptics.selectionAsync();
-      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-      if (showSearchInput) {
-          handleCancelSearch();
-      } else {
-          setShowSearchInput(true);
-      }
   }
 
   function handleFocus() {
@@ -310,40 +298,39 @@ export default function HomeScreen() {
             points={points}
             initials={getInitials()}
             isGuest={!session?.user}
-            onScanPress={() => router.push('/scan')}
             onWalletPress={() => router.push('/movements')}
             onProfilePress={() => router.push('/profile')}
-            onSearchPress={toggleSearch}
           />
 
           <View style={styles.contentWrapper}>
             {/* Search Input Area */}
-            {showSearchInput && (
-                <Animated.View entering={FadeInDown.duration(200)} style={{ paddingHorizontal: 20, marginBottom: 20, marginTop: 20 }}>
-                    <View style={[styles.searchBar, { borderColor: '#E5E7EB', borderWidth: 1 }]}>
-                        <Ionicons name="search-outline" size={20} color="#6B7280" style={{marginRight: 10}} />
-                        <TextInput
-                            placeholder="Buscar restaurantes, platos..."
-                            placeholderTextColor="#9CA3AF"
-                            style={styles.searchInput}
-                            value={searchQuery}
-                            onChangeText={setSearchQuery}
-                            autoFocus
-                            onFocus={handleFocus}
-                        />
-                        {searching ? (
-                                <ActivityIndicator size="small" color="#6B7280" style={{ marginLeft: 8 }} />
-                            ) : searchQuery.length > 0 ? (
-                                    <TouchableOpacity onPress={() => setSearchQuery("")} hitSlop={10}>
-                                        <Ionicons name="close-circle" size={18} color="#D1D5DB" />
-                                    </TouchableOpacity>
-                            ) : null}
-                    </View>
-                    <TouchableOpacity onPress={handleCancelSearch} style={styles.cancelButton}>
+            <View style={{ paddingHorizontal: 20, marginBottom: 20, marginTop: 24, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                <View style={[styles.searchBar, { borderColor: '#E5E7EB', borderWidth: 1, flex: 1 }]}>
+                    <Ionicons name="search-outline" size={20} color="#6B7280" style={{marginRight: 10}} />
+                    <TextInput
+                        placeholder="Buscar restaurantes, platos..."
+                        placeholderTextColor="#9CA3AF"
+                        style={styles.searchInput}
+                        value={searchQuery}
+                        onChangeText={setSearchQuery}
+                        onFocus={handleFocus}
+                    />
+                    {searching ? (
+                            <ActivityIndicator size="small" color="#6B7280" style={{ marginLeft: 8 }} />
+                        ) : searchQuery.length > 0 ? (
+                                <TouchableOpacity onPress={() => setSearchQuery("")} hitSlop={10}>
+                                    <Ionicons name="close-circle" size={18} color="#D1D5DB" />
+                                </TouchableOpacity>
+                        ) : null}
+                </View>
+                {(isSearching || searchQuery.length > 0) && (
+                    <Animated.View entering={FadeInDown.duration(200)}>
+                        <TouchableOpacity onPress={handleCancelSearch} style={styles.cancelButton}>
                             <Text style={styles.cancelButtonText}>Cancelar</Text>
-                    </TouchableOpacity>
-                </Animated.View>
-            )}
+                        </TouchableOpacity>
+                    </Animated.View>
+                )}
+            </View>
 
             {!isSearching && (
                 <>

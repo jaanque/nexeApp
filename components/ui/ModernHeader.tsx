@@ -11,7 +11,6 @@ interface ModernHeaderProps {
     isGuest: boolean;
     onWalletPress: () => void;
     onProfilePress: () => void;
-    onSearchPress: () => void;
 }
 
 export function ModernHeader({
@@ -20,8 +19,7 @@ export function ModernHeader({
     initials,
     isGuest,
     onWalletPress,
-    onProfilePress,
-    onSearchPress
+    onProfilePress
 }: ModernHeaderProps) {
     const insets = useSafeAreaInsets();
 
@@ -44,10 +42,6 @@ export function ModernHeader({
                 </View>
 
                 <View style={styles.actionsContainer}>
-                     <TouchableOpacity onPress={() => handlePress(onSearchPress)} style={styles.iconButton}>
-                        <Ionicons name="search" size={22} color="#FFFFFF" />
-                    </TouchableOpacity>
-
                     <TouchableOpacity onPress={() => handlePress(onProfilePress)} style={styles.profileButton}>
                          {isGuest ? (
                              <Ionicons name="person" size={20} color="#121212" />
