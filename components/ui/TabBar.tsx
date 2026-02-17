@@ -16,7 +16,7 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
       {state.routes.map((route, index) => {
         const { options } = descriptors[route.key];
         const isFocused = state.index === index;
-        const isScanTab = route.name === 'scan-tab';
+        const isScanTab = route.name === 'scan';
 
         const label =
           options.tabBarLabel !== undefined
