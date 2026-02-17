@@ -80,14 +80,15 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
 const styles = StyleSheet.create({
   tabBar: {
     position: 'absolute',
-    bottom: 25,
+    bottom: 30,
+    left: 20,
+    right: 20,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 1)', // Semi-transparent or solid white
-    marginHorizontal: 32, // Floating effect
-    paddingVertical: 12,
-    borderRadius: 32, // Pill shape
+    backgroundColor: '#fff',
+    paddingVertical: 14,
+    borderRadius: 36, // Rounded pill
     // Shadow for depth
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 8 },
