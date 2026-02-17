@@ -7,7 +7,7 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
 
   // Nexe Clean: Black for active, Stone Gray for inactive
-  const activeColor = '#4F46E5';
+  const activeColor = '#163D36';
   const inactiveColor = '#6E7278';
 
   return (

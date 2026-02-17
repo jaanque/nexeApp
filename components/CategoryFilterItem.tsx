@@ -22,7 +22,7 @@ export function CategoryFilterItem({ item, isActive, onPress }: CategoryFilterIt
     <TouchableOpacity
       style={[
           styles.container,
-          { backgroundColor: isActive ? '#4F46E5' : 'transparent' }
+          { backgroundColor: isActive ? '#163D36' : 'transparent' }
       ]}
       onPress={handlePress}
       activeOpacity={0.7}
