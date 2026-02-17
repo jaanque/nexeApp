@@ -402,7 +402,7 @@ export default function HomeScreen() {
                                 <Text style={styles.sectionTitle}>Recompensas</Text>
                                 <TouchableOpacity style={styles.viewAllButton}>
                                     <Text style={styles.viewAllText}>Ver todo</Text>
-                                    <Ionicons name="chevron-forward" size={16} color="#163D36" />
+                                    <Ionicons name="chevron-forward" size={16} color="#121212" />
                                 </TouchableOpacity>
                             </View>
                             <FlatList
@@ -422,7 +422,7 @@ export default function HomeScreen() {
                             <Text style={styles.sectionTitle}>Comercios Nexe</Text>
                             <TouchableOpacity style={styles.viewAllButton}>
                                 <Text style={styles.viewAllText}>Filtros</Text>
-                                <Ionicons name="options-outline" size={16} color="#163D36" />
+                                <Ionicons name="options-outline" size={16} color="#121212" />
                             </TouchableOpacity>
                         </View>
                         <View style={styles.listContainer}>
@@ -508,7 +508,7 @@ const styles = StyleSheet.create({
       padding: 10,
   },
   cancelButtonText: {
-      color: '#163D36', // Primary Green
+      color: '#121212', // Primary Green
       fontSize: 15,
       fontWeight: '600',
   },
@@ -542,7 +542,7 @@ const styles = StyleSheet.create({
       opacity: 0.7,
   },
   viewAllText: {
-      color: '#163D36', // Primary Green
+      color: '#121212', // Primary Green
       fontSize: 14,
       fontWeight: '700',
   },

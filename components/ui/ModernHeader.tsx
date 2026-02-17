@@ -50,7 +50,7 @@ export function ModernHeader({
 
                     <TouchableOpacity onPress={() => handlePress(onProfilePress)} style={styles.profileButton}>
                          {isGuest ? (
-                             <Ionicons name="person" size={20} color="#163D36" />
+                             <Ionicons name="person" size={20} color="#121212" />
                          ) : (
                              <Text style={styles.initials}>{initials}</Text>
                          )}
@@ -120,11 +120,11 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         borderWidth: 2,
-        borderColor: '#163D36', // Brand color border
+        borderColor: '#121212', // Brand color border
     },
     initials: {
         fontSize: 18,
         fontWeight: '700',
-        color: '#163D36',
+        color: '#121212',
     },
 });

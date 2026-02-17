@@ -8,7 +8,7 @@ import { Image } from 'expo-image';
 export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
 
-  const activeColor = '#163D36'; // Brand Green
+  const activeColor = '#121212'; // Brand Black
   const inactiveColor = '#9CA3AF'; // Gray 400
 
   return (
@@ -134,11 +134,11 @@ const styles = StyleSheet.create({
       width: 56,
       height: 56,
       borderRadius: 28,
-      backgroundColor: '#163D36', // Brand Color
+      backgroundColor: '#121212', // Brand Color
       justifyContent: 'center',
       alignItems: 'center',
       marginBottom: 10, // Push up slightly
-      shadowColor: "#163D36",
+      shadowColor: "#121212",
       shadowOffset: { width: 0, height: 4 },
       shadowOpacity: 0.3,
       shadowRadius: 8,
