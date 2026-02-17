@@ -65,7 +65,7 @@ const styles = StyleSheet.create({
     container: {
         backgroundColor: '#121212',
         paddingHorizontal: 20,
-        paddingBottom: 24,
+        paddingBottom: 32, // Increased from 24
         borderBottomLeftRadius: 32,
         borderBottomRightRadius: 32,
     },
@@ -82,7 +82,7 @@ const styles = StyleSheet.create({
         fontSize: 28,
         fontWeight: '800', // Heavy bold
         color: '#FFFFFF',
-        marginBottom: 6,
+        marginBottom: 12, // Increased from 6
         letterSpacing: -0.5,
     },
     pointsPill: {
