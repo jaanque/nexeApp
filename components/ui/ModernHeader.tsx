@@ -29,27 +29,37 @@ export function ModernHeader({
     };
 
     return (
-        <View style={[styles.container, { paddingTop: insets.top + 10 }]}>
-            {/* Top Row: Greeting & Profile */}
-            <View style={styles.topRow}>
+        <View style={[styles.container, { paddingTop: insets.top + 20 }]}>
+            <View style={styles.contentRow}>
+                {/* Profile Avatar */}
+                <TouchableOpacity
+                    onPress={() => handlePress(onProfilePress)}
+                    style={styles.profileButton}
+                    activeOpacity={0.8}
+                >
+                     {isGuest ? (
+                         <Ionicons name="person" size={24} color="#121212" />
+                     ) : (
+                         <Text style={styles.initials}>{initials}</Text>
+                     )}
+                </TouchableOpacity>
+
+                {/* Greeting Text */}
                 <View style={styles.greetingContainer}>
-                    <Text style={styles.greetingText}>{greeting}</Text>
-                    <TouchableOpacity onPress={() => handlePress(onWalletPress)} style={styles.pointsPill}>
-                         <Ionicons name="star" size={14} color="#F59E0B" style={{marginRight: 4}} />
-                         <Text style={styles.pointsText}>{points} pts</Text>
-                         <Ionicons name="chevron-forward" size={12} color="#9CA3AF" style={{marginLeft: 2}} />
-                    </TouchableOpacity>
+                    <Text style={styles.greetingText} numberOfLines={1} adjustsFontSizeToFit>
+                        {greeting}
+                    </Text>
                 </View>
 
-                <View style={styles.actionsContainer}>
-                    <TouchableOpacity onPress={() => handlePress(onProfilePress)} style={styles.profileButton}>
-                         {isGuest ? (
-                             <Ionicons name="person" size={20} color="#121212" />
-                         ) : (
-                             <Text style={styles.initials}>{initials}</Text>
-                         )}
-                    </TouchableOpacity>
-                </View>
+                {/* Points Pill */}
+                <TouchableOpacity
+                    onPress={() => handlePress(onWalletPress)}
+                    style={styles.pointsPill}
+                    activeOpacity={0.7}
+                >
+                     <Ionicons name="star" size={16} color="#F59E0B" style={{marginRight: 6}} />
+                     <Text style={styles.pointsText}>{points}</Text>
+                </TouchableOpacity>
             </View>
         </View>
     );
@@ -59,66 +69,54 @@ const styles = StyleSheet.create({
     container: {
         backgroundColor: '#121212',
         paddingHorizontal: 20,
-        paddingBottom: 32, // Increased from 24
+        paddingBottom: 40, // Increased bottom padding for overlap
         borderBottomLeftRadius: 32,
         borderBottomRightRadius: 32,
     },
-    topRow: {
+    contentRow: {
         flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'flex-start',
+        alignItems: 'center',
+        gap: 16,
+    },
+    profileButton: {
+        width: 48,
+        height: 48,
+        borderRadius: 24,
+        backgroundColor: '#F3F4F6', // Light background for contrast
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 2,
+        borderColor: 'rgba(255,255,255,0.1)', // Subtle border
+    },
+    initials: {
+        fontSize: 18,
+        fontWeight: '700',
+        color: '#121212',
     },
     greetingContainer: {
         flex: 1,
-        marginRight: 16,
+        justifyContent: 'center',
     },
     greetingText: {
-        fontSize: 28,
-        fontWeight: '800', // Heavy bold
+        fontSize: 20,
+        fontWeight: '700',
         color: '#FFFFFF',
-        marginBottom: 12, // Increased from 6
         letterSpacing: -0.5,
     },
     pointsPill: {
         flexDirection: 'row',
         alignItems: 'center',
         backgroundColor: 'rgba(255,255,255,0.1)',
-        paddingHorizontal: 10,
-        paddingVertical: 6,
-        borderRadius: 20,
-        alignSelf: 'flex-start',
+        paddingHorizontal: 14,
+        paddingVertical: 10,
+        borderRadius: 24,
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.1)',
     },
     pointsText: {
-        color: '#E5E7EB', // Gray 200
-        fontSize: 14,
-        fontWeight: '600',
-    },
-    actionsContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 12,
-    },
-    iconButton: {
-        width: 44,
-        height: 44,
-        borderRadius: 22,
-        backgroundColor: 'rgba(255,255,255,0.1)',
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    profileButton: {
-        width: 44,
-        height: 44,
-        borderRadius: 22,
-        backgroundColor: '#F3F4F6', // Light background for contrast
-        justifyContent: 'center',
-        alignItems: 'center',
-        borderWidth: 2,
-        borderColor: '#121212', // Brand color border
-    },
-    initials: {
-        fontSize: 18,
+        color: '#FFFFFF',
+        fontSize: 15,
         fontWeight: '700',
-        color: '#121212',
+        letterSpacing: 0.5,
     },
 });
