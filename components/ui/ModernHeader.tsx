@@ -68,11 +68,11 @@ export function ModernHeader({
                     activeOpacity={0.9}
                 >
                     <View style={styles.scanContent}>
-                        <Ionicons name="scan" size={20} color="#163D36" style={{ marginRight: 8 }} />
-                        <Text style={styles.scanText}>Escanear código QR</Text>
+                        <Ionicons name="receipt-outline" size={20} color="#163D36" style={{ marginRight: 8 }} />
+                        <Text style={styles.scanText}>Escanear tiquet</Text>
                     </View>
                      <View style={styles.scanBadge}>
-                        <Ionicons name="camera" size={12} color="#fff" />
+                        <Ionicons name="camera-outline" size={12} color="#fff" />
                     </View>
                 </TouchableOpacity>
             </View>
@@ -155,7 +155,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'space-between',
         backgroundColor: '#FFFFFF',
-        paddingVertical: 14,
+        paddingVertical: 12, // Reduced from 14 for a lighter feel
         paddingHorizontal: 16,
         borderRadius: 20, // Modern rounded shape
         shadowColor: '#000',
