@@ -57,7 +57,7 @@ export function MarketingSlider({ banners }: MarketingSliderProps) {
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   const cardWidth = windowWidth - (CARD_MARGIN * 2);
-  const cardHeight = 160;
+  const cardHeight = 120; // Thinner card as requested
 
   // Auto-scroll logic
   const startAutoScroll = useCallback(() => {
@@ -83,6 +83,16 @@ export function MarketingSlider({ banners }: MarketingSliderProps) {
     };
   }, [startAutoScroll]);
 
+  const setIsInteracting = (value: boolean) => {
+    isInteracting.current = value;
+    if (!value) {
+      // Resume auto-scroll after interaction ends (with a delay if needed)
+      startAutoScroll();
+    } else {
+        if (timerRef.current) clearInterval(timerRef.current);
+    }
+  };
+
   const onScroll = useAnimatedScrollHandler({
     onScroll: (event) => {
       scrollX.value = event.contentOffset.x;
@@ -94,16 +104,6 @@ export function MarketingSlider({ banners }: MarketingSliderProps) {
       runOnJS(setIsInteracting)(false);
     },
   });
-
-  const setIsInteracting = (value: boolean) => {
-    isInteracting.current = value;
-    if (!value) {
-      // Resume auto-scroll after interaction ends (with a delay if needed)
-      startAutoScroll();
-    } else {
-        if (timerRef.current) clearInterval(timerRef.current);
-    }
-  };
 
   const onViewableItemsChanged = useCallback(({ viewableItems }: { viewableItems: ViewToken[] }) => {
     if (viewableItems.length > 0 && viewableItems[0].index !== null) {
