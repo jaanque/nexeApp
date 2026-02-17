@@ -8,8 +8,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import * as Location from 'expo-location';
-import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
-import { customMapStyle } from '@/constants/mapStyle';
+import RestaurantDetailMap from '@/components/RestaurantDetailMap';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -473,35 +472,11 @@ export default function RestaurantDetailScreen() {
                 </View>
 
                 <View style={styles.mapContainer}>
-                     <MapView
-                        style={styles.map}
-                        customMapStyle={customMapStyle}
-                        provider={PROVIDER_GOOGLE}
-                        initialRegion={{
-                            latitude: restaurant.latitude || 19.432608,
-                            longitude: restaurant.longitude || -99.133209,
-                            latitudeDelta: 0.01,
-                            longitudeDelta: 0.01,
-                        }}
-                     >
-                        {restaurant.latitude && restaurant.longitude && (
-                            <Marker
-                                coordinate={{
-                                    latitude: restaurant.latitude,
-                                    longitude: restaurant.longitude
-                                }}
-                            />
-                        )}
-                        {userLocation && (
-                             <Marker
-                                coordinate={{
-                                    latitude: userLocation.latitude,
-                                    longitude: userLocation.longitude
-                                }}
-                                pinColor="blue"
-                            />
-                        )}
-                     </MapView>
+                     <RestaurantDetailMap
+                         restaurant={restaurant}
+                         userLocation={userLocation}
+                         style={styles.map}
+                     />
                 </View>
 
                 <View style={styles.modalInfo}>
