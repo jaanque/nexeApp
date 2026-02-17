@@ -74,7 +74,7 @@ const styles = StyleSheet.create({
     card: {
         width: CARD_WIDTH,
         height: CARD_WIDTH * 1.5, // 2:3 Aspect Ratio (approx 180x270)
-        borderRadius: 24,
+        borderRadius: 20,
         marginRight: 16,
         backgroundColor: '#E5E7EB', // Gray 200 placeholder
         shadowColor: "#000",
@@ -82,7 +82,7 @@ const styles = StyleSheet.create({
             width: 0,
             height: 8,
         },
-        shadowOpacity: 0.15,
+        shadowOpacity: 0.1,
         shadowRadius: 10,
         elevation: 6,
         overflow: 'hidden',

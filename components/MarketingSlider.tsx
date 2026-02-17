@@ -29,6 +29,7 @@ export function MarketingSlider({ banners }: MarketingSliderProps) {
   const { width: windowWidth } = useWindowDimensions();
   const isUserInteracting = useRef(false);
   const CARD_MARGIN = 20;
+  const cardHeight = (windowWidth - CARD_MARGIN * 2) * (9 / 16);
 
   // Auto-scroll logic
   useEffect(() => {
@@ -95,7 +96,7 @@ export function MarketingSlider({ banners }: MarketingSliderProps) {
             onPress={() => handlePress(item)}
             style={{ width: windowWidth, paddingHorizontal: CARD_MARGIN, alignItems: 'center' }}
           >
-            <View style={styles.card}>
+            <View style={[styles.card, { height: cardHeight }]}>
                 <Image
                     source={{ uri: item.image_url }}
                     style={styles.image}

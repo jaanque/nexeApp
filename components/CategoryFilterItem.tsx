@@ -11,7 +11,6 @@ interface CategoryFilterItemProps {
 
 export function CategoryFilterItem({ item, isActive, onPress }: CategoryFilterItemProps) {
   const categoryColor = item.color || getCategoryColor(item.emoji);
-  const activeBackgroundColor = hexToRgba(categoryColor, 0.25);
   const inactiveBackgroundColor = 'rgba(245, 246, 248, 1)'; // #F5F6F8
 
   const handlePress = () => {
@@ -21,20 +20,23 @@ export function CategoryFilterItem({ item, isActive, onPress }: CategoryFilterIt
 
   return (
     <TouchableOpacity
-      style={styles.container}
+      style={[
+          styles.container,
+          { backgroundColor: isActive ? '#4F46E5' : 'transparent' }
+      ]}
       onPress={handlePress}
       activeOpacity={0.7}
     >
       <View style={[
         styles.iconContainer,
         {
-          backgroundColor: isActive ? activeBackgroundColor : inactiveBackgroundColor,
-          borderColor: isActive ? categoryColor : 'transparent',
+          backgroundColor: isActive ? 'rgba(255,255,255,0.2)' : inactiveBackgroundColor,
+          borderColor: 'transparent',
           borderWidth: 1, // Keep constant
-          shadowColor: isActive ? categoryColor : 'transparent',
-          shadowOpacity: isActive ? 0.2 : 0,
-          shadowRadius: isActive ? 8 : 0,
-          elevation: isActive ? 4 : 0,
+          shadowColor: isActive ? '#000' : 'transparent',
+          shadowOpacity: isActive ? 0.1 : 0,
+          shadowRadius: isActive ? 4 : 0,
+          elevation: isActive ? 2 : 0,
         }
       ]}>
         <Text style={styles.emoji}>{item.emoji}</Text>
@@ -42,7 +44,7 @@ export function CategoryFilterItem({ item, isActive, onPress }: CategoryFilterIt
       <Text style={[
         styles.label,
         {
-          color: isActive ? categoryColor : '#121212',
+          color: isActive ? '#FFFFFF' : '#121212',
           fontWeight: isActive ? '700' : '600'
         }
       ]}>
@@ -55,8 +57,10 @@ export function CategoryFilterItem({ item, isActive, onPress }: CategoryFilterIt
 const styles = StyleSheet.create({
   container: {
       alignItems: 'center',
-      marginRight: 20,
-      minWidth: 70, // Ensure touch target
+      marginRight: 12,
+      minWidth: 80, // Ensure touch target
+      padding: 8,
+      borderRadius: 24,
   },
   iconContainer: {
       width: 64,

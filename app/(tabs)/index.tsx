@@ -185,7 +185,7 @@ export default function HomeScreen() {
 
   function formatDistance(lat1: number, lon1: number, lat2: number, lon2: number) {
       const d = getDistanceInMeters(lat1, lon1, lat2, lon2);
-      return d < 1000 ? `${Math.round(d)}m` : `${(d / 1000).toFixed(1)} km`;
+      return d < 1000 ? `a ${Math.round(d)}m` : `a ${(d / 1000).toFixed(1)} km`;
   }
 
   function handleCancelSearch() {
@@ -511,10 +511,10 @@ const styles = StyleSheet.create({
       fontWeight: '600',
   },
   filterScroll: {
-      paddingLeft: 20,
+      paddingLeft: 24,
   },
   filterContent: {
-      paddingRight: 20,
+      paddingRight: 24,
   },
   sectionContainer: {
       marginBottom: 32,
