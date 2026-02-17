@@ -322,23 +322,6 @@ export default function HomeScreen() {
               </View>
           )}
 
-          {!isSearching && (
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                style={styles.filterScroll}
-                contentContainerStyle={styles.filterContent}
-              >
-                  {categories.map((cat) => (
-                      <CategoryFilterItem
-                          key={cat.id}
-                          item={cat}
-                          isActive={activeCategory === cat.id}
-                          onPress={() => setActiveCategory(activeCategory === cat.id ? null : cat.id)}
-                      />
-                  ))}
-              </ScrollView>
-          )}
 
           {isSearching ? (
              <View style={styles.sectionContainer}>

@@ -89,8 +89,9 @@ const styles = StyleSheet.create({
   content: {
       flex: 1,
       paddingHorizontal: 24,
-      paddingBottom: 30,
-      justifyContent: 'space-between',
+      paddingBottom: 24,
+      justifyContent: 'flex-start',
+      gap: 24,
   },
   topRow: {
       flexDirection: 'row',
