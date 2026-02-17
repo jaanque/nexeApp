@@ -146,8 +146,8 @@ const styles = StyleSheet.create({
   },
   card: {
     width: '100%',
-    height: 240, // Taller for more impact
-    borderRadius: 24,
+    height: 160, // Thinner for a sleek look
+    borderRadius: 20,
     overflow: 'hidden',
     backgroundColor: '#E5E7EB', // Placeholder gray
     shadowColor: '#000',
@@ -174,7 +174,7 @@ const styles = StyleSheet.create({
   },
   title: {
     color: 'white',
-    fontSize: 28, // Bigger title
+    fontSize: 22, // Adjusted for thinner card
     fontWeight: '800',
     letterSpacing: -0.5,
     textShadowColor: 'rgba(0,0,0,0.4)',
