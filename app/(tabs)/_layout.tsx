@@ -1,5 +1,6 @@
-import { Tabs } from 'expo-router';
+import { Tabs, useRouter } from 'expo-router';
 import React from 'react';
+import { View } from 'react-native';
 
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors } from '@/constants/theme';
@@ -8,6 +9,7 @@ import { TabBar } from '@/components/ui/TabBar';
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
+  const router = useRouter();
 
   return (
     <Tabs
@@ -24,10 +26,23 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="scan-tab"
+        options={{
+          title: '', // No label for the central button
+          tabBarIcon: ({ color }) => <IconSymbol size={32} name="camera.viewfinder" color={color} />,
+        }}
+        listeners={() => ({
+            tabPress: (e) => {
+                e.preventDefault();
+                router.push('/scan');
+            },
+        })}
+      />
+      <Tabs.Screen
         name="explore"
         options={{
           title: 'Explorar',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="safari" color={color} />,
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="safari.fill" color={color} />, // Using filled variant for consistency if available, otherwise 'safari'
         }}
       />
     </Tabs>
