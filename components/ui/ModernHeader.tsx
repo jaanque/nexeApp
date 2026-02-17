@@ -91,24 +91,23 @@ export function ModernHeader({
                             </TouchableOpacity>
                         </View>
                     ) : (
-                        <View style={styles.pointsRow}>
-                            <Text style={styles.pointsValue}>{points.toLocaleString()}</Text>
-                            <Text style={styles.pointsLabel}> pts</Text>
+                        <View style={styles.bottomRow}>
+                            <View style={styles.pointsRow}>
+                                <Text style={styles.pointsValue}>{points.toLocaleString()}</Text>
+                                <Text style={styles.pointsLabel}> pts</Text>
+                            </View>
+
+                            <TouchableOpacity
+                                style={styles.scanButton}
+                                activeOpacity={0.9}
+                                onPress={onScanPress}
+                            >
+                                <Ionicons name="scan-outline" size={20} color="#000" />
+                                <Text style={styles.scanButtonText}>Escanear</Text>
+                            </TouchableOpacity>
                         </View>
                     )}
                 </View>
-
-                {/* Floating Scan Button (Bottom Right) */}
-                {!isGuest && (
-                    <TouchableOpacity
-                        style={styles.scanButton}
-                        activeOpacity={0.9}
-                        onPress={onScanPress}
-                    >
-                        <Ionicons name="scan-outline" size={20} color="#000" />
-                        <Text style={styles.scanButtonText}>Escanear</Text>
-                    </TouchableOpacity>
-                )}
             </View>
 
         </View>
@@ -187,6 +186,12 @@ const styles = StyleSheet.create({
       fontWeight: '500',
       letterSpacing: 0.5,
   },
+  bottomRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      width: '100%',
+  },
   pointsRow: {
       flexDirection: 'row',
       alignItems: 'baseline',
@@ -205,9 +210,6 @@ const styles = StyleSheet.create({
       marginLeft: 4,
   },
   scanButton: {
-      position: 'absolute',
-      right: 0,
-      bottom: 4,
       flexDirection: 'row',
       alignItems: 'center',
       backgroundColor: '#fff',
