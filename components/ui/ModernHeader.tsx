@@ -1,6 +1,5 @@
 import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, LayoutAnimation, Platform, UIManager } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -51,13 +50,8 @@ export function ModernHeader({
   };
 
   return (
-    <View style={[styles.container, { height: HEADER_HEIGHT }]}>
-        <LinearGradient
-            colors={['#121212', '#2C2C2E']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.background}
-        >
+    <View style={[styles.container, { height: HEADER_HEIGHT, backgroundColor: '#121212' }]}>
+        <View style={styles.background}>
             <View style={[styles.content, { paddingTop: insets.top + 10 }]}>
                 {/* Top Row: Avatar & Actions */}
                 <View style={styles.topRow}>
@@ -113,12 +107,7 @@ export function ModernHeader({
                 </View>
             </View>
 
-            {/* Bottom Gradient Fade */}
-            <LinearGradient
-                colors={['transparent', 'rgba(255,255,255,0.05)']}
-                style={styles.bottomOverlay}
-            />
-        </LinearGradient>
+        </View>
     </View>
   );
 }
