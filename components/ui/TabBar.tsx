@@ -60,13 +60,13 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
             {options.tabBarIcon?.({
                 focused: isFocused,
                 color: isFocused ? activeColor : inactiveColor,
-                size: 24,
+                size: 22,
             })}
             <Text style={{
                 color: isFocused ? activeColor : inactiveColor,
-                fontSize: 10,
+                fontSize: 9,
                 fontWeight: isFocused ? '600' : '500',
-                marginTop: 4,
+                marginTop: 2,
             }}>
               {typeof label === 'string' ? label : ''}
             </Text>
@@ -87,14 +87,14 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     backgroundColor: '#fff',
-    paddingVertical: 14,
-    borderRadius: 36, // Rounded pill
+    paddingVertical: 10,
+    borderRadius: 28, // Slimmer pill
     // Shadow for depth
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.15,
-    shadowRadius: 20,
-    elevation: 10,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 8,
     borderWidth: 1,
     borderColor: '#f0f0f0',
   },

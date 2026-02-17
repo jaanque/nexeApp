@@ -52,18 +52,16 @@ export function ModernHeader({ greeting, points, initials, onScanPress, onWallet
                     <View style={styles.pointsRow}>
                         <Text style={styles.pointsValue}>{points.toLocaleString()}</Text>
                         <Text style={styles.pointsLabel}> pts</Text>
+
+                        <TouchableOpacity
+                            style={styles.scanIconButton}
+                            activeOpacity={0.8}
+                            onPress={onScanPress}
+                        >
+                            <Ionicons name="qr-code-outline" size={24} color="#fff" />
+                        </TouchableOpacity>
                     </View>
                 </View>
-
-                {/* Scan Action */}
-                <TouchableOpacity
-                    style={styles.scanButton}
-                    activeOpacity={0.8}
-                    onPress={onScanPress}
-                >
-                    <Ionicons name="qr-code-outline" size={20} color="#000" />
-                    <Text style={styles.scanText}>Escanear QR</Text>
-                </TouchableOpacity>
             </View>
 
             {/* Bottom Gradient Fade for merging with content */}
@@ -148,7 +146,7 @@ const styles = StyleSheet.create({
   },
   pointsRow: {
       flexDirection: 'row',
-      alignItems: 'baseline',
+      alignItems: 'center', // Changed to center for icon alignment
   },
   pointsValue: {
       fontSize: 48,
@@ -162,26 +160,18 @@ const styles = StyleSheet.create({
       fontWeight: '600',
       color: 'rgba(255,255,255,0.8)',
       marginLeft: 4,
+      marginTop: 8, // Adjust visual baseline
   },
-  scanButton: {
-      flexDirection: 'row',
+  scanIconButton: {
+      marginLeft: 16,
+      backgroundColor: 'rgba(255,255,255,0.1)',
+      width: 44,
+      height: 44,
+      borderRadius: 22,
+      justifyContent: 'center',
       alignItems: 'center',
-      alignSelf: 'flex-start',
-      backgroundColor: '#fff',
-      paddingVertical: 12,
-      paddingHorizontal: 20,
-      borderRadius: 20, // Capsule shape
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.2,
-      shadowRadius: 8,
-      elevation: 4,
-  },
-  scanText: {
-      color: '#000',
-      fontWeight: 'bold',
-      fontSize: 14,
-      marginLeft: 8,
+      borderWidth: 1,
+      borderColor: 'rgba(255,255,255,0.2)',
   },
   bottomOverlay: {
       position: 'absolute',
