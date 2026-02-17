@@ -89,7 +89,7 @@ const styles = StyleSheet.create({
         overflow: 'hidden', // Ensure shadows respect border radius on Android but for iOS we might need to separate
     },
     imageContainer: {
-        height: 200,
+        height: 220, // Taller image
         width: '100%',
         backgroundColor: '#f0f0f0',
         position: 'relative',
