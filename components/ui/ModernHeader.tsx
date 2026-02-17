@@ -58,7 +58,7 @@ export function ModernHeader({ greeting, points, initials, onScanPress, onWallet
                             activeOpacity={0.8}
                             onPress={onScanPress}
                         >
-                            <Ionicons name="qr-code-outline" size={24} color="#fff" />
+                            <Ionicons name="qr-code-outline" size={20} color="#fff" />
                         </TouchableOpacity>
                     </View>
                 </View>
@@ -149,25 +149,25 @@ const styles = StyleSheet.create({
       alignItems: 'center', // Changed to center for icon alignment
   },
   pointsValue: {
-      fontSize: 48,
+      fontSize: 36,
       fontWeight: '800', // Heavy Bold
       color: '#fff',
-      letterSpacing: -1.5,
-      lineHeight: 52,
+      letterSpacing: -1,
+      lineHeight: 40,
   },
   pointsLabel: {
-      fontSize: 20,
+      fontSize: 16,
       fontWeight: '600',
       color: 'rgba(255,255,255,0.8)',
       marginLeft: 4,
-      marginTop: 8, // Adjust visual baseline
+      marginTop: 6, // Adjust visual baseline
   },
   scanIconButton: {
-      marginLeft: 16,
+      marginLeft: 12,
       backgroundColor: 'rgba(255,255,255,0.1)',
-      width: 44,
-      height: 44,
-      borderRadius: 22,
+      width: 36,
+      height: 36,
+      borderRadius: 18,
       justifyContent: 'center',
       alignItems: 'center',
       borderWidth: 1,
