@@ -1,28 +1,59 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ImageBackground, StatusBar as RNStatusBar } from 'react-native';
+import React, { useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, LayoutAnimation, Platform, UIManager } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { Image } from 'expo-image';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
+import * as Haptics from 'expo-haptics';
+
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
 
 interface ModernHeaderProps {
   greeting: string;
   points: number;
   initials: string;
+  isGuest?: boolean; // New prop
   onScanPress: () => void;
   onWalletPress: () => void;
   onProfilePress: () => void;
   onSearchPress: () => void;
 }
 
-export function ModernHeader({ greeting, points, initials, onScanPress, onWalletPress, onProfilePress, onSearchPress }: ModernHeaderProps) {
+export function ModernHeader({
+    greeting,
+    points,
+    initials,
+    isGuest = false,
+    onScanPress,
+    onWalletPress,
+    onProfilePress,
+    onSearchPress
+}: ModernHeaderProps) {
   const insets = useSafeAreaInsets();
-  const HEADER_HEIGHT = 200; // Thinner banner as requested
+  const router = useRouter();
+  const HEADER_HEIGHT = 200;
+
+  // Trigger animation when isGuest changes
+  useEffect(() => {
+      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+  }, [isGuest]);
+
+  const handleLoginPress = () => {
+      Haptics.selectionAsync();
+      router.push('/login');
+  };
+
+  const handleRegisterPress = () => {
+      Haptics.selectionAsync();
+      router.push('/register');
+  };
 
   return (
     <View style={[styles.container, { height: HEADER_HEIGHT }]}>
         <LinearGradient
-            colors={['#121212', '#2C2C2E']} // Dark, premium background
+            colors={['#121212', '#2C2C2E']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.background}
@@ -32,39 +63,57 @@ export function ModernHeader({ greeting, points, initials, onScanPress, onWallet
                 <View style={styles.topRow}>
                     <TouchableOpacity onPress={onProfilePress} style={styles.avatarButton}>
                         <View style={styles.avatar}>
-                             <Ionicons name="person-outline" size={20} color="#fff" />
+                             {isGuest ? (
+                                <Ionicons name="person-outline" size={20} color="#fff" />
+                             ) : (
+                                <Text style={styles.avatarText}>{initials}</Text>
+                             )}
                         </View>
                     </TouchableOpacity>
 
                     <View style={styles.actionsRow}>
-                        <TouchableOpacity onPress={onWalletPress} style={styles.iconButton}>
-                            <Ionicons name="wallet-outline" size={24} color="#fff" />
-                        </TouchableOpacity>
+                        {!isGuest && (
+                            <TouchableOpacity onPress={onWalletPress} style={styles.iconButton}>
+                                <Ionicons name="wallet-outline" size={24} color="#fff" />
+                            </TouchableOpacity>
+                        )}
                         <TouchableOpacity onPress={onSearchPress} style={styles.iconButton}>
                             <Ionicons name="search-outline" size={24} color="#fff" />
                         </TouchableOpacity>
                     </View>
                 </View>
 
-                {/* Main Content: Greeting & Points */}
+                {/* Main Content: Greeting & Points/Login */}
                 <View style={styles.mainContent}>
                     <Text style={styles.greeting}>{greeting}</Text>
-                    <View style={styles.pointsRow}>
-                        <Text style={styles.pointsValue}>{points.toLocaleString()}</Text>
-                        <Text style={styles.pointsLabel}> pts</Text>
 
-                        <TouchableOpacity
-                            style={styles.scanIconButton}
-                            activeOpacity={0.8}
-                            onPress={onScanPress}
-                        >
-                            <Ionicons name="qr-code-outline" size={20} color="#fff" />
-                        </TouchableOpacity>
-                    </View>
+                    {isGuest ? (
+                        <View style={styles.guestActions}>
+                            <TouchableOpacity style={styles.primaryButton} onPress={handleLoginPress}>
+                                <Text style={styles.primaryButtonText}>Iniciar Sesión</Text>
+                            </TouchableOpacity>
+                             <TouchableOpacity style={styles.secondaryButton} onPress={handleRegisterPress}>
+                                <Text style={styles.secondaryButtonText}>Registrarse</Text>
+                            </TouchableOpacity>
+                        </View>
+                    ) : (
+                        <View style={styles.pointsRow}>
+                            <Text style={styles.pointsValue}>{points.toLocaleString()}</Text>
+                            <Text style={styles.pointsLabel}> pts</Text>
+
+                            <TouchableOpacity
+                                style={styles.scanIconButton}
+                                activeOpacity={0.8}
+                                onPress={onScanPress}
+                            >
+                                <Ionicons name="qr-code-outline" size={20} color="#fff" />
+                            </TouchableOpacity>
+                        </View>
+                    )}
                 </View>
             </View>
 
-            {/* Bottom Gradient Fade for merging with content */}
+            {/* Bottom Gradient Fade */}
             <LinearGradient
                 colors={['transparent', 'rgba(255,255,255,0.05)']}
                 style={styles.bottomOverlay}
@@ -81,7 +130,6 @@ const styles = StyleSheet.create({
   },
   background: {
       flex: 1,
-      // Removed rounded corners as requested
       overflow: 'hidden',
   },
   content: {
@@ -89,13 +137,13 @@ const styles = StyleSheet.create({
       paddingHorizontal: 24,
       paddingBottom: 20,
       justifyContent: 'flex-start',
-      gap: 16, // Tighter gap for smaller height
+      gap: 16,
   },
   topRow: {
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
-      marginBottom: 20,
+      marginBottom: 10,
   },
   avatarButton: {
       shadowColor: '#000',
@@ -107,7 +155,7 @@ const styles = StyleSheet.create({
   avatar: {
       width: 44,
       height: 44,
-      borderRadius: 16, // Squircle
+      borderRadius: 16,
       backgroundColor: 'rgba(255,255,255,0.1)',
       justifyContent: 'center',
       alignItems: 'center',
@@ -135,22 +183,24 @@ const styles = StyleSheet.create({
       borderColor: 'rgba(255,255,255,0.2)',
   },
   mainContent: {
-      marginBottom: 20,
+      marginBottom: 10,
+      justifyContent: 'center', // Center vertically in the remaining space
+      flex: 1,
   },
   greeting: {
       fontSize: 16,
-      color: '#A1A1AA', // Zinc 400
-      marginBottom: 4,
+      color: '#A1A1AA',
+      marginBottom: 8,
       fontWeight: '500',
       letterSpacing: 0.5,
   },
   pointsRow: {
       flexDirection: 'row',
-      alignItems: 'center', // Changed to center for icon alignment
+      alignItems: 'center',
   },
   pointsValue: {
       fontSize: 36,
-      fontWeight: '800', // Heavy Bold
+      fontWeight: '800',
       color: '#fff',
       letterSpacing: -1,
       lineHeight: 40,
@@ -160,7 +210,7 @@ const styles = StyleSheet.create({
       fontWeight: '600',
       color: 'rgba(255,255,255,0.8)',
       marginLeft: 4,
-      marginTop: 6, // Adjust visual baseline
+      marginTop: 6,
   },
   scanIconButton: {
       marginLeft: 12,
@@ -180,4 +230,37 @@ const styles = StyleSheet.create({
       right: 0,
       height: 60,
   },
+  guestActions: {
+      flexDirection: 'row',
+      gap: 12,
+      marginTop: 4,
+  },
+  primaryButton: {
+      backgroundColor: '#fff',
+      paddingVertical: 10,
+      paddingHorizontal: 20,
+      borderRadius: 12,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 4,
+      elevation: 2,
+  },
+  primaryButtonText: {
+      color: '#121212',
+      fontWeight: '700',
+      fontSize: 14,
+  },
+  secondaryButton: {
+      paddingVertical: 10,
+      paddingHorizontal: 20,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: 'rgba(255,255,255,0.3)',
+  },
+  secondaryButtonText: {
+      color: '#fff',
+      fontWeight: '600',
+      fontSize: 14,
+  }
 });
