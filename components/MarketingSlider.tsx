@@ -1,14 +1,18 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Dimensions, FlatList, TouchableOpacity, NativeSyntheticEvent, NativeScrollEvent, useWindowDimensions, LayoutAnimation, Platform, UIManager } from 'react-native';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { View, Text, StyleSheet, useWindowDimensions, TouchableOpacity, FlatList, Platform, ViewToken } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
-
-// Enable LayoutAnimation on Android
-if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
-  UIManager.setLayoutAnimationEnabledExperimental(true);
-}
+import Animated, {
+  useAnimatedScrollHandler,
+  useSharedValue,
+  useAnimatedStyle,
+  interpolate,
+  Extrapolation,
+  runOnJS,
+  SharedValue
+} from 'react-native-reanimated';
 
 export interface Banner {
   id: number;
@@ -22,55 +26,94 @@ interface MarketingSliderProps {
   banners: Banner[];
 }
 
+interface BannerItemProps {
+  item: Banner;
+  index: number;
+  scrollX: SharedValue<number>;
+  windowWidth: number;
+  cardHeight: number;
+  onPress: () => void;
+}
+
+interface PaginationProps {
+  banners: Banner[];
+  scrollX: SharedValue<number>;
+  windowWidth: number;
+}
+
+const AnimatedFlatList = Animated.createAnimatedComponent(FlatList);
+
+const CARD_MARGIN = 20;
+const AUTO_SCROLL_INTERVAL = 5000;
+
 export function MarketingSlider({ banners }: MarketingSliderProps) {
   const router = useRouter();
-  const flatListRef = useRef<FlatList>(null);
-  const [currentIndex, setCurrentIndex] = useState(0);
   const { width: windowWidth } = useWindowDimensions();
-  const isUserInteracting = useRef(false);
-  const CARD_MARGIN = 20;
-  const cardHeight = (windowWidth - CARD_MARGIN * 2) * (9 / 16);
+  const flatListRef = useRef<FlatList<Banner>>(null);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const scrollX = useSharedValue(0);
+  const isAutoScrolling = useRef(false);
+  const isInteracting = useRef(false);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const cardWidth = windowWidth - (CARD_MARGIN * 2);
+  const cardHeight = cardWidth * (9 / 16);
 
   // Auto-scroll logic
-  useEffect(() => {
-    if (!banners || banners.length <= 1) return;
-
-    const interval = setInterval(() => {
-      if (isUserInteracting.current) return;
+  const startAutoScroll = useCallback(() => {
+    if (timerRef.current) clearInterval(timerRef.current);
+    timerRef.current = setInterval(() => {
+      if (isInteracting.current || banners.length <= 1) return;
 
       let nextIndex = currentIndex + 1;
       if (nextIndex >= banners.length) {
         nextIndex = 0;
       }
-      flatListRef.current?.scrollToIndex({ index: nextIndex, animated: true });
-    }, 5000);
 
-    return () => clearInterval(interval);
+      isAutoScrolling.current = true;
+      flatListRef.current?.scrollToIndex({ index: nextIndex, animated: true });
+      setCurrentIndex(nextIndex);
+    }, AUTO_SCROLL_INTERVAL);
   }, [currentIndex, banners.length]);
 
-  const handleScrollBeginDrag = () => {
-      isUserInteracting.current = true;
-  };
+  useEffect(() => {
+    startAutoScroll();
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [startAutoScroll]);
 
-  const handleScrollEndDrag = () => {
-      setTimeout(() => {
-          isUserInteracting.current = false;
-      }, 3000);
-  };
+  const onScroll = useAnimatedScrollHandler({
+    onScroll: (event) => {
+      scrollX.value = event.contentOffset.x;
+    },
+    onBeginDrag: () => {
+      runOnJS(setIsInteracting)(true);
+    },
+    onEndDrag: () => {
+      runOnJS(setIsInteracting)(false);
+    },
+  });
 
-  const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const contentOffsetX = event.nativeEvent.contentOffset.x;
-    const index = Math.round(contentOffsetX / windowWidth);
-
-    if (index !== currentIndex && index >= 0 && index < banners.length) {
-      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-      setCurrentIndex(index);
-
-      if (isUserInteracting.current) {
-          Haptics.selectionAsync();
-      }
+  const setIsInteracting = (value: boolean) => {
+    isInteracting.current = value;
+    if (!value) {
+      // Resume auto-scroll after interaction ends (with a delay if needed)
+      startAutoScroll();
+    } else {
+        if (timerRef.current) clearInterval(timerRef.current);
     }
   };
+
+  const onViewableItemsChanged = useCallback(({ viewableItems }: { viewableItems: ViewToken[] }) => {
+    if (viewableItems.length > 0 && viewableItems[0].index !== null) {
+      setCurrentIndex(viewableItems[0].index);
+    }
+  }, []);
+
+  const viewabilityConfig = useRef({
+    itemVisiblePercentThreshold: 50,
+  });
 
   const handlePress = (banner: Banner) => {
     Haptics.selectionAsync();
@@ -83,131 +126,222 @@ export function MarketingSlider({ banners }: MarketingSliderProps) {
 
   return (
     <View style={styles.container}>
-      <FlatList
+      <AnimatedFlatList
         ref={flatListRef}
         data={banners}
         horizontal
         pagingEnabled
         showsHorizontalScrollIndicator={false}
-        keyExtractor={(item) => item.id.toString()}
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            activeOpacity={0.95}
-            onPress={() => handlePress(item)}
-            style={{ width: windowWidth, paddingHorizontal: CARD_MARGIN, alignItems: 'center' }}
-          >
-            <View style={[styles.card, { height: cardHeight }]}>
-                <Image
-                    source={{ uri: item.image_url }}
-                    style={styles.image}
-                    contentFit="cover"
-                    transition={500}
-                />
-                <LinearGradient
-                    colors={['transparent', 'rgba(0,0,0,0.2)', 'rgba(0,0,0,0.8)']}
-                    locations={[0, 0.5, 1]}
-                    style={styles.gradient}
-                >
-                    <View style={styles.textContainer}>
-                        <Text style={styles.subtitle}>{item.subtitle}</Text>
-                        <Text style={styles.title} numberOfLines={2}>{item.title}</Text>
-                    </View>
-                </LinearGradient>
-            </View>
-          </TouchableOpacity>
-        )}
-        onScrollBeginDrag={handleScrollBeginDrag}
-        onScrollEndDrag={handleScrollEndDrag}
-        onScroll={handleScroll}
+        keyExtractor={(item: any) => item.id.toString()}
+        onScroll={onScroll}
         scrollEventThrottle={16}
-        style={styles.list}
+        onViewableItemsChanged={onViewableItemsChanged}
+        viewabilityConfig={viewabilityConfig.current}
+        renderItem={({ item, index }: { item: unknown; index: number }) => (
+          <BannerItem
+            item={item as Banner}
+            index={index}
+            scrollX={scrollX}
+            windowWidth={windowWidth}
+            cardHeight={cardHeight}
+            onPress={() => handlePress(item as Banner)}
+          />
+        )}
+        contentContainerStyle={{ paddingBottom: 20 }} // Space for shadow
       />
 
-      <View style={styles.pagination}>
-        {banners.map((_, index) => (
-          <View
-            key={index}
-            style={[
-              styles.dot,
-              currentIndex === index ? styles.activeDot : styles.inactiveDot,
-            ]}
-          />
-        ))}
-      </View>
+      <Pagination banners={banners} scrollX={scrollX} windowWidth={windowWidth} />
     </View>
   );
 }
 
+const BannerItem = ({ item, index, scrollX, windowWidth, cardHeight, onPress }: BannerItemProps) => {
+  const inputRange = [(index - 1) * windowWidth, index * windowWidth, (index + 1) * windowWidth];
+
+  const animatedImageStyle = useAnimatedStyle(() => {
+    const translateX = interpolate(
+      scrollX.value,
+      inputRange,
+      [-windowWidth * 0.2, 0, windowWidth * 0.2], // Parallax effect
+      Extrapolation.CLAMP
+    );
+
+    const scale = interpolate(
+        scrollX.value,
+        inputRange,
+        [1.2, 1, 1.2], // Slight zoom out on focus
+        Extrapolation.CLAMP
+    );
+
+    return {
+      transform: [{ translateX }, { scale }],
+    };
+  });
+
+  const animatedContentStyle = useAnimatedStyle(() => {
+    const opacity = interpolate(
+      scrollX.value,
+      inputRange,
+      [0, 1, 0],
+      Extrapolation.CLAMP
+    );
+
+    const translateY = interpolate(
+      scrollX.value,
+      inputRange,
+      [20, 0, 20], // Slide up effect
+      Extrapolation.CLAMP
+    );
+
+    return {
+      opacity,
+      transform: [{ translateY }],
+    };
+  });
+
+  const animatedContainerStyle = useAnimatedStyle(() => {
+      const scale = interpolate(
+          scrollX.value,
+          inputRange,
+          [0.9, 1, 0.9], // Card scale effect
+          Extrapolation.CLAMP
+      );
+      return {
+          transform: [{ scale }]
+      };
+  });
+
+  return (
+    <TouchableOpacity
+      activeOpacity={0.95}
+      onPress={onPress}
+      style={{ width: windowWidth, alignItems: 'center', justifyContent: 'center' }}
+    >
+      <Animated.View style={[styles.card, { height: cardHeight, width: windowWidth - (CARD_MARGIN * 2) }, animatedContainerStyle]}>
+        <View style={styles.imageContainer}>
+            <Animated.View style={[StyleSheet.absoluteFill, animatedImageStyle]}>
+                <Image
+                    source={{ uri: item.image_url }}
+                    style={{ width: '100%', height: '100%' }}
+                    contentFit="cover"
+                    transition={200}
+                />
+            </Animated.View>
+        </View>
+
+        <LinearGradient
+            colors={['transparent', 'rgba(0,0,0,0.4)', 'rgba(0,0,0,0.8)']}
+            locations={[0, 0.5, 1]}
+            style={styles.gradient}
+        >
+            <Animated.View style={[styles.textContainer, animatedContentStyle]}>
+                {item.subtitle && <Text style={styles.subtitle}>{item.subtitle}</Text>}
+                <Text style={styles.title} numberOfLines={2}>{item.title}</Text>
+            </Animated.View>
+        </LinearGradient>
+      </Animated.View>
+    </TouchableOpacity>
+  );
+};
+
+const Pagination = ({ banners, scrollX, windowWidth }: PaginationProps) => {
+    return (
+        <View style={styles.pagination}>
+            {banners.map((_, index) => {
+                const animatedDotStyle = useAnimatedStyle(() => {
+                    const inputRange = [(index - 1) * windowWidth, index * windowWidth, (index + 1) * windowWidth];
+
+                    const width = interpolate(
+                        scrollX.value,
+                        inputRange,
+                        [8, 24, 8],
+                        Extrapolation.CLAMP
+                    );
+
+                    const opacity = interpolate(
+                        scrollX.value,
+                        inputRange,
+                        [0.5, 1, 0.5],
+                        Extrapolation.CLAMP
+                    );
+
+                    return {
+                        width,
+                        opacity,
+                    };
+                });
+
+                return (
+                    <Animated.View
+                        key={index}
+                        style={[styles.dot, animatedDotStyle]}
+                    />
+                );
+            })}
+        </View>
+    );
+};
+
 const styles = StyleSheet.create({
   container: {
-    marginBottom: 32,
-  },
-  list: {
-      flexGrow: 0,
+    marginBottom: 12,
   },
   card: {
-    width: '100%',
-    height: 120, // Even thinner
-    borderRadius: 16,
+    borderRadius: 20, // Increased border radius
     overflow: 'hidden',
-    backgroundColor: '#E5E7EB', // Placeholder gray
+    backgroundColor: '#1F2937', // Darker placeholder
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.18,
-    shadowRadius: 16,
-    elevation: 10,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
+    elevation: 8,
   },
-  image: {
-    width: '100%',
-    height: '100%',
+  imageContainer: {
+      width: '100%',
+      height: '100%',
+      overflow: 'hidden', // Ensures image doesn't bleed out during scaling
   },
   gradient: {
     position: 'absolute',
     left: 0,
     right: 0,
     bottom: 0,
-    height: '60%', // Reduced gradient height to show more image
+    height: '100%', // Full height gradient for better text readability
     justifyContent: 'flex-end',
-    padding: 24, // More padding
+    padding: 24,
   },
   textContainer: {
-      gap: 4,
+      gap: 6,
   },
   title: {
     color: 'white',
-    fontSize: 18, // Further adjusted
-    fontWeight: '700',
-    letterSpacing: -0.3,
-    textShadowColor: 'rgba(0,0,0,0.4)',
+    fontSize: 22, // Larger font
+    fontWeight: '800', // Bolder
+    letterSpacing: -0.5,
+    textShadowColor: 'rgba(0,0,0,0.5)',
     textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 6,
-    lineHeight: 32,
+    textShadowRadius: 4,
+    lineHeight: 28,
   },
   subtitle: {
-    color: '#F3F4F6', // Lighter gray
-    fontSize: 14,
+    color: '#E5E7EB', // Gray 200
+    fontSize: 13,
     fontWeight: '700',
     textTransform: 'uppercase',
-    letterSpacing: 1.2,
-    opacity: 0.95,
-    marginBottom: 2,
+    letterSpacing: 1.5,
+    opacity: 0.9,
+    marginBottom: 4,
   },
   pagination: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginTop: 20,
-    gap: 8,
+    alignItems: 'center',
+    marginTop: -10, // Pull up closer
+    gap: 6,
   },
   dot: {
-    height: 6,
-    borderRadius: 3,
-  },
-  activeDot: {
-    width: 24,
-    backgroundColor: '#111827', // Gray 900
-  },
-  inactiveDot: {
-    width: 6,
-    backgroundColor: '#D1D5DB', // Gray 300
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#163D36', // Primary Green
   },
 });
