@@ -1,83 +1,68 @@
 import React from 'react';
-import { View, StyleSheet, ScrollView } from 'react-native';
+import { View, StyleSheet, ScrollView, Dimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Skeleton } from './ui/Skeleton';
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 export function HomeScreenSkeleton() {
   const insets = useSafeAreaInsets();
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top + 10 }]}>
-      {/* 1. Header */}
-      <View style={styles.header}>
-        <View>
-          <Skeleton width={150} height={24} borderRadius={4} />
-          <Skeleton width={100} height={14} borderRadius={4} style={{ marginTop: 8 }} />
-        </View>
-        <View style={styles.headerRight}>
-          <Skeleton width={24} height={24} borderRadius={12} style={{ marginRight: 16 }} />
-          <Skeleton width={40} height={40} borderRadius={12} />
-        </View>
+    <View style={styles.container}>
+      {/* 1. Header Area (Approx matching ModernHeader) */}
+      <View style={[styles.headerContainer, { height: 200, paddingTop: insets.top + 10 }]}>
+         <View style={styles.headerTopRow}>
+            {/* Avatar Skeleton */}
+            <Skeleton width={44} height={44} borderRadius={16} style={{ backgroundColor: '#2C2C2E' }} />
+            <View style={styles.headerActions}>
+                {/* Icons */}
+                <Skeleton width={44} height={44} borderRadius={16} style={{ marginRight: 12, backgroundColor: '#2C2C2E' }} />
+                <Skeleton width={44} height={44} borderRadius={16} style={{ backgroundColor: '#2C2C2E' }} />
+            </View>
+         </View>
+         <View style={styles.headerContent}>
+             <Skeleton width={150} height={20} borderRadius={4} style={{ marginBottom: 12, backgroundColor: '#2C2C2E' }} />
+             <Skeleton width={100} height={36} borderRadius={8} style={{ backgroundColor: '#2C2C2E' }} />
+         </View>
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
-        {/* 2. Hero Card (Wallet) */}
-        <View style={styles.heroContainer}>
-          <Skeleton width="100%" height={120} borderRadius={16} />
+
+        {/* 2. Marketing Slider Skeleton */}
+        <View style={styles.sliderContainer}>
+          <Skeleton width={SCREEN_WIDTH - 40} height={180} borderRadius={20} />
         </View>
 
-        {/* 3. Search & Filters */}
-        <View style={styles.searchSection}>
-          <View style={{ paddingHorizontal: 20 }}>
-            <Skeleton width="100%" height={56} borderRadius={12} style={{ marginBottom: 16 }} />
-          </View>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterScroll}>
-            {[1, 2, 3, 4].map((item) => (
-              <Skeleton
-                key={item}
-                width={100}
-                height={36}
-                borderRadius={12}
-                style={{ marginRight: 10 }}
-              />
-            ))}
-          </ScrollView>
-        </View>
-
-        {/* 4. Rewards Active */}
-        <View style={styles.sectionContainer}>
-          <View style={styles.sectionHeader}>
-            <Skeleton width={200} height={24} borderRadius={4} />
-            <Skeleton width={32} height={32} borderRadius={12} />
-          </View>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.carouselContent}>
-            {[1, 2, 3].map((item) => (
-              <View key={item} style={styles.rewardCard}>
-                <Skeleton width="100%" height={160} borderRadius={16} style={{ marginBottom: 12 }} />
-                <Skeleton width="70%" height={20} borderRadius={4} style={{ marginBottom: 4 }} />
-                <Skeleton width="50%" height={16} borderRadius={4} />
-              </View>
-            ))}
-          </ScrollView>
-        </View>
-
-        {/* 5. Comercios Nexe */}
-        <View style={styles.sectionContainer}>
-          <View style={{ paddingHorizontal: 20, marginBottom: 16 }}>
-             <Skeleton width={180} height={24} borderRadius={4} />
-          </View>
-          <View style={styles.listContainer}>
-            {[1, 2, 3, 4, 5].map((item) => (
-              <View key={item} style={styles.businessRow}>
-                <Skeleton width={50} height={50} borderRadius={12} style={{ marginRight: 16 }} />
-                <View style={{ flex: 1 }}>
-                  <Skeleton width="60%" height={16} borderRadius={4} style={{ marginBottom: 8 }} />
-                  <Skeleton width="40%" height={14} borderRadius={4} />
+        {/* 3. Categories Skeleton */}
+        <View style={styles.categoriesContainer}>
+           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ paddingLeft: 20 }}>
+             {[1, 2, 3, 4, 5].map((i) => (
+                <View key={i} style={{ alignItems: 'center', marginRight: 20 }}>
+                    <Skeleton width={64} height={64} borderRadius={24} style={{ marginBottom: 8 }} />
+                    <Skeleton width={50} height={12} borderRadius={4} />
                 </View>
-              </View>
-            ))}
-          </View>
+             ))}
+           </ScrollView>
         </View>
+
+        {/* 4. Restaurant List Skeleton */}
+        <View style={styles.listContainer}>
+             <View style={{ paddingHorizontal: 20, marginBottom: 16 }}>
+                <Skeleton width={180} height={24} borderRadius={4} />
+             </View>
+             {[1, 2, 3].map((i) => (
+                 <View key={i} style={styles.cardContainer}>
+                     <Skeleton width="100%" height={200} borderRadius={20} style={{ marginBottom: 12 }} />
+                     <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
+                        <Skeleton width="60%" height={20} borderRadius={4} />
+                        <Skeleton width={40} height={20} borderRadius={4} />
+                     </View>
+                     <Skeleton width="40%" height={16} borderRadius={4} />
+                 </View>
+             ))}
+        </View>
+
       </ScrollView>
     </View>
   );
@@ -86,55 +71,45 @@ export function HomeScreenSkeleton() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#FAFAFA',
   },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingBottom: 20,
+  headerContainer: {
+      backgroundColor: '#121212', // Dark background for skeleton to match header
+      paddingHorizontal: 24,
+      justifyContent: 'flex-start',
   },
-  headerRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  headerTopRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      marginBottom: 20,
   },
-  heroContainer: {
-    paddingHorizontal: 20,
-    marginBottom: 24,
+  headerActions: {
+      flexDirection: 'row',
   },
-  searchSection: {
-    marginBottom: 32,
+  headerContent: {
+      justifyContent: 'center',
   },
-  filterScroll: {
-    paddingLeft: 20,
+  sliderContainer: {
+      marginTop: 20,
+      alignItems: 'center',
+      marginBottom: 32,
   },
-  sectionContainer: {
-    marginBottom: 32,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    marginBottom: 16,
-  },
-  carouselContent: {
-    paddingHorizontal: 20,
-    paddingRight: 4,
-  },
-  rewardCard: {
-    width: 280,
-    marginRight: 16,
+  categoriesContainer: {
+      marginBottom: 32,
   },
   listContainer: {
-    paddingHorizontal: 20,
+      width: '100%',
   },
-  businessRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
-  },
+  cardContainer: {
+      marginHorizontal: 20,
+      marginBottom: 24,
+      backgroundColor: '#fff',
+      padding: 16,
+      borderRadius: 24,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.05,
+      shadowRadius: 8,
+      elevation: 2,
+  }
 });

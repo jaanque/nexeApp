@@ -1,6 +1,6 @@
-import { View, StyleSheet, Text, TextInput, ScrollView, TouchableOpacity, FlatList, ListRenderItem, ActivityIndicator, LayoutAnimation, Platform, UIManager, Keyboard, Dimensions } from 'react-native';
+import { View, StyleSheet, Text, TextInput, ScrollView, TouchableOpacity, FlatList, ListRenderItem, ActivityIndicator, LayoutAnimation, Platform, UIManager, Keyboard, RefreshControl } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Session } from '@supabase/supabase-js';
 import { Ionicons } from '@expo/vector-icons';
@@ -15,6 +15,7 @@ import { CategoryFilterItem } from '@/components/CategoryFilterItem';
 import { ModernHeader } from '@/components/ui/ModernHeader';
 import { ModernRewardCard } from '@/components/ModernRewardCard';
 import { ModernBusinessCard } from '@/components/ModernBusinessCard';
+import { MarketingSlider, Banner } from '@/components/MarketingSlider';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 // Enable LayoutAnimation on Android
@@ -32,6 +33,8 @@ interface Restaurant {
   latitude?: number;
   longitude?: number;
   category_id?: number;
+  opening_time?: string;
+  closing_time?: string;
 }
 
 interface Category {
@@ -64,19 +67,22 @@ export default function HomeScreen() {
   const [allRewards, setAllRewards] = useState<MenuItemResult[]>([]);
   const [loading, setLoading] = useState(true);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [banners, setBanners] = useState<Banner[]>([]); // Banners State
   const [userLocation, setUserLocation] = useState<{ latitude: number, longitude: number } | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
   const [searchResultsRestaurants, setSearchResultsRestaurants] = useState<Restaurant[]>([]);
   const [searchResultsDishes, setSearchResultsDishes] = useState<MenuItemResult[]>([]);
   const [isSearching, setIsSearching] = useState<boolean>(false);
-  const [showSearchInput, setShowSearchInput] = useState<boolean>(false); // New state for search toggle
+  const [showSearchInput, setShowSearchInput] = useState<boolean>(false);
   const [searching, setSearching] = useState<boolean>(false);
   const [activeCategory, setActiveCategory] = useState<number | null>(null);
+  const [refreshing, setRefreshing] = useState(false); // Pull to refresh
 
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
+  // Load initial session
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
@@ -89,14 +95,38 @@ export default function HomeScreen() {
       setSession(session);
       if (session?.user) {
         fetchPoints(session.user.id);
+      } else {
+          setPoints(0);
       }
     });
 
-    fetchCategories();
-    fetchData();
     getUserLocation();
+    fetchAllData();
   }, []);
 
+  const fetchAllData = async () => {
+      setLoading(true);
+      await Promise.all([
+          fetchCategories(),
+          fetchRestaurantsAndRewards(),
+          fetchBanners()
+      ]);
+      setLoading(false);
+  };
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    await Promise.all([
+        fetchCategories(),
+        fetchRestaurantsAndRewards(),
+        fetchBanners(),
+        session?.user ? fetchPoints(session.user.id) : Promise.resolve()
+    ]);
+    setRefreshing(false);
+  }, [session]);
+
+  // Filtering Logic
   useEffect(() => {
       if (activeCategory === null) {
           setPopularRestaurants(allRestaurants);
@@ -110,10 +140,12 @@ export default function HomeScreen() {
       }
   }, [activeCategory, allRestaurants, allRewards]);
 
+  // Search Logic
   useEffect(() => {
       handleSearch(debouncedSearchQuery);
   }, [debouncedSearchQuery]);
 
+  // Location Sorting Logic
   useEffect(() => {
       if (popularRestaurants.length > 0) {
           if (userLocation) {
@@ -167,12 +199,12 @@ export default function HomeScreen() {
   }
 
   function toggleSearch() {
+      Haptics.selectionAsync();
       LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
       if (showSearchInput) {
           handleCancelSearch();
       } else {
           setShowSearchInput(true);
-          // Focus logic could be added here if we had a ref
       }
   }
 
@@ -219,9 +251,16 @@ export default function HomeScreen() {
       } catch (e) { console.error("Error categories:", e); }
   }
 
-  async function fetchData() {
+  async function fetchBanners() {
+      try {
+          // Check if table exists first (in case migration didn't run, but we assume it did)
+          const { data, error } = await supabase.from('marketing_banners').select('*').eq('active', true).order('display_order', { ascending: true });
+          if (!error && data) setBanners(data);
+      } catch (e) { console.error("Error banners:", e); }
+  }
+
+  async function fetchRestaurantsAndRewards() {
     try {
-      setLoading(true);
       const { data: restData } = await supabase.from('restaurants').select('*').limit(100);
       if (restData) {
           setAllRestaurants(restData);
@@ -233,7 +272,6 @@ export default function HomeScreen() {
           setRewardItems(menuData as any);
       }
     } catch (error) { console.error("Error data:", error); }
-    finally { setLoading(false); }
   }
 
   const getGreeting = () => {
@@ -263,11 +301,15 @@ export default function HomeScreen() {
         contentContainerStyle={{ paddingBottom: 80 }}
         keyboardDismissMode="on-drag"
         scrollEnabled={!isSearching || searchResultsRestaurants.length > 0 || searchResultsDishes.length > 0}
+        refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#121212" />
+        }
       >
           <ModernHeader
             greeting={getGreeting()}
             points={points}
             initials={getInitials()}
+            isGuest={!session?.user}
             onScanPress={() => router.push('/scan')}
             onWalletPress={() => router.push('/movements')}
             onProfilePress={() => router.push('/profile')}
@@ -303,23 +345,31 @@ export default function HomeScreen() {
           )}
 
           {!isSearching && (
-              <View style={{ marginTop: 20 }}>
-                  <ScrollView
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                    style={styles.filterScroll}
-                    contentContainerStyle={styles.filterContent}
-                  >
-                      {categories.map((cat) => (
-                          <CategoryFilterItem
-                              key={cat.id}
-                              item={cat}
-                              isActive={activeCategory === cat.id}
-                              onPress={() => setActiveCategory(activeCategory === cat.id ? null : cat.id)}
-                          />
-                      ))}
-                  </ScrollView>
-              </View>
+              <>
+                  {/* Marketing Banners */}
+                  <View style={{ marginTop: 20 }}>
+                    <MarketingSlider banners={banners} />
+                  </View>
+
+                  {/* Categories */}
+                  <View style={{ marginBottom: 10 }}>
+                      <ScrollView
+                        horizontal
+                        showsHorizontalScrollIndicator={false}
+                        style={styles.filterScroll}
+                        contentContainerStyle={styles.filterContent}
+                      >
+                          {categories.map((cat) => (
+                              <CategoryFilterItem
+                                  key={cat.id}
+                                  item={cat}
+                                  isActive={activeCategory === cat.id}
+                                  onPress={() => setActiveCategory(activeCategory === cat.id ? null : cat.id)}
+                              />
+                          ))}
+                      </ScrollView>
+                  </View>
+              </>
           )}
 
 
@@ -344,23 +394,27 @@ export default function HomeScreen() {
              </View>
           ) : (
             <>
-                <Animated.View entering={FadeInDown.delay(100).springify()} style={styles.sectionContainer}>
-                    <View style={styles.sectionHeader}>
-                        <Text style={styles.sectionTitle}>Recompensas Activas</Text>
-                        <TouchableOpacity style={styles.arrowButton}>
-                            <Ionicons name="arrow-forward" size={20} color="#000" />
-                        </TouchableOpacity>
-                    </View>
-                    <FlatList
-                        data={rewardItems}
-                        renderItem={renderRewardItem}
-                        keyExtractor={(item) => item.id.toString()}
-                        horizontal
-                        showsHorizontalScrollIndicator={false}
-                        contentContainerStyle={styles.carouselContent}
-                    />
-                </Animated.View>
+                {/* Rewards Section */}
+                {rewardItems.length > 0 && (
+                    <Animated.View entering={FadeInDown.delay(100).springify()} style={styles.sectionContainer}>
+                        <View style={styles.sectionHeader}>
+                            <Text style={styles.sectionTitle}>Recompensas Activas</Text>
+                            <TouchableOpacity style={styles.arrowButton}>
+                                <Ionicons name="arrow-forward" size={20} color="#000" />
+                            </TouchableOpacity>
+                        </View>
+                        <FlatList
+                            data={rewardItems}
+                            renderItem={renderRewardItem}
+                            keyExtractor={(item) => item.id.toString()}
+                            horizontal
+                            showsHorizontalScrollIndicator={false}
+                            contentContainerStyle={styles.carouselContent}
+                        />
+                    </Animated.View>
+                )}
 
+                {/* Restaurants List */}
                 <Animated.View entering={FadeInDown.delay(200).springify()} style={styles.sectionContainer}>
                     <View style={{ paddingHorizontal: 24, marginBottom: 16 }}>
                         <Text style={styles.sectionTitle}>Comercios Nexe</Text>

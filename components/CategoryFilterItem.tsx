@@ -1,6 +1,7 @@
 import React from 'react';
 import { TouchableOpacity, Text, StyleSheet, View } from 'react-native';
 import { getCategoryColor, hexToRgba } from '@/lib/colorGenerator';
+import * as Haptics from 'expo-haptics';
 
 interface CategoryFilterItemProps {
   item: { id: number; name: string; emoji: string; color?: string };
@@ -13,10 +14,15 @@ export function CategoryFilterItem({ item, isActive, onPress }: CategoryFilterIt
   const activeBackgroundColor = hexToRgba(categoryColor, 0.25);
   const inactiveBackgroundColor = 'rgba(245, 246, 248, 1)'; // #F5F6F8
 
+  const handlePress = () => {
+      Haptics.selectionAsync();
+      onPress();
+  }
+
   return (
     <TouchableOpacity
       style={styles.container}
-      onPress={onPress}
+      onPress={handlePress}
       activeOpacity={0.7}
     >
       <View style={[
