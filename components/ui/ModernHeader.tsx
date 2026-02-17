@@ -32,7 +32,7 @@ export function ModernHeader({ greeting, points, initials, onScanPress, onWallet
                 <View style={styles.topRow}>
                     <TouchableOpacity onPress={onProfilePress} style={styles.avatarButton}>
                         <View style={styles.avatar}>
-                            <Text style={styles.avatarText}>{initials}</Text>
+                             <Ionicons name="person-outline" size={20} color="#fff" />
                         </View>
                     </TouchableOpacity>
                     <TouchableOpacity onPress={onWalletPress} style={styles.walletButton}>
@@ -82,8 +82,8 @@ const styles = StyleSheet.create({
   },
   background: {
       flex: 1,
-      borderBottomLeftRadius: 32,
-      borderBottomRightRadius: 32,
+      borderBottomLeftRadius: 24,
+      borderBottomRightRadius: 24,
       overflow: 'hidden',
   },
   content: {
