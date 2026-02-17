@@ -1,0 +1,193 @@
+import React from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ImageBackground, StatusBar as RNStatusBar } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
+import { Image } from 'expo-image';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+interface ModernHeaderProps {
+  greeting: string;
+  points: number;
+  initials: string;
+  onScanPress: () => void;
+  onWalletPress: () => void;
+  onProfilePress: () => void;
+  children?: React.ReactNode; // For the search bar or extra content
+}
+
+export function ModernHeader({ greeting, points, initials, onScanPress, onWalletPress, onProfilePress, children }: ModernHeaderProps) {
+  const insets = useSafeAreaInsets();
+  const HEADER_HEIGHT = 280; // Taller header for immersive feel
+
+  return (
+    <View style={[styles.container, { height: HEADER_HEIGHT }]}>
+        <LinearGradient
+            colors={['#121212', '#2C2C2E']} // Dark, premium background
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.background}
+        >
+            <View style={[styles.content, { paddingTop: insets.top + 10 }]}>
+                {/* Top Row: Avatar & Wallet */}
+                <View style={styles.topRow}>
+                    <TouchableOpacity onPress={onProfilePress} style={styles.avatarButton}>
+                        <View style={styles.avatar}>
+                            <Text style={styles.avatarText}>{initials}</Text>
+                        </View>
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={onWalletPress} style={styles.walletButton}>
+                        <Ionicons name="wallet-outline" size={24} color="#fff" />
+                    </TouchableOpacity>
+                </View>
+
+                {/* Main Content: Greeting & Points */}
+                <View style={styles.mainContent}>
+                    <Text style={styles.greeting}>{greeting}</Text>
+                    <View style={styles.pointsRow}>
+                        <Text style={styles.pointsValue}>{points.toLocaleString()}</Text>
+                        <Text style={styles.pointsLabel}> pts</Text>
+                    </View>
+                </View>
+
+                {/* Scan Action */}
+                <TouchableOpacity
+                    style={styles.scanButton}
+                    activeOpacity={0.8}
+                    onPress={onScanPress}
+                >
+                    <Ionicons name="qr-code-outline" size={20} color="#000" />
+                    <Text style={styles.scanText}>Escanear QR</Text>
+                </TouchableOpacity>
+            </View>
+
+            {/* Bottom Gradient Fade for merging with content */}
+            <LinearGradient
+                colors={['transparent', 'rgba(255,255,255,0.05)']}
+                style={styles.bottomOverlay}
+            />
+        </LinearGradient>
+
+        {/* Floating Child Container (Search Bar) - Positioned absolutely at bottom overlap */}
+        <View style={styles.childContainer}>
+            {children}
+        </View>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+      marginBottom: 30, // Space for the overlapping search bar
+      zIndex: 10,
+  },
+  background: {
+      flex: 1,
+      borderBottomLeftRadius: 32,
+      borderBottomRightRadius: 32,
+      overflow: 'hidden',
+  },
+  content: {
+      flex: 1,
+      paddingHorizontal: 24,
+      paddingBottom: 60, // Space for search bar area
+      justifyContent: 'space-between',
+  },
+  topRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: 20,
+  },
+  avatarButton: {
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.3,
+      shadowRadius: 8,
+      elevation: 5,
+  },
+  avatar: {
+      width: 44,
+      height: 44,
+      borderRadius: 16, // Squircle
+      backgroundColor: 'rgba(255,255,255,0.1)',
+      justifyContent: 'center',
+      alignItems: 'center',
+      borderWidth: 1,
+      borderColor: 'rgba(255,255,255,0.2)',
+  },
+  avatarText: {
+      color: '#fff',
+      fontSize: 16,
+      fontWeight: 'bold',
+  },
+  walletButton: {
+      width: 44,
+      height: 44,
+      borderRadius: 16,
+      backgroundColor: 'rgba(255,255,255,0.1)',
+      justifyContent: 'center',
+      alignItems: 'center',
+      borderWidth: 1,
+      borderColor: 'rgba(255,255,255,0.2)',
+  },
+  mainContent: {
+      marginBottom: 20,
+  },
+  greeting: {
+      fontSize: 16,
+      color: '#A1A1AA', // Zinc 400
+      marginBottom: 4,
+      fontWeight: '500',
+      letterSpacing: 0.5,
+  },
+  pointsRow: {
+      flexDirection: 'row',
+      alignItems: 'baseline',
+  },
+  pointsValue: {
+      fontSize: 48,
+      fontWeight: '800', // Heavy Bold
+      color: '#fff',
+      letterSpacing: -1.5,
+      lineHeight: 52,
+  },
+  pointsLabel: {
+      fontSize: 20,
+      fontWeight: '600',
+      color: 'rgba(255,255,255,0.8)',
+      marginLeft: 4,
+  },
+  scanButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      alignSelf: 'flex-start',
+      backgroundColor: '#fff',
+      paddingVertical: 12,
+      paddingHorizontal: 20,
+      borderRadius: 20, // Capsule shape
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.2,
+      shadowRadius: 8,
+      elevation: 4,
+  },
+  scanText: {
+      color: '#000',
+      fontWeight: 'bold',
+      fontSize: 14,
+      marginLeft: 8,
+  },
+  bottomOverlay: {
+      position: 'absolute',
+      bottom: 0,
+      left: 0,
+      right: 0,
+      height: 60,
+  },
+  childContainer: {
+      position: 'absolute',
+      bottom: -28, // Half of search bar height (56/2)
+      left: 20,
+      right: 20,
+  },
+});
