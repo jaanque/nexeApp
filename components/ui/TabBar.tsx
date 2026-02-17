@@ -11,7 +11,7 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const inactiveColor = '#6E7278';
 
   return (
-    <View style={[styles.tabBar, { paddingBottom: insets.bottom + 5 }]}>
+    <View style={styles.tabBar}>
       {state.routes.map((route, index) => {
         const { options } = descriptors[route.key];
         const label =
@@ -80,17 +80,22 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
 const styles = StyleSheet.create({
   tabBar: {
     position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
+    bottom: 25,
     flexDirection: 'row',
-    backgroundColor: '#fff',
-    borderTopColor: '#F0F0F0',
-    borderTopWidth: 1,
-    paddingTop: 10,
-    // No shadows - Clean Aesthetic
-    shadowColor: 'transparent',
-    elevation: 0,
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 1)', // Semi-transparent or solid white
+    marginHorizontal: 32, // Floating effect
+    paddingVertical: 12,
+    borderRadius: 32, // Pill shape
+    // Shadow for depth
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 20,
+    elevation: 10,
+    borderWidth: 1,
+    borderColor: '#f0f0f0',
   },
   tabItem: {
     flex: 1,
