@@ -28,8 +28,8 @@ export default function TabLayout() {
       <Tabs.Screen
         name="scan"
         options={{
-          title: '', // No label for the central button
-          tabBarIcon: ({ color }) => <IconSymbol size={32} name="camera.viewfinder" color={color} />,
+          title: 'Escanear',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="camera.viewfinder" color={color} />,
         }}
       />
       <Tabs.Screen

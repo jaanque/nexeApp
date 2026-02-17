@@ -48,21 +48,6 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
           });
         };
 
-        if (isScanTab) {
-            return (
-                <Pressable
-                    key={route.key}
-                    onPress={onPress}
-                    onLongPress={onLongPress}
-                    style={styles.scanTabContainer}
-                >
-                    <View style={styles.scanButton}>
-                        <Ionicons name="scan-outline" size={28} color="#FFFFFF" />
-                    </View>
-                </Pressable>
-            );
-        }
-
         return (
           <Pressable
             key={route.key}
@@ -77,6 +62,8 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
             {/* Custom Icons for cleaner aesthetic */}
             {route.name === 'index' ? (
                 <Ionicons name={isFocused ? "home" : "home-outline"} size={24} color={isFocused ? activeColor : inactiveColor} />
+            ) : route.name === 'scan' ? (
+                <Ionicons name={isFocused ? "scan" : "scan-outline"} size={24} color={isFocused ? activeColor : inactiveColor} />
             ) : route.name === 'explore' ? (
                 <Ionicons name={isFocused ? "compass" : "compass-outline"} size={26} color={isFocused ? activeColor : inactiveColor} />
             ) : (
@@ -123,26 +110,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingBottom: 4,
-  },
-  scanTabContainer: {
-      width: 70, // Fixed width for center area
-      alignItems: 'center',
-      justifyContent: 'flex-end',
-      marginBottom: 4, // Adjust vertical alignment
-  },
-  scanButton: {
-      width: 56,
-      height: 56,
-      borderRadius: 28,
-      backgroundColor: '#121212', // Brand Color
-      justifyContent: 'center',
-      alignItems: 'center',
-      marginBottom: 10, // Push up slightly
-      shadowColor: "#121212",
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.3,
-      shadowRadius: 8,
-      elevation: 6,
   },
   label: {
       fontSize: 10,
