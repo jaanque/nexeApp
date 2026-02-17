@@ -26,17 +26,11 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="scan-tab"
+        name="scan"
         options={{
           title: '', // No label for the central button
           tabBarIcon: ({ color }) => <IconSymbol size={32} name="camera.viewfinder" color={color} />,
         }}
-        listeners={() => ({
-            tabPress: (e) => {
-                e.preventDefault();
-                router.push('/scan');
-            },
-        })}
       />
       <Tabs.Screen
         name="explore"
