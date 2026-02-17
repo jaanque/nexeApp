@@ -126,7 +126,7 @@ const styles = StyleSheet.create({
         shadowRadius: 4,
     },
     pointsText: {
-        color: '#163D36', // Brand Color
+        color: '#121212', // Brand Color
         fontSize: 12,
         fontWeight: '800',
     },

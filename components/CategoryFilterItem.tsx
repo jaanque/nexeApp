@@ -70,8 +70,8 @@ const styles = StyleSheet.create({
       borderColor: 'transparent',
   },
   activeContainer: {
-      backgroundColor: '#163D36', // Primary Brand Color
-      shadowColor: "#163D36",
+      backgroundColor: '#121212', // Primary Brand Color
+      shadowColor: "#121212",
       shadowOffset: {
           width: 0,
           height: 4,

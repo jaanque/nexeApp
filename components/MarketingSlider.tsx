@@ -342,6 +342,6 @@ const styles = StyleSheet.create({
   dot: {
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#163D36', // Primary Green
+    backgroundColor: '#121212', // Primary Green
   },
 });
