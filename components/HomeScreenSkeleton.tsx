@@ -34,21 +34,7 @@ export function HomeScreenSkeleton() {
           <Skeleton width={SCREEN_WIDTH - 40} height={200} borderRadius={24} />
         </View>
 
-        {/* 3. Promotions Skeleton (New) */}
-        <View style={styles.sectionContainer}>
-             <View style={{ paddingHorizontal: 20, marginBottom: 16 }}>
-                <Skeleton width={140} height={24} borderRadius={4} />
-             </View>
-             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingLeft: 20 }}>
-                 {[1, 2].map(i => (
-                     <View key={i} style={{ marginRight: 16 }}>
-                        <Skeleton width={SCREEN_WIDTH * 0.75} height={160} borderRadius={24} />
-                     </View>
-                 ))}
-             </ScrollView>
-        </View>
-
-        {/* 4. Categories Skeleton */}
+        {/* 3. Categories Skeleton */}
         <View style={styles.categoriesContainer}>
            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ paddingLeft: 20 }}>
              {[1, 2, 3, 4, 5].map((i) => (
@@ -60,7 +46,7 @@ export function HomeScreenSkeleton() {
            </ScrollView>
         </View>
 
-        {/* 5. Restaurant List Skeleton */}
+        {/* 4. Restaurant List Skeleton */}
         <View style={styles.listContainer}>
              <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16, paddingHorizontal: 4 }}>
                 <Skeleton width={150} height={24} borderRadius={4} />
@@ -107,9 +93,6 @@ const styles = StyleSheet.create({
   sliderContainer: {
       marginTop: 24,
       alignItems: 'center',
-      marginBottom: 32,
-  },
-  sectionContainer: {
       marginBottom: 32,
   },
   categoriesContainer: {
