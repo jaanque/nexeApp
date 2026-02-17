@@ -1,9 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Dimensions, FlatList, TouchableOpacity, NativeSyntheticEvent, NativeScrollEvent, useWindowDimensions } from 'react-native';
+import { View, Text, StyleSheet, Dimensions, FlatList, TouchableOpacity, NativeSyntheticEvent, NativeScrollEvent, useWindowDimensions, LayoutAnimation, Platform, UIManager } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
+
+// Enable LayoutAnimation on Android
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
 
 export interface Banner {
   id: number;
@@ -22,7 +27,7 @@ export function MarketingSlider({ banners }: MarketingSliderProps) {
   const flatListRef = useRef<FlatList>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const { width: windowWidth } = useWindowDimensions();
-  const isUserInteracting = useRef(false); // Ref to track user interaction
+  const isUserInteracting = useRef(false);
   const CARD_MARGIN = 20;
 
   // Auto-scroll logic
@@ -30,15 +35,17 @@ export function MarketingSlider({ banners }: MarketingSliderProps) {
     if (!banners || banners.length <= 1) return;
 
     const interval = setInterval(() => {
-      if (isUserInteracting.current) return; // Skip if user is interacting
+      if (isUserInteracting.current) return;
 
       let nextIndex = currentIndex + 1;
       if (nextIndex >= banners.length) {
         nextIndex = 0;
       }
       flatListRef.current?.scrollToIndex({ index: nextIndex, animated: true });
-      setCurrentIndex(nextIndex);
-    }, 5000); // 5 seconds
+      // We don't need to manually set state here as onScroll will handle it,
+      // but strictly speaking scrollTo doesn't always fire onScroll perfectly on Android.
+      // Let's rely on onScroll for the index update to keep it synced.
+    }, 5000);
 
     return () => clearInterval(interval);
   }, [currentIndex, banners.length]);
@@ -48,25 +55,24 @@ export function MarketingSlider({ banners }: MarketingSliderProps) {
   };
 
   const handleScrollEndDrag = () => {
-      // Re-enable auto-scroll after a short delay
       setTimeout(() => {
           isUserInteracting.current = false;
       }, 3000);
   };
 
-  const handleMomentumScrollEnd = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+  const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const contentOffsetX = event.nativeEvent.contentOffset.x;
     const index = Math.round(contentOffsetX / windowWidth);
 
     if (index !== currentIndex && index >= 0 && index < banners.length) {
+      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); // Animate dot transition
       setCurrentIndex(index);
-      // Trigger haptics only if user was interacting (or just finished dragging)
+
+      // Trigger haptics only if user is manually scrolling
       if (isUserInteracting.current) {
           Haptics.selectionAsync();
       }
     }
-
-    // Reset interaction flag after momentum ends if needed, but the timeout above handles the "pause" better
   };
 
   const handlePress = (banner: Banner) => {
@@ -114,7 +120,8 @@ export function MarketingSlider({ banners }: MarketingSliderProps) {
         )}
         onScrollBeginDrag={handleScrollBeginDrag}
         onScrollEndDrag={handleScrollEndDrag}
-        onMomentumScrollEnd={handleMomentumScrollEnd}
+        onScroll={handleScroll}
+        scrollEventThrottle={16} // Ensure frequent updates
         style={styles.list}
       />
 
@@ -136,19 +143,19 @@ export function MarketingSlider({ banners }: MarketingSliderProps) {
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: 32, // Increased spacing
+    marginBottom: 32,
   },
   list: {
       flexGrow: 0,
   },
   card: {
     width: '100%',
-    height: 200, // Slightly taller for premium feel
-    borderRadius: 24, // Matches iOS standard for large cards
+    height: 200,
+    borderRadius: 24,
     overflow: 'hidden',
     backgroundColor: '#f0f0f0',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 }, // Deeper shadow
+    shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.15,
     shadowRadius: 16,
     elevation: 8,
@@ -162,7 +169,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    height: '70%', // Higher gradient for better text legibility
+    height: '70%',
     justifyContent: 'flex-end',
     padding: 20,
   },
@@ -171,7 +178,7 @@ const styles = StyleSheet.create({
   },
   title: {
     color: 'white',
-    fontSize: 24, // Larger title
+    fontSize: 24,
     fontWeight: '800',
     letterSpacing: -0.5,
     textShadowColor: 'rgba(0,0,0,0.3)',
