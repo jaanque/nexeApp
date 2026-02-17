@@ -49,8 +49,8 @@ export function ModernRewardCard({ item }: ModernRewardCardProps) {
 
             {/* Gradient Overlay */}
             <LinearGradient
-                colors={['transparent', 'rgba(0,0,0,0.3)', 'rgba(0,0,0,0.85)']}
-                locations={[0, 0.4, 1]}
+                colors={['transparent', 'rgba(0,0,0,0.4)', 'rgba(0,0,0,0.95)']}
+                locations={[0, 0.5, 1]}
                 style={styles.gradient}
             >
                 <View style={styles.content}>
@@ -109,18 +109,13 @@ const styles = StyleSheet.create({
         marginTop: 12,
     },
     pointsBadge: {
-        backgroundColor: 'rgba(255, 255, 255, 0.95)', // Increased opacity for pop
+        backgroundColor: '#fff',
         paddingHorizontal: 10,
-        paddingVertical: 5,
-        borderRadius: 12,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.15,
-        shadowRadius: 4,
-        elevation: 3,
+        paddingVertical: 6,
+        borderRadius: 20,
     },
     pointsText: {
-        color: '#111827',
+        color: '#121212',
         fontSize: 12,
         fontWeight: '800', // Heaviest weight
     },
@@ -128,7 +123,7 @@ const styles = StyleSheet.create({
         gap: 4,
     },
     restaurantName: {
-        color: '#D1D5DB', // Gray 300
+        color: 'rgba(255,255,255,0.8)', // Lighter
         fontSize: 12,
         fontWeight: '600',
         textTransform: 'uppercase',
@@ -136,9 +131,9 @@ const styles = StyleSheet.create({
     },
     itemName: {
         color: '#fff',
-        fontSize: 18, // Larger
+        fontSize: 20, // Larger
         fontWeight: '800',
-        lineHeight: 22,
+        lineHeight: 24,
         textShadowColor: 'rgba(0,0,0,0.5)',
         textShadowOffset: { width: 0, height: 1 },
         textShadowRadius: 3,

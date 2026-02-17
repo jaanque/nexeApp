@@ -52,12 +52,6 @@ export function ModernBusinessCard({ restaurant, distance, isLast }: ModernBusin
                     <Text style={styles.ratingText}>{(restaurant.rating || 0).toFixed(1)}</Text>
                 </View>
 
-                {/* Distance Badge (Overlay) */}
-                {distance && (
-                    <View style={styles.distanceBadgeOverlay}>
-                        <Text style={styles.distanceTextOverlay}>{distance}</Text>
-                    </View>
-                )}
             </View>
 
             <View style={styles.infoContainer}>
@@ -69,7 +63,10 @@ export function ModernBusinessCard({ restaurant, distance, isLast }: ModernBusin
 
                 <View style={styles.addressRow}>
                      <Ionicons name="location-outline" size={14} color="#9CA3AF" style={{marginRight: 4}} />
-                     <Text style={styles.address} numberOfLines={1}>{restaurant.address}</Text>
+                     <Text style={styles.address} numberOfLines={1}>
+                        {restaurant.address}
+                        {distance ? ` • ${distance}` : ''}
+                     </Text>
                 </View>
             </View>
         </TouchableOpacity>
@@ -92,7 +89,7 @@ const styles = StyleSheet.create({
         overflow: Platform.OS === 'android' ? 'hidden' : 'visible', // Handle shadows correctly
     },
     imageContainer: {
-        height: 200, // Slightly reduced height for better density
+        height: 220, // Taller for more impact
         width: '100%',
         backgroundColor: '#f0f0f0',
         position: 'relative',
@@ -126,20 +123,6 @@ const styles = StyleSheet.create({
         marginLeft: 4,
         color: '#121212',
     },
-    distanceBadgeOverlay: {
-        position: 'absolute',
-        bottom: 12,
-        right: 12,
-        backgroundColor: 'rgba(0,0,0,0.6)',
-        paddingHorizontal: 8,
-        paddingVertical: 4,
-        borderRadius: 8,
-    },
-    distanceTextOverlay: {
-        color: '#fff',
-        fontSize: 12,
-        fontWeight: '600',
-    },
     infoContainer: {
         padding: 16,
     },
@@ -150,10 +133,10 @@ const styles = StyleSheet.create({
         marginBottom: 4,
     },
     name: {
-        fontSize: 18,
-        fontWeight: '700', // Bold but not heavy
+        fontSize: 20,
+        fontWeight: '800', // Heavy bold
         color: '#111827', // Gray 900
-        letterSpacing: -0.3,
+        letterSpacing: -0.5,
     },
     cuisine: {
         fontSize: 13,

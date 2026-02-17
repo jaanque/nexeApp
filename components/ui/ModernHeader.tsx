@@ -135,7 +135,7 @@ const styles = StyleSheet.create({
   content: {
       flex: 1,
       paddingHorizontal: 24,
-      paddingBottom: 20,
+      paddingBottom: 24,
       justifyContent: 'flex-start',
       gap: 16,
   },
