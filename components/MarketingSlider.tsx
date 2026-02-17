@@ -57,7 +57,7 @@ export function MarketingSlider({ banners }: MarketingSliderProps) {
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   const cardWidth = windowWidth - (CARD_MARGIN * 2);
-  const cardHeight = cardWidth * (9 / 16);
+  const cardHeight = 160;
 
   // Auto-scroll logic
   const startAutoScroll = useCallback(() => {
@@ -311,17 +311,17 @@ const styles = StyleSheet.create({
     padding: 24,
   },
   textContainer: {
-      gap: 6,
+      gap: 4,
   },
   title: {
     color: 'white',
-    fontSize: 22, // Larger font
-    fontWeight: '800', // Bolder
+    fontSize: 18,
+    fontWeight: '800',
     letterSpacing: -0.5,
     textShadowColor: 'rgba(0,0,0,0.5)',
     textShadowOffset: { width: 0, height: 2 },
     textShadowRadius: 4,
-    lineHeight: 28,
+    lineHeight: 22,
   },
   subtitle: {
     color: '#E5E7EB', // Gray 200
