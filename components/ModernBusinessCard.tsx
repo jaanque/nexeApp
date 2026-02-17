@@ -25,8 +25,12 @@ export function ModernBusinessCard({ restaurant, distance, isLast }: ModernBusin
 
     const handlePress = () => {
         if (process.env.EXPO_OS === 'ios') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-        router.push(`/restaurant/${restaurant.id}`);
+        if (restaurant?.id) {
+             router.push(`/restaurant/${restaurant.id}`);
+        }
     };
+
+    if (!restaurant) return null;
 
     return (
         <TouchableOpacity
@@ -43,7 +47,7 @@ export function ModernBusinessCard({ restaurant, distance, isLast }: ModernBusin
                 />
                 <View style={styles.ratingBadge}>
                     <Ionicons name="star" size={12} color="#000" />
-                    <Text style={styles.ratingText}>{restaurant.rating.toFixed(1)}</Text>
+                    <Text style={styles.ratingText}>{(restaurant.rating || 0).toFixed(1)}</Text>
                 </View>
             </View>
 
