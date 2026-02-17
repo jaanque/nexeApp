@@ -298,8 +298,8 @@ export default function HomeScreen() {
             points={points}
             initials={getInitials()}
             isGuest={!session?.user}
-            onWalletPress={() => router.push('/movements')}
-            onProfilePress={() => router.push('/profile')}
+            onWalletPress={() => router.push('/(tabs)/wallet')}
+            onProfilePress={() => router.push('/(tabs)/profile')}
           />
 
           <View style={styles.contentWrapper}>
