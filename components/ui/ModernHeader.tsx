@@ -12,12 +12,12 @@ interface ModernHeaderProps {
   onScanPress: () => void;
   onWalletPress: () => void;
   onProfilePress: () => void;
-  children?: React.ReactNode; // For the search bar or extra content
+  onSearchPress: () => void;
 }
 
-export function ModernHeader({ greeting, points, initials, onScanPress, onWalletPress, onProfilePress, children }: ModernHeaderProps) {
+export function ModernHeader({ greeting, points, initials, onScanPress, onWalletPress, onProfilePress, onSearchPress }: ModernHeaderProps) {
   const insets = useSafeAreaInsets();
-  const HEADER_HEIGHT = 280; // Taller header for immersive feel
+  const HEADER_HEIGHT = 260; // Slightly shorter without overlapping content
 
   return (
     <View style={[styles.container, { height: HEADER_HEIGHT }]}>
@@ -28,16 +28,22 @@ export function ModernHeader({ greeting, points, initials, onScanPress, onWallet
             style={styles.background}
         >
             <View style={[styles.content, { paddingTop: insets.top + 10 }]}>
-                {/* Top Row: Avatar & Wallet */}
+                {/* Top Row: Avatar & Actions */}
                 <View style={styles.topRow}>
                     <TouchableOpacity onPress={onProfilePress} style={styles.avatarButton}>
                         <View style={styles.avatar}>
                              <Ionicons name="person-outline" size={20} color="#fff" />
                         </View>
                     </TouchableOpacity>
-                    <TouchableOpacity onPress={onWalletPress} style={styles.walletButton}>
-                        <Ionicons name="wallet-outline" size={24} color="#fff" />
-                    </TouchableOpacity>
+
+                    <View style={styles.actionsRow}>
+                        <TouchableOpacity onPress={onWalletPress} style={styles.iconButton}>
+                            <Ionicons name="wallet-outline" size={24} color="#fff" />
+                        </TouchableOpacity>
+                        <TouchableOpacity onPress={onSearchPress} style={styles.iconButton}>
+                            <Ionicons name="search-outline" size={24} color="#fff" />
+                        </TouchableOpacity>
+                    </View>
                 </View>
 
                 {/* Main Content: Greeting & Points */}
@@ -66,30 +72,24 @@ export function ModernHeader({ greeting, points, initials, onScanPress, onWallet
                 style={styles.bottomOverlay}
             />
         </LinearGradient>
-
-        {/* Floating Child Container (Search Bar) - Positioned absolutely at bottom overlap */}
-        <View style={styles.childContainer}>
-            {children}
-        </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-      marginBottom: 30, // Space for the overlapping search bar
+      marginBottom: 0,
       zIndex: 10,
   },
   background: {
       flex: 1,
-      borderBottomLeftRadius: 24,
-      borderBottomRightRadius: 24,
+      // Removed rounded corners as requested
       overflow: 'hidden',
   },
   content: {
       flex: 1,
       paddingHorizontal: 24,
-      paddingBottom: 60, // Space for search bar area
+      paddingBottom: 30,
       justifyContent: 'space-between',
   },
   topRow: {
@@ -120,7 +120,12 @@ const styles = StyleSheet.create({
       fontSize: 16,
       fontWeight: 'bold',
   },
-  walletButton: {
+  actionsRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+  },
+  iconButton: {
       width: 44,
       height: 44,
       borderRadius: 16,
@@ -183,11 +188,5 @@ const styles = StyleSheet.create({
       left: 0,
       right: 0,
       height: 60,
-  },
-  childContainer: {
-      position: 'absolute',
-      bottom: -28, // Half of search bar height (56/2)
-      left: 20,
-      right: 20,
   },
 });
