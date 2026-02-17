@@ -38,6 +38,7 @@ export function CategoryFilterItem({ item, isActive, onPress }: CategoryFilterIt
             style={[
                 styles.container,
                 isActive && styles.activeContainer,
+                isActive && item.color ? { backgroundColor: item.color } : null
             ]}
             onPress={handlePress}
             onPressIn={handlePressIn}
@@ -71,14 +72,6 @@ const styles = StyleSheet.create({
   },
   activeContainer: {
       backgroundColor: '#121212', // Primary Brand Color
-      shadowColor: "#121212",
-      shadowOffset: {
-          width: 0,
-          height: 4,
-      },
-      shadowOpacity: 0.25,
-      shadowRadius: 8,
-      elevation: 4,
   },
   emojiContainer: {
       marginRight: 8,
