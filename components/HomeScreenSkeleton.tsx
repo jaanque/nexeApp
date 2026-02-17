@@ -31,7 +31,7 @@ export function HomeScreenSkeleton() {
 
         {/* 2. Marketing Slider Skeleton */}
         <View style={styles.sliderContainer}>
-          <Skeleton width={SCREEN_WIDTH - 40} height={180} borderRadius={20} />
+          <Skeleton width={SCREEN_WIDTH - 40} height={200} borderRadius={24} />
         </View>
 
         {/* 3. Categories Skeleton */}
@@ -48,12 +48,13 @@ export function HomeScreenSkeleton() {
 
         {/* 4. Restaurant List Skeleton */}
         <View style={styles.listContainer}>
-             <View style={{ paddingHorizontal: 20, marginBottom: 16 }}>
-                <Skeleton width={180} height={24} borderRadius={4} />
+             <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16, paddingHorizontal: 4 }}>
+                <Skeleton width={150} height={24} borderRadius={4} />
+                <Skeleton width={60} height={20} borderRadius={4} />
              </View>
              {[1, 2, 3].map((i) => (
                  <View key={i} style={styles.cardContainer}>
-                     <Skeleton width="100%" height={200} borderRadius={20} style={{ marginBottom: 12 }} />
+                     <Skeleton width="100%" height={200} borderRadius={16} style={{ marginBottom: 12 }} />
                      <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
                         <Skeleton width="60%" height={20} borderRadius={4} />
                         <Skeleton width={40} height={20} borderRadius={4} />
@@ -71,7 +72,7 @@ export function HomeScreenSkeleton() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FAFAFA',
+    backgroundColor: '#F9FAFB', // Match new background
   },
   headerContainer: {
       backgroundColor: '#121212', // Dark background for skeleton to match header
@@ -90,7 +91,7 @@ const styles = StyleSheet.create({
       justifyContent: 'center',
   },
   sliderContainer: {
-      marginTop: 20,
+      marginTop: 24,
       alignItems: 'center',
       marginBottom: 32,
   },
@@ -99,17 +100,17 @@ const styles = StyleSheet.create({
   },
   listContainer: {
       width: '100%',
+      paddingHorizontal: 24,
   },
   cardContainer: {
-      marginHorizontal: 20,
-      marginBottom: 24,
+      marginBottom: 20,
       backgroundColor: '#fff',
       padding: 16,
-      borderRadius: 24,
+      borderRadius: 16, // Match new card radius
       shadowColor: '#000',
-      shadowOffset: { width: 0, height: 2 },
+      shadowOffset: { width: 0, height: 4 },
       shadowOpacity: 0.05,
-      shadowRadius: 8,
+      shadowRadius: 12,
       elevation: 2,
   }
 });
