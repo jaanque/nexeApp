@@ -42,9 +42,6 @@ export function MarketingSlider({ banners }: MarketingSliderProps) {
         nextIndex = 0;
       }
       flatListRef.current?.scrollToIndex({ index: nextIndex, animated: true });
-      // We don't need to manually set state here as onScroll will handle it,
-      // but strictly speaking scrollTo doesn't always fire onScroll perfectly on Android.
-      // Let's rely on onScroll for the index update to keep it synced.
     }, 5000);
 
     return () => clearInterval(interval);
@@ -65,10 +62,9 @@ export function MarketingSlider({ banners }: MarketingSliderProps) {
     const index = Math.round(contentOffsetX / windowWidth);
 
     if (index !== currentIndex && index >= 0 && index < banners.length) {
-      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); // Animate dot transition
+      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
       setCurrentIndex(index);
 
-      // Trigger haptics only if user is manually scrolling
       if (isUserInteracting.current) {
           Haptics.selectionAsync();
       }
@@ -107,12 +103,13 @@ export function MarketingSlider({ banners }: MarketingSliderProps) {
                     transition={500}
                 />
                 <LinearGradient
-                    colors={['transparent', 'rgba(0,0,0,0.4)', 'rgba(0,0,0,0.8)']}
+                    colors={['transparent', 'rgba(0,0,0,0.2)', 'rgba(0,0,0,0.8)']}
+                    locations={[0, 0.5, 1]}
                     style={styles.gradient}
                 >
                     <View style={styles.textContainer}>
                         <Text style={styles.subtitle}>{item.subtitle}</Text>
-                        <Text style={styles.title}>{item.title}</Text>
+                        <Text style={styles.title} numberOfLines={2}>{item.title}</Text>
                     </View>
                 </LinearGradient>
             </View>
@@ -121,11 +118,10 @@ export function MarketingSlider({ banners }: MarketingSliderProps) {
         onScrollBeginDrag={handleScrollBeginDrag}
         onScrollEndDrag={handleScrollEndDrag}
         onScroll={handleScroll}
-        scrollEventThrottle={16} // Ensure frequent updates
+        scrollEventThrottle={16}
         style={styles.list}
       />
 
-      {/* Pagination Dots */}
       <View style={styles.pagination}>
         {banners.map((_, index) => (
           <View
@@ -150,15 +146,15 @@ const styles = StyleSheet.create({
   },
   card: {
     width: '100%',
-    height: 200,
+    height: 240, // Taller for more impact
     borderRadius: 24,
     overflow: 'hidden',
-    backgroundColor: '#f0f0f0',
+    backgroundColor: '#E5E7EB', // Placeholder gray
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.15,
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.18,
     shadowRadius: 16,
-    elevation: 8,
+    elevation: 10,
   },
   image: {
     width: '100%',
@@ -169,34 +165,36 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    height: '70%',
+    height: '60%', // Reduced gradient height to show more image
     justifyContent: 'flex-end',
-    padding: 20,
+    padding: 24, // More padding
   },
   textContainer: {
-      gap: 6,
+      gap: 4,
   },
   title: {
     color: 'white',
-    fontSize: 24,
+    fontSize: 28, // Bigger title
     fontWeight: '800',
     letterSpacing: -0.5,
-    textShadowColor: 'rgba(0,0,0,0.3)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 4,
+    textShadowColor: 'rgba(0,0,0,0.4)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 6,
+    lineHeight: 32,
   },
   subtitle: {
-    color: '#E0E0E0',
-    fontSize: 13,
+    color: '#F3F4F6', // Lighter gray
+    fontSize: 14,
     fontWeight: '700',
     textTransform: 'uppercase',
-    letterSpacing: 1,
-    opacity: 0.9,
+    letterSpacing: 1.2,
+    opacity: 0.95,
+    marginBottom: 2,
   },
   pagination: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginTop: 16,
+    marginTop: 20,
     gap: 8,
   },
   dot: {
@@ -205,7 +203,7 @@ const styles = StyleSheet.create({
   },
   activeDot: {
     width: 24,
-    backgroundColor: '#121212',
+    backgroundColor: '#111827', // Gray 900
   },
   inactiveDot: {
     width: 6,
