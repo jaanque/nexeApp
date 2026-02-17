@@ -180,10 +180,10 @@ const styles = StyleSheet.create({
       flex: 1,
   },
   greeting: {
-      fontSize: 16,
-      color: '#A1A1AA',
+      fontSize: 24,
+      color: '#FFFFFF',
       marginBottom: 8,
-      fontWeight: '500',
+      fontWeight: '700',
       letterSpacing: 0.5,
   },
   bottomRow: {
@@ -199,7 +199,7 @@ const styles = StyleSheet.create({
   pointsValue: {
       fontSize: 40,
       fontWeight: '800',
-      color: '#fff',
+      color: '#F59E0B',
       letterSpacing: -1,
       lineHeight: 44,
   },
@@ -215,7 +215,7 @@ const styles = StyleSheet.create({
       backgroundColor: '#fff',
       paddingVertical: 10,
       paddingHorizontal: 16,
-      borderRadius: 24,
+      borderRadius: 16,
       gap: 6,
       shadowColor: '#000',
       shadowOffset: { width: 0, height: 4 },
