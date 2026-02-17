@@ -70,8 +70,8 @@ export default function HomeScreen() {
   const [searchResultsRestaurants, setSearchResultsRestaurants] = useState<Restaurant[]>([]);
   const [searchResultsDishes, setSearchResultsDishes] = useState<MenuItemResult[]>([]);
   const [isSearching, setIsSearching] = useState<boolean>(false);
+  const [showSearchInput, setShowSearchInput] = useState<boolean>(false); // New state for search toggle
   const [searching, setSearching] = useState<boolean>(false);
-  const [isFocused, setIsFocused] = useState<boolean>(false);
   const [activeCategory, setActiveCategory] = useState<number | null>(null);
 
   const router = useRouter();
@@ -162,8 +162,18 @@ export default function HomeScreen() {
       setSearchResultsRestaurants([]);
       setSearchResultsDishes([]);
       setIsSearching(false);
-      setIsFocused(false);
+      setShowSearchInput(false);
       Keyboard.dismiss();
+  }
+
+  function toggleSearch() {
+      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+      if (showSearchInput) {
+          handleCancelSearch();
+      } else {
+          setShowSearchInput(true);
+          // Focus logic could be added here if we had a ref
+      }
   }
 
   function handleFocus() {
@@ -171,7 +181,6 @@ export default function HomeScreen() {
           LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
           setIsSearching(true);
       }
-      setIsFocused(true);
   }
 
   async function handleSearch(query: string) {
@@ -262,36 +271,54 @@ export default function HomeScreen() {
             onScanPress={() => router.push('/scan')}
             onWalletPress={() => router.push('/movements')}
             onProfilePress={() => router.push('/profile')}
-          >
-              <View style={[styles.searchBar, isFocused && styles.searchBarFocused]}>
-                  <Ionicons name="search-outline" size={20} color={isFocused ? "#121212" : "#6E7278"} style={{marginRight: 10}} />
-                  <TextInput
-                    placeholder="Buscar restaurantes o platos..."
-                    placeholderTextColor="#6E7278"
-                    style={styles.searchInput}
-                    value={searchQuery}
-                    onChangeText={setSearchQuery}
-                    onFocus={handleFocus}
-                  />
-                   {searching ? (
-                          <ActivityIndicator size="small" color="#6E7278" style={{ marginLeft: 8 }} />
-                      ) : searchQuery.length > 0 ? (
-                            <TouchableOpacity onPress={() => setSearchQuery("")} hitSlop={10}>
-                                <Ionicons name="close-circle" size={18} color="#CCCCCC" />
-                            </TouchableOpacity>
-                      ) : null}
-              </View>
-          </ModernHeader>
+            onSearchPress={toggleSearch}
+          />
 
-          {/* Spacer for overlapping search bar + padding */}
-          <View style={{ height: 40 }} />
-
-          {/* Search/Filters Active State */}
-          {isSearching && (
-              <View style={{ paddingHorizontal: 20, marginBottom: 20 }}>
+          {/* Search Input Area */}
+          {showSearchInput && (
+              <Animated.View entering={FadeInDown.duration(200)} style={{ paddingHorizontal: 20, marginBottom: 20, marginTop: 20 }}>
+                  <View style={[styles.searchBar, { borderColor: '#2C2C2E', borderWidth: 1 }]}>
+                      <Ionicons name="search-outline" size={20} color="#121212" style={{marginRight: 10}} />
+                      <TextInput
+                        placeholder="Buscar restaurantes o platos..."
+                        placeholderTextColor="#6E7278"
+                        style={styles.searchInput}
+                        value={searchQuery}
+                        onChangeText={setSearchQuery}
+                        autoFocus
+                        onFocus={handleFocus}
+                      />
+                       {searching ? (
+                              <ActivityIndicator size="small" color="#6E7278" style={{ marginLeft: 8 }} />
+                          ) : searchQuery.length > 0 ? (
+                                <TouchableOpacity onPress={() => setSearchQuery("")} hitSlop={10}>
+                                    <Ionicons name="close-circle" size={18} color="#CCCCCC" />
+                                </TouchableOpacity>
+                          ) : null}
+                  </View>
                    <TouchableOpacity onPress={handleCancelSearch} style={styles.cancelButton}>
-                        <Text style={styles.cancelButtonText}>Cancelar búsqueda</Text>
+                        <Text style={styles.cancelButtonText}>Cerrar búsqueda</Text>
                    </TouchableOpacity>
+              </Animated.View>
+          )}
+
+          {!isSearching && (
+              <View style={{ marginTop: 20 }}>
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    style={styles.filterScroll}
+                    contentContainerStyle={styles.filterContent}
+                  >
+                      {categories.map((cat) => (
+                          <CategoryFilterItem
+                              key={cat.id}
+                              item={cat}
+                              isActive={activeCategory === cat.id}
+                              onPress={() => setActiveCategory(activeCategory === cat.id ? null : cat.id)}
+                          />
+                      ))}
+                  </ScrollView>
               </View>
           )}
 
