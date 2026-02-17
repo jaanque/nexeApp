@@ -11,7 +11,7 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const inactiveColor = '#6E7278';
 
   return (
-    <View style={styles.tabBar}>
+    <View style={[styles.tabBar, { paddingBottom: insets.bottom + 8 }]}>
       {state.routes.map((route, index) => {
         const { options } = descriptors[route.key];
         const label =
@@ -80,23 +80,18 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
 const styles = StyleSheet.create({
   tabBar: {
     position: 'absolute',
-    bottom: 30,
-    left: 20,
-    right: 20,
+    bottom: 0,
+    left: 0,
+    right: 0,
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'space-around',
     alignItems: 'center',
     backgroundColor: '#fff',
-    paddingVertical: 10,
-    borderRadius: 28, // Slimmer pill
-    // Shadow for depth
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 8,
-    borderWidth: 1,
-    borderColor: '#f0f0f0',
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#F0F0F0',
+    elevation: 0,
+    shadowOpacity: 0,
   },
   tabItem: {
     flex: 1,

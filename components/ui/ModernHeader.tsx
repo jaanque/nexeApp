@@ -17,7 +17,7 @@ interface ModernHeaderProps {
 
 export function ModernHeader({ greeting, points, initials, onScanPress, onWalletPress, onProfilePress, onSearchPress }: ModernHeaderProps) {
   const insets = useSafeAreaInsets();
-  const HEADER_HEIGHT = 260; // Slightly shorter without overlapping content
+  const HEADER_HEIGHT = 200; // Thinner banner as requested
 
   return (
     <View style={[styles.container, { height: HEADER_HEIGHT }]}>
@@ -87,9 +87,9 @@ const styles = StyleSheet.create({
   content: {
       flex: 1,
       paddingHorizontal: 24,
-      paddingBottom: 24,
+      paddingBottom: 20,
       justifyContent: 'flex-start',
-      gap: 24,
+      gap: 16, // Tighter gap for smaller height
   },
   topRow: {
       flexDirection: 'row',
