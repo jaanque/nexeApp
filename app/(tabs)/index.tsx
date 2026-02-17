@@ -16,6 +16,7 @@ import { ModernHeader } from '@/components/ui/ModernHeader';
 import { ModernRewardCard } from '@/components/ModernRewardCard';
 import { ModernBusinessCard } from '@/components/ModernBusinessCard';
 import { MarketingSlider, Banner } from '@/components/MarketingSlider';
+import { PromotionCard, Promotion } from '@/components/PromotionCard';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 // Enable LayoutAnimation on Android
@@ -65,6 +66,7 @@ export default function HomeScreen() {
   const [rewardItems, setRewardItems] = useState<MenuItemResult[]>([]);
   const [allRestaurants, setAllRestaurants] = useState<Restaurant[]>([]);
   const [allRewards, setAllRewards] = useState<MenuItemResult[]>([]);
+  const [promotions, setPromotions] = useState<Promotion[]>([]); // Promotions State
   const [loading, setLoading] = useState(true);
   const [categories, setCategories] = useState<Category[]>([]);
   const [banners, setBanners] = useState<Banner[]>([]); // Banners State
@@ -109,7 +111,8 @@ export default function HomeScreen() {
       await Promise.all([
           fetchCategories(),
           fetchRestaurantsAndRewards(),
-          fetchBanners()
+          fetchBanners(),
+          fetchPromotions()
       ]);
       setLoading(false);
   };
@@ -121,6 +124,7 @@ export default function HomeScreen() {
         fetchCategories(),
         fetchRestaurantsAndRewards(),
         fetchBanners(),
+        fetchPromotions(),
         session?.user ? fetchPoints(session.user.id) : Promise.resolve()
     ]);
     setRefreshing(false);
@@ -253,10 +257,20 @@ export default function HomeScreen() {
 
   async function fetchBanners() {
       try {
-          // Check if table exists first (in case migration didn't run, but we assume it did)
           const { data, error } = await supabase.from('marketing_banners').select('*').eq('active', true).order('display_order', { ascending: true });
           if (!error && data) setBanners(data);
       } catch (e) { console.error("Error banners:", e); }
+  }
+
+  async function fetchPromotions() {
+      try {
+          const { data, error } = await supabase.from('promotions')
+            .select('*, restaurants(name, image_url)')
+            .eq('active', true)
+            .limit(5);
+
+          if (!error && data) setPromotions(data as any);
+      } catch (e) { console.error("Error promotions:", e); }
   }
 
   async function fetchRestaurantsAndRewards() {
@@ -288,6 +302,10 @@ export default function HomeScreen() {
 
   const renderRewardItem: ListRenderItem<MenuItemResult> = ({ item }) => (
       <ModernRewardCard item={item} />
+  );
+
+  const renderPromotionItem: ListRenderItem<Promotion> = ({ item }) => (
+      <PromotionCard item={item} />
   );
 
   if (loading) return <HomeScreenSkeleton />;
@@ -350,6 +368,23 @@ export default function HomeScreen() {
                   <View style={{ marginTop: 24 }}>
                     <MarketingSlider banners={banners} />
                   </View>
+
+                  {/* Promotions Section */}
+                  {promotions.length > 0 && (
+                      <Animated.View entering={FadeInDown.delay(50).springify()} style={styles.sectionContainer}>
+                           <View style={styles.sectionHeader}>
+                              <Text style={styles.sectionTitle}>Ofertas del Día</Text>
+                          </View>
+                          <FlatList
+                              data={promotions}
+                              renderItem={renderPromotionItem}
+                              keyExtractor={(item) => item.id.toString()}
+                              horizontal
+                              showsHorizontalScrollIndicator={false}
+                              contentContainerStyle={styles.carouselContent}
+                          />
+                      </Animated.View>
+                  )}
 
                   {/* Categories */}
                   <View style={{ marginBottom: 32 }}>
