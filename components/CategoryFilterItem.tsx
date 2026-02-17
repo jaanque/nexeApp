@@ -1,7 +1,8 @@
 import React from 'react';
 import { TouchableOpacity, Text, StyleSheet, View } from 'react-native';
-import { getCategoryColor, hexToRgba } from '@/lib/colorGenerator';
+import { getCategoryColor } from '@/lib/colorGenerator';
 import * as Haptics from 'expo-haptics';
+import Animated, { useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 
 interface CategoryFilterItemProps {
   item: { id: number; name: string; emoji: string; color?: string };
@@ -10,72 +11,92 @@ interface CategoryFilterItemProps {
 }
 
 export function CategoryFilterItem({ item, isActive, onPress }: CategoryFilterItemProps) {
-  const categoryColor = item.color || getCategoryColor(item.emoji);
-  const inactiveBackgroundColor = 'rgba(245, 246, 248, 1)'; // #F5F6F8
+  const scale = useSharedValue(1);
+
+  const handlePressIn = () => {
+    scale.value = withSpring(0.95);
+  };
+
+  const handlePressOut = () => {
+    scale.value = withSpring(1);
+  };
 
   const handlePress = () => {
-      Haptics.selectionAsync();
-      onPress();
-  }
+    Haptics.selectionAsync();
+    onPress();
+  };
+
+  const animatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ scale: scale.value }],
+    };
+  });
 
   return (
-    <TouchableOpacity
-      style={[
-          styles.container,
-          { backgroundColor: isActive ? '#163D36' : 'transparent' }
-      ]}
-      onPress={handlePress}
-      activeOpacity={0.7}
-    >
-      <View style={[
-        styles.iconContainer,
-        {
-          backgroundColor: isActive ? 'rgba(255,255,255,0.2)' : inactiveBackgroundColor,
-          borderColor: 'transparent',
-          borderWidth: 1, // Keep constant
-          shadowColor: isActive ? '#000' : 'transparent',
-          shadowOpacity: isActive ? 0.1 : 0,
-          shadowRadius: isActive ? 4 : 0,
-          elevation: isActive ? 2 : 0,
-        }
-      ]}>
-        <Text style={styles.emoji}>{item.emoji}</Text>
-      </View>
-      <Text style={[
-        styles.label,
-        {
-          color: isActive ? '#FFFFFF' : '#121212',
-          fontWeight: isActive ? '700' : '600'
-        }
-      ]}>
-        {item.name}
-      </Text>
-    </TouchableOpacity>
+    <Animated.View style={[styles.wrapper, animatedStyle]}>
+        <TouchableOpacity
+            style={[
+                styles.container,
+                isActive && styles.activeContainer,
+            ]}
+            onPress={handlePress}
+            onPressIn={handlePressIn}
+            onPressOut={handlePressOut}
+            activeOpacity={1}
+        >
+            <View style={[styles.emojiContainer, isActive && styles.activeEmojiContainer]}>
+                <Text style={styles.emoji}>{item.emoji}</Text>
+            </View>
+            <Text style={[styles.label, isActive && styles.activeLabel]}>
+                {item.name}
+            </Text>
+        </TouchableOpacity>
+    </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-      alignItems: 'center',
+  wrapper: {
       marginRight: 12,
-      minWidth: 80, // Ensure touch target
-      padding: 8,
-      borderRadius: 24,
   },
-  iconContainer: {
-      width: 64,
-      height: 64,
-      borderRadius: 24, // Squircle
-      justifyContent: 'center',
+  container: {
+      flexDirection: 'row',
       alignItems: 'center',
-      marginBottom: 8,
-      shadowOffset: { width: 0, height: 4 },
+      paddingVertical: 10,
+      paddingHorizontal: 16,
+      borderRadius: 24, // Pill shape
+      backgroundColor: '#F3F4F6', // Light gray default
+      borderWidth: 1,
+      borderColor: 'transparent',
+  },
+  activeContainer: {
+      backgroundColor: '#163D36', // Primary Brand Color
+      shadowColor: "#163D36",
+      shadowOffset: {
+          width: 0,
+          height: 4,
+      },
+      shadowOpacity: 0.25,
+      shadowRadius: 8,
+      elevation: 4,
+  },
+  emojiContainer: {
+      marginRight: 8,
+  },
+  activeEmojiContainer: {
+      // No change needed, text handles it
   },
   emoji: {
-      fontSize: 32,
+      fontSize: 18,
   },
   label: {
-      fontSize: 12,
-      textAlign: 'center',
+      fontSize: 14,
+      fontWeight: '600',
+      color: '#374151', // Gray 700
+      letterSpacing: -0.2,
+  },
+  activeLabel: {
+      color: '#FFFFFF',
+      fontWeight: '700',
   },
 });

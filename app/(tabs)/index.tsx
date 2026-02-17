@@ -476,8 +476,10 @@ const styles = StyleSheet.create({
   contentWrapper: {
       flex: 1,
       backgroundColor: '#F9FAFB',
-      borderTopLeftRadius: 24,
-      borderTopRightRadius: 24,
+      borderTopLeftRadius: 32,
+      borderTopRightRadius: 32,
+      marginTop: -24, // Pull up to cover header bottom radius
+      paddingTop: 32,
       overflow: 'hidden',
       paddingBottom: 100, // Bottom padding moved here
       minHeight: '100%',
@@ -511,24 +513,24 @@ const styles = StyleSheet.create({
       fontWeight: '600',
   },
   filterScroll: {
-      paddingLeft: 24,
+      paddingLeft: 20,
   },
   filterContent: {
-      paddingRight: 24,
+      paddingRight: 20,
   },
   sectionContainer: {
-      marginBottom: 32,
+      marginBottom: 40, // Increased spacing
   },
   sectionHeader: {
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
-      paddingHorizontal: 24,
-      marginBottom: 16,
+      paddingHorizontal: 20,
+      marginBottom: 20,
   },
   sectionTitle: {
-      fontSize: 20, // Clean size
-      fontWeight: '700',
+      fontSize: 22, // Larger
+      fontWeight: '800',
       color: '#111827', // Gray 900
       letterSpacing: -0.5,
   },
@@ -537,18 +539,19 @@ const styles = StyleSheet.create({
       alignItems: 'center',
       gap: 4,
       padding: 4,
+      opacity: 0.7,
   },
   viewAllText: {
       color: '#163D36', // Primary Green
       fontSize: 14,
-      fontWeight: '600',
+      fontWeight: '700',
   },
   carouselContent: {
-      paddingHorizontal: 24,
-      paddingRight: 8,
+      paddingHorizontal: 20,
+      paddingRight: 4,
   },
   listContainer: {
-      paddingHorizontal: 24,
+      paddingHorizontal: 20,
   },
   noResultsContainer: {
       alignItems: 'center',
