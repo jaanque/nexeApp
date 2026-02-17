@@ -23,7 +23,7 @@ interface ModernRewardCardProps {
 }
 
 const { width } = Dimensions.get('window');
-const CARD_WIDTH = width * 0.7; // 70% for better visibility
+const CARD_WIDTH = width * 0.8; // 80% for prominent visibility
 
 export function ModernRewardCard({ item }: ModernRewardCardProps) {
     const router = useRouter();
