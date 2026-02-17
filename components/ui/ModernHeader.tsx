@@ -9,7 +9,6 @@ interface ModernHeaderProps {
     points: number;
     initials: string;
     isGuest: boolean;
-    onScanPress: () => void;
     onWalletPress: () => void;
     onProfilePress: () => void;
     onSearchPress: () => void;
@@ -20,7 +19,6 @@ export function ModernHeader({
     points,
     initials,
     isGuest,
-    onScanPress,
     onWalletPress,
     onProfilePress,
     onSearchPress
@@ -59,23 +57,6 @@ export function ModernHeader({
                     </TouchableOpacity>
                 </View>
             </View>
-
-            {/* Bottom Row: Scan Button (Full Width, Prominent) */}
-            <View style={styles.bottomRow}>
-                <TouchableOpacity
-                    style={styles.scanButton}
-                    onPress={() => handlePress(onScanPress)}
-                    activeOpacity={0.9}
-                >
-                    <View style={styles.scanContent}>
-                        <Ionicons name="receipt-outline" size={20} color="#163D36" style={{ marginRight: 8 }} />
-                        <Text style={styles.scanText}>Escanear tiquet</Text>
-                    </View>
-                     <View style={styles.scanBadge}>
-                        <Ionicons name="camera-outline" size={12} color="#fff" />
-                    </View>
-                </TouchableOpacity>
-            </View>
         </View>
     );
 }
@@ -92,7 +73,6 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'flex-start',
-        marginBottom: 20,
     },
     greetingContainer: {
         flex: 1,
@@ -146,39 +126,5 @@ const styles = StyleSheet.create({
         fontSize: 18,
         fontWeight: '700',
         color: '#163D36',
-    },
-    bottomRow: {
-        marginTop: 4,
-    },
-    scanButton: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        backgroundColor: '#FFFFFF',
-        paddingVertical: 12, // Reduced from 14 for a lighter feel
-        paddingHorizontal: 16,
-        borderRadius: 20, // Modern rounded shape
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.15,
-        shadowRadius: 12,
-        elevation: 6,
-    },
-    scanContent: {
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
-    scanText: {
-        color: '#163D36',
-        fontSize: 16,
-        fontWeight: '700',
-    },
-    scanBadge: {
-        backgroundColor: '#163D36',
-        width: 28,
-        height: 28,
-        borderRadius: 14,
-        justifyContent: 'center',
-        alignItems: 'center',
     },
 });

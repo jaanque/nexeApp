@@ -1,27 +1,29 @@
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
-import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { View, Text, Pressable, StyleSheet, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
+import { Ionicons } from '@expo/vector-icons';
+import { Image } from 'expo-image';
 
 export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
 
-  // Nexe Clean: Black for active, Stone Gray for inactive
-  const activeColor = '#163D36';
-  const inactiveColor = '#6E7278';
+  const activeColor = '#163D36'; // Brand Green
+  const inactiveColor = '#9CA3AF'; // Gray 400
 
   return (
     <View style={[styles.tabBar, { paddingBottom: insets.bottom + 8 }]}>
       {state.routes.map((route, index) => {
         const { options } = descriptors[route.key];
+        const isFocused = state.index === index;
+        const isScanTab = route.name === 'scan-tab';
+
         const label =
           options.tabBarLabel !== undefined
             ? options.tabBarLabel
             : options.title !== undefined
             ? options.title
             : route.name;
-
-        const isFocused = state.index === index;
 
         const onPress = () => {
           const event = navigation.emit({
@@ -46,6 +48,21 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
           });
         };
 
+        if (isScanTab) {
+            return (
+                <Pressable
+                    key={route.key}
+                    onPress={onPress}
+                    onLongPress={onLongPress}
+                    style={styles.scanTabContainer}
+                >
+                    <View style={styles.scanButton}>
+                        <Ionicons name="scan-outline" size={28} color="#FFFFFF" />
+                    </View>
+                </Pressable>
+            );
+        }
+
         return (
           <Pressable
             key={route.key}
@@ -57,17 +74,23 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
             onLongPress={onLongPress}
             style={styles.tabItem}
           >
-            {options.tabBarIcon?.({
-                focused: isFocused,
-                color: isFocused ? activeColor : inactiveColor,
-                size: 22,
-            })}
-            <Text style={{
-                color: isFocused ? activeColor : inactiveColor,
-                fontSize: 9,
-                fontWeight: isFocused ? '600' : '500',
-                marginTop: 2,
-            }}>
+            {/* Custom Icons for cleaner aesthetic */}
+            {route.name === 'index' ? (
+                <Ionicons name={isFocused ? "home" : "home-outline"} size={24} color={isFocused ? activeColor : inactiveColor} />
+            ) : route.name === 'explore' ? (
+                <Ionicons name={isFocused ? "compass" : "compass-outline"} size={26} color={isFocused ? activeColor : inactiveColor} />
+            ) : (
+                options.tabBarIcon?.({
+                    focused: isFocused,
+                    color: isFocused ? activeColor : inactiveColor,
+                    size: 24,
+                })
+            )}
+
+            <Text style={[
+                styles.label,
+                { color: isFocused ? activeColor : inactiveColor, fontWeight: isFocused ? '700' : '500' }
+            ]}>
               {typeof label === 'string' ? label : ''}
             </Text>
           </Pressable>
@@ -85,17 +108,44 @@ const styles = StyleSheet.create({
     right: 0,
     flexDirection: 'row',
     justifyContent: 'space-around',
-    alignItems: 'center',
+    alignItems: 'flex-end', // Align bottom to handle protruding button
     backgroundColor: '#fff',
     paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: '#F0F0F0',
-    elevation: 0,
-    shadowOpacity: 0,
+    borderTopWidth: 0, // Removed border for cleaner look
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    elevation: 10,
   },
   tabItem: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    paddingBottom: 4,
+  },
+  scanTabContainer: {
+      width: 70, // Fixed width for center area
+      alignItems: 'center',
+      justifyContent: 'flex-end',
+      marginBottom: 4, // Adjust vertical alignment
+  },
+  scanButton: {
+      width: 56,
+      height: 56,
+      borderRadius: 28,
+      backgroundColor: '#163D36', // Brand Color
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginBottom: 10, // Push up slightly
+      shadowColor: "#163D36",
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.3,
+      shadowRadius: 8,
+      elevation: 6,
+  },
+  label: {
+      fontSize: 10,
+      marginTop: 4,
   },
 });
