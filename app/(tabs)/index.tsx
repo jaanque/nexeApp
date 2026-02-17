@@ -297,12 +297,13 @@ export default function HomeScreen() {
 
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 100 }}
+        contentContainerStyle={{ paddingBottom: 0 }}
         keyboardDismissMode="on-drag"
         scrollEnabled={!isSearching || searchResultsRestaurants.length > 0 || searchResultsDishes.length > 0}
         refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#121212" />
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#FFFFFF" colors={['#121212']} progressBackgroundColor="#FFFFFF" />
         }
+        style={{ backgroundColor: '#121212' }}
       >
           <ModernHeader
             greeting={getGreeting()}
@@ -315,133 +316,135 @@ export default function HomeScreen() {
             onSearchPress={toggleSearch}
           />
 
-          {/* Search Input Area */}
-          {showSearchInput && (
-              <Animated.View entering={FadeInDown.duration(200)} style={{ paddingHorizontal: 20, marginBottom: 20, marginTop: 20 }}>
-                  <View style={[styles.searchBar, { borderColor: '#E5E7EB', borderWidth: 1 }]}>
-                      <Ionicons name="search-outline" size={20} color="#6B7280" style={{marginRight: 10}} />
-                      <TextInput
-                        placeholder="Buscar restaurantes, platos..."
-                        placeholderTextColor="#9CA3AF"
-                        style={styles.searchInput}
-                        value={searchQuery}
-                        onChangeText={setSearchQuery}
-                        autoFocus
-                        onFocus={handleFocus}
-                      />
-                       {searching ? (
-                              <ActivityIndicator size="small" color="#6B7280" style={{ marginLeft: 8 }} />
-                          ) : searchQuery.length > 0 ? (
-                                <TouchableOpacity onPress={() => setSearchQuery("")} hitSlop={10}>
-                                    <Ionicons name="close-circle" size={18} color="#D1D5DB" />
-                                </TouchableOpacity>
-                          ) : null}
-                  </View>
-                   <TouchableOpacity onPress={handleCancelSearch} style={styles.cancelButton}>
-                        <Text style={styles.cancelButtonText}>Cancelar</Text>
-                   </TouchableOpacity>
-              </Animated.View>
-          )}
+          <View style={styles.contentWrapper}>
+            {/* Search Input Area */}
+            {showSearchInput && (
+                <Animated.View entering={FadeInDown.duration(200)} style={{ paddingHorizontal: 20, marginBottom: 20, marginTop: 20 }}>
+                    <View style={[styles.searchBar, { borderColor: '#E5E7EB', borderWidth: 1 }]}>
+                        <Ionicons name="search-outline" size={20} color="#6B7280" style={{marginRight: 10}} />
+                        <TextInput
+                            placeholder="Buscar restaurantes, platos..."
+                            placeholderTextColor="#9CA3AF"
+                            style={styles.searchInput}
+                            value={searchQuery}
+                            onChangeText={setSearchQuery}
+                            autoFocus
+                            onFocus={handleFocus}
+                        />
+                        {searching ? (
+                                <ActivityIndicator size="small" color="#6B7280" style={{ marginLeft: 8 }} />
+                            ) : searchQuery.length > 0 ? (
+                                    <TouchableOpacity onPress={() => setSearchQuery("")} hitSlop={10}>
+                                        <Ionicons name="close-circle" size={18} color="#D1D5DB" />
+                                    </TouchableOpacity>
+                            ) : null}
+                    </View>
+                    <TouchableOpacity onPress={handleCancelSearch} style={styles.cancelButton}>
+                            <Text style={styles.cancelButtonText}>Cancelar</Text>
+                    </TouchableOpacity>
+                </Animated.View>
+            )}
 
-          {!isSearching && (
-              <>
-                  {/* Marketing Banners */}
-                  <View style={{ marginTop: 24 }}>
-                    <MarketingSlider banners={banners} />
-                  </View>
+            {!isSearching && (
+                <>
+                    {/* Marketing Banners */}
+                    <View style={{ marginTop: 24 }}>
+                        <MarketingSlider banners={banners} />
+                    </View>
 
-                  {/* Categories */}
-                  <View style={{ marginBottom: 32 }}>
-                      <ScrollView
-                        horizontal
-                        showsHorizontalScrollIndicator={false}
-                        style={styles.filterScroll}
-                        contentContainerStyle={styles.filterContent}
-                      >
-                          {categories.map((cat) => (
-                              <CategoryFilterItem
-                                  key={cat.id}
-                                  item={cat}
-                                  isActive={activeCategory === cat.id}
-                                  onPress={() => setActiveCategory(activeCategory === cat.id ? null : cat.id)}
-                              />
-                          ))}
-                      </ScrollView>
-                  </View>
-              </>
-          )}
-
-
-          {isSearching ? (
-             <View style={styles.sectionContainer}>
-                  {searchResultsRestaurants.length > 0 || searchResultsDishes.length > 0 ? (
-                      <>
-                        <Text style={[styles.sectionTitle, { marginLeft: 20, marginBottom: 16 }]}>Resultados</Text>
-                        {searchResultsRestaurants.map(item => (
-                            <ModernBusinessCard key={`rest-${item.id}`} restaurant={item} isLast={false} />
-                        ))}
-                         {searchResultsDishes.map(item => (
-                            <DishResultCard key={`dish-${item.id}`} item={item} />
-                        ))}
-                      </>
-                  ) : !searching && searchQuery.length >= 3 ? (
-                      <View style={styles.noResultsContainer}>
-                          <Ionicons name="search" size={48} color="#E5E7EB" />
-                          <Text style={styles.noResultsText}>No se encontraron resultados</Text>
-                      </View>
-                  ) : null}
-             </View>
-          ) : (
-            <>
-                {/* Rewards Section */}
-                {rewardItems.length > 0 && (
-                    <Animated.View entering={FadeInDown.delay(100).springify()} style={styles.sectionContainer}>
-                        <View style={styles.sectionHeader}>
-                            <Text style={styles.sectionTitle}>Recompensas</Text>
-                            <TouchableOpacity style={styles.viewAllButton}>
-                                <Text style={styles.viewAllText}>Ver todo</Text>
-                                <Ionicons name="chevron-forward" size={16} color="#4F46E5" />
-                            </TouchableOpacity>
-                        </View>
-                        <FlatList
-                            data={rewardItems}
-                            renderItem={renderRewardItem}
-                            keyExtractor={(item) => item.id.toString()}
+                    {/* Categories */}
+                    <View style={{ marginBottom: 32 }}>
+                        <ScrollView
                             horizontal
                             showsHorizontalScrollIndicator={false}
-                            contentContainerStyle={styles.carouselContent}
-                        />
-                    </Animated.View>
-                )}
-
-                {/* Restaurants List */}
-                <Animated.View entering={FadeInDown.delay(200).springify()} style={styles.sectionContainer}>
-                    <View style={styles.sectionHeader}>
-                        <Text style={styles.sectionTitle}>Comercios Nexe</Text>
-                         <TouchableOpacity style={styles.viewAllButton}>
-                            <Text style={styles.viewAllText}>Filtros</Text>
-                            <Ionicons name="options-outline" size={16} color="#4F46E5" />
-                        </TouchableOpacity>
-                    </View>
-                    <View style={styles.listContainer}>
-                        {sortedRestaurants.map((restaurant, index) => {
-                            const distance = (userLocation && restaurant.latitude && restaurant.longitude)
-                                ? formatDistance(userLocation.latitude, userLocation.longitude, restaurant.latitude, restaurant.longitude)
-                                : undefined;
-
-                            return (
-                                <ModernBusinessCard
-                                    key={restaurant.id}
-                                    restaurant={restaurant}
-                                    isLast={index === sortedRestaurants.length - 1}
-                                    distance={distance}
+                            style={styles.filterScroll}
+                            contentContainerStyle={styles.filterContent}
+                        >
+                            {categories.map((cat) => (
+                                <CategoryFilterItem
+                                    key={cat.id}
+                                    item={cat}
+                                    isActive={activeCategory === cat.id}
+                                    onPress={() => setActiveCategory(activeCategory === cat.id ? null : cat.id)}
                                 />
-                            );
-                        })}
+                            ))}
+                        </ScrollView>
                     </View>
-                </Animated.View>
-            </>
-          )}
+                </>
+            )}
+
+
+            {isSearching ? (
+                <View style={styles.sectionContainer}>
+                    {searchResultsRestaurants.length > 0 || searchResultsDishes.length > 0 ? (
+                        <>
+                            <Text style={[styles.sectionTitle, { marginLeft: 20, marginBottom: 16 }]}>Resultados</Text>
+                            {searchResultsRestaurants.map(item => (
+                                <ModernBusinessCard key={`rest-${item.id}`} restaurant={item} isLast={false} />
+                            ))}
+                            {searchResultsDishes.map(item => (
+                                <DishResultCard key={`dish-${item.id}`} item={item} />
+                            ))}
+                        </>
+                    ) : !searching && searchQuery.length >= 3 ? (
+                        <View style={styles.noResultsContainer}>
+                            <Ionicons name="search" size={48} color="#E5E7EB" />
+                            <Text style={styles.noResultsText}>No se encontraron resultados</Text>
+                        </View>
+                    ) : null}
+                </View>
+            ) : (
+                <>
+                    {/* Rewards Section */}
+                    {rewardItems.length > 0 && (
+                        <Animated.View entering={FadeInDown.delay(100).springify()} style={styles.sectionContainer}>
+                            <View style={styles.sectionHeader}>
+                                <Text style={styles.sectionTitle}>Recompensas</Text>
+                                <TouchableOpacity style={styles.viewAllButton}>
+                                    <Text style={styles.viewAllText}>Ver todo</Text>
+                                    <Ionicons name="chevron-forward" size={16} color="#4F46E5" />
+                                </TouchableOpacity>
+                            </View>
+                            <FlatList
+                                data={rewardItems}
+                                renderItem={renderRewardItem}
+                                keyExtractor={(item) => item.id.toString()}
+                                horizontal
+                                showsHorizontalScrollIndicator={false}
+                                contentContainerStyle={styles.carouselContent}
+                            />
+                        </Animated.View>
+                    )}
+
+                    {/* Restaurants List */}
+                    <Animated.View entering={FadeInDown.delay(200).springify()} style={styles.sectionContainer}>
+                        <View style={styles.sectionHeader}>
+                            <Text style={styles.sectionTitle}>Comercios Nexe</Text>
+                            <TouchableOpacity style={styles.viewAllButton}>
+                                <Text style={styles.viewAllText}>Filtros</Text>
+                                <Ionicons name="options-outline" size={16} color="#4F46E5" />
+                            </TouchableOpacity>
+                        </View>
+                        <View style={styles.listContainer}>
+                            {sortedRestaurants.map((restaurant, index) => {
+                                const distance = (userLocation && restaurant.latitude && restaurant.longitude)
+                                    ? formatDistance(userLocation.latitude, userLocation.longitude, restaurant.latitude, restaurant.longitude)
+                                    : undefined;
+
+                                return (
+                                    <ModernBusinessCard
+                                        key={restaurant.id}
+                                        restaurant={restaurant}
+                                        isLast={index === sortedRestaurants.length - 1}
+                                        distance={distance}
+                                    />
+                                );
+                            })}
+                        </View>
+                    </Animated.View>
+                </>
+            )}
+          </View>
       </ScrollView>
     </View>
   );
@@ -468,7 +471,16 @@ function DishResultCard({ item }: { item: MenuItemResult }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F9FAFB', // Cool Gray 50 - Cleaner look
+    backgroundColor: '#121212', // Dark background to match header
+  },
+  contentWrapper: {
+      flex: 1,
+      backgroundColor: '#F9FAFB',
+      borderTopLeftRadius: 24,
+      borderTopRightRadius: 24,
+      overflow: 'hidden',
+      paddingBottom: 100, // Bottom padding moved here
+      minHeight: '100%',
   },
   searchBar: {
       flexDirection: 'row',
