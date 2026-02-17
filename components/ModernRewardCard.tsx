@@ -23,7 +23,7 @@ interface ModernRewardCardProps {
 }
 
 const { width } = Dimensions.get('window');
-const CARD_WIDTH = width * 0.8; // 80% for prominent visibility
+const CARD_WIDTH = width * 0.45; // Smaller cards as requested
 
 export function ModernRewardCard({ item }: ModernRewardCardProps) {
     const router = useRouter();
@@ -100,30 +100,30 @@ const styles = StyleSheet.create({
     },
     restaurantName: {
         color: 'rgba(255,255,255,0.8)',
-        fontSize: 12,
+        fontSize: 10,
         fontWeight: '600',
         textTransform: 'uppercase',
         letterSpacing: 0.5,
     },
     itemName: {
         color: '#fff',
-        fontSize: 18,
+        fontSize: 14,
         fontWeight: 'bold',
-        lineHeight: 22,
+        lineHeight: 18,
     },
     priceTag: {
         alignSelf: 'flex-start',
         backgroundColor: 'rgba(255,255,255,0.2)',
-        paddingHorizontal: 8,
-        paddingVertical: 4,
-        borderRadius: 8,
+        paddingHorizontal: 6,
+        paddingVertical: 2,
+        borderRadius: 6,
         marginTop: 4,
         borderWidth: 1,
         borderColor: 'rgba(255,255,255,0.3)',
     },
     priceText: {
         color: '#fff',
-        fontSize: 13,
+        fontSize: 11,
         fontWeight: '700',
     },
 });
