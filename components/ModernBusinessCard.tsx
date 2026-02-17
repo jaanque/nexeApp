@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -34,8 +34,8 @@ export function ModernBusinessCard({ restaurant, distance, isLast }: ModernBusin
 
     return (
         <TouchableOpacity
-            style={[styles.container, isLast && { marginBottom: 100 }]} // Extra padding for last item
-            activeOpacity={0.9}
+            style={[styles.container, isLast && { marginBottom: 100 }]}
+            activeOpacity={0.95}
             onPress={handlePress}
         >
             <View style={styles.imageContainer}>
@@ -45,27 +45,30 @@ export function ModernBusinessCard({ restaurant, distance, isLast }: ModernBusin
                     contentFit="cover"
                     transition={300}
                 />
+
+                {/* Rating Badge */}
                 <View style={styles.ratingBadge}>
-                    <Ionicons name="star" size={12} color="#000" />
+                    <Ionicons name="star" size={12} color="#F59E0B" />
                     <Text style={styles.ratingText}>{(restaurant.rating || 0).toFixed(1)}</Text>
                 </View>
+
+                {/* Distance Badge (Overlay) */}
+                {distance && (
+                    <View style={styles.distanceBadgeOverlay}>
+                        <Text style={styles.distanceTextOverlay}>{distance}</Text>
+                    </View>
+                )}
             </View>
 
             <View style={styles.infoContainer}>
                 <View style={styles.headerRow}>
                     <Text style={styles.name} numberOfLines={1}>{restaurant.name}</Text>
-                    {distance && (
-                        <View style={styles.distanceBadge}>
-                            <Ionicons name="location-sharp" size={10} color="#6E7278" />
-                            <Text style={styles.distanceText}>{distance}</Text>
-                        </View>
-                    )}
                 </View>
 
                 <Text style={styles.cuisine}>{restaurant.cuisine_type}</Text>
 
                 <View style={styles.addressRow}>
-                     <Ionicons name="map-outline" size={14} color="#9CA3AF" style={{marginRight: 4}} />
+                     <Ionicons name="location-outline" size={14} color="#9CA3AF" style={{marginRight: 4}} />
                      <Text style={styles.address} numberOfLines={1}>{restaurant.address}</Text>
                 </View>
             </View>
@@ -76,23 +79,26 @@ export function ModernBusinessCard({ restaurant, distance, isLast }: ModernBusin
 const styles = StyleSheet.create({
     container: {
         backgroundColor: '#fff',
-        borderRadius: 24,
-        marginBottom: 24,
+        borderRadius: 16, // More subtle "Squircle"
+        marginBottom: 20, // Reduced slightly
         shadowColor: "#000",
         shadowOffset: {
             width: 0,
-            height: 12,
+            height: 4, // Softer shadow offset
         },
-        shadowOpacity: 0.08,
-        shadowRadius: 16,
-        elevation: 6,
-        overflow: 'hidden', // Ensure shadows respect border radius on Android but for iOS we might need to separate
+        shadowOpacity: 0.06, // Much lighter shadow
+        shadowRadius: 12, // Diffuse shadow
+        elevation: 4,
+        overflow: Platform.OS === 'android' ? 'hidden' : 'visible', // Handle shadows correctly
     },
     imageContainer: {
-        height: 220, // Taller image
+        height: 200, // Slightly reduced height for better density
         width: '100%',
         backgroundColor: '#f0f0f0',
         position: 'relative',
+        borderTopLeftRadius: 16,
+        borderTopRightRadius: 16,
+        overflow: 'hidden',
     },
     image: {
         width: '100%',
@@ -100,12 +106,12 @@ const styles = StyleSheet.create({
     },
     ratingBadge: {
         position: 'absolute',
-        top: 16,
-        right: 16,
+        top: 12,
+        right: 12,
         backgroundColor: '#fff',
         paddingHorizontal: 8,
         paddingVertical: 4,
-        borderRadius: 12,
+        borderRadius: 20,
         flexDirection: 'row',
         alignItems: 'center',
         shadowColor: '#000',
@@ -116,11 +122,26 @@ const styles = StyleSheet.create({
     },
     ratingText: {
         fontSize: 12,
-        fontWeight: 'bold',
+        fontWeight: '700',
         marginLeft: 4,
+        color: '#121212',
+    },
+    distanceBadgeOverlay: {
+        position: 'absolute',
+        bottom: 12,
+        right: 12,
+        backgroundColor: 'rgba(0,0,0,0.6)',
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: 8,
+    },
+    distanceTextOverlay: {
+        color: '#fff',
+        fontSize: 12,
+        fontWeight: '600',
     },
     infoContainer: {
-        padding: 20,
+        padding: 16,
     },
     headerRow: {
         flexDirection: 'row',
@@ -129,41 +150,24 @@ const styles = StyleSheet.create({
         marginBottom: 4,
     },
     name: {
-        fontSize: 20,
-        fontWeight: 'bold',
-        color: '#121212',
-        flex: 1,
-        marginRight: 8,
+        fontSize: 18,
+        fontWeight: '700', // Bold but not heavy
+        color: '#111827', // Gray 900
+        letterSpacing: -0.3,
     },
     cuisine: {
-        fontSize: 14,
-        color: '#6E7278', // Secondary text
-        fontWeight: '600',
-        marginBottom: 12,
-        textTransform: 'uppercase',
-        letterSpacing: 0.5,
+        fontSize: 13,
+        color: '#6B7280', // Gray 500
+        fontWeight: '500',
+        marginBottom: 10,
     },
     addressRow: {
         flexDirection: 'row',
         alignItems: 'center',
     },
     address: {
-        fontSize: 14,
-        color: '#9CA3AF',
+        fontSize: 13,
+        color: '#9CA3AF', // Gray 400
         flex: 1,
-    },
-    distanceBadge: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: '#F5F6F8',
-        paddingHorizontal: 8,
-        paddingVertical: 4,
-        borderRadius: 8,
-    },
-    distanceText: {
-        fontSize: 12,
-        fontWeight: '600',
-        color: '#6E7278',
-        marginLeft: 2,
     },
 });

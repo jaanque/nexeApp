@@ -23,7 +23,7 @@ interface ModernRewardCardProps {
 }
 
 const { width } = Dimensions.get('window');
-const CARD_WIDTH = width * 0.45; // Smaller cards as requested
+const CARD_WIDTH = width * 0.42; // Slightly narrower to show more content
 
 export function ModernRewardCard({ item }: ModernRewardCardProps) {
     const router = useRouter();
@@ -49,14 +49,20 @@ export function ModernRewardCard({ item }: ModernRewardCardProps) {
 
             {/* Gradient Overlay */}
             <LinearGradient
-                colors={['transparent', 'rgba(0,0,0,0.8)']}
+                colors={['transparent', 'rgba(0,0,0,0.4)', 'rgba(0,0,0,0.9)']}
+                locations={[0, 0.5, 1]}
                 style={styles.gradient}
             >
                 <View style={styles.content}>
-                    <Text style={styles.restaurantName} numberOfLines={1}>{item.restaurants?.name}</Text>
-                    <Text style={styles.itemName} numberOfLines={2}>{item.name}</Text>
-                    <View style={styles.priceTag}>
-                        <Text style={styles.priceText}>{pointsPrice} pts</Text>
+                    <View style={styles.topRow}>
+                        <View style={styles.pointsBadge}>
+                             <Text style={styles.pointsText}>{pointsPrice} pts</Text>
+                        </View>
+                    </View>
+
+                    <View style={styles.bottomInfo}>
+                        <Text style={styles.restaurantName} numberOfLines={1}>{item.restaurants?.name}</Text>
+                        <Text style={styles.itemName} numberOfLines={2}>{item.name}</Text>
                     </View>
                 </View>
             </LinearGradient>
@@ -67,20 +73,19 @@ export function ModernRewardCard({ item }: ModernRewardCardProps) {
 const styles = StyleSheet.create({
     card: {
         width: CARD_WIDTH,
-        height: CARD_WIDTH * 1.4, // 5:7 aspect ratio roughly
-        borderRadius: 24,
+        height: CARD_WIDTH * 1.5, // Taller aspect ratio (2:3)
+        borderRadius: 20, // Rounded corners
         marginRight: 16,
-        overflow: 'hidden',
-        backgroundColor: '#f0f0f0',
-        position: 'relative',
+        backgroundColor: '#E5E7EB', // Gray 200 placeholder
         shadowColor: "#000",
         shadowOffset: {
             width: 0,
-            height: 8,
+            height: 4,
         },
-        shadowOpacity: 0.15,
-        shadowRadius: 12,
-        elevation: 8,
+        shadowOpacity: 0.1,
+        shadowRadius: 8,
+        elevation: 4,
+        overflow: 'hidden',
     },
     image: {
         width: '100%',
@@ -88,42 +93,54 @@ const styles = StyleSheet.create({
     },
     gradient: {
         position: 'absolute',
-        bottom: 0,
         left: 0,
         right: 0,
-        height: '50%',
+        bottom: 0,
+        height: '100%', // Full height gradient for better text pop
         justifyContent: 'flex-end',
-        padding: 16,
+        padding: 12,
     },
     content: {
-        gap: 4,
+        flex: 1,
+        justifyContent: 'space-between',
+    },
+    topRow: {
+        alignItems: 'flex-start',
+        marginTop: 12,
+    },
+    pointsBadge: {
+        backgroundColor: '#fff',
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: 12,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.15,
+        shadowRadius: 4,
+        elevation: 3,
+    },
+    pointsText: {
+        color: '#111827',
+        fontSize: 12,
+        fontWeight: '700',
+    },
+    bottomInfo: {
+        gap: 2,
     },
     restaurantName: {
-        color: 'rgba(255,255,255,0.8)',
-        fontSize: 10,
+        color: '#D1D5DB', // Gray 300
+        fontSize: 11,
         fontWeight: '600',
         textTransform: 'uppercase',
         letterSpacing: 0.5,
     },
     itemName: {
         color: '#fff',
-        fontSize: 14,
-        fontWeight: 'bold',
-        lineHeight: 18,
-    },
-    priceTag: {
-        alignSelf: 'flex-start',
-        backgroundColor: 'rgba(255,255,255,0.2)',
-        paddingHorizontal: 6,
-        paddingVertical: 2,
-        borderRadius: 6,
-        marginTop: 2,
-        borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.3)',
-    },
-    priceText: {
-        color: '#fff',
-        fontSize: 11,
-        fontWeight: '700',
+        fontSize: 16,
+        fontWeight: '800',
+        lineHeight: 20,
+        textShadowColor: 'rgba(0,0,0,0.5)',
+        textShadowOffset: { width: 0, height: 1 },
+        textShadowRadius: 2,
     },
 });

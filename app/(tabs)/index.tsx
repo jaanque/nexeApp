@@ -298,7 +298,7 @@ export default function HomeScreen() {
 
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 80 }}
+        contentContainerStyle={{ paddingBottom: 100 }}
         keyboardDismissMode="on-drag"
         scrollEnabled={!isSearching || searchResultsRestaurants.length > 0 || searchResultsDishes.length > 0}
         refreshControl={
@@ -319,11 +319,11 @@ export default function HomeScreen() {
           {/* Search Input Area */}
           {showSearchInput && (
               <Animated.View entering={FadeInDown.duration(200)} style={{ paddingHorizontal: 20, marginBottom: 20, marginTop: 20 }}>
-                  <View style={[styles.searchBar, { borderColor: '#2C2C2E', borderWidth: 1 }]}>
-                      <Ionicons name="search-outline" size={20} color="#121212" style={{marginRight: 10}} />
+                  <View style={[styles.searchBar, { borderColor: '#E5E7EB', borderWidth: 1 }]}>
+                      <Ionicons name="search-outline" size={20} color="#6B7280" style={{marginRight: 10}} />
                       <TextInput
-                        placeholder="Buscar restaurantes o platos..."
-                        placeholderTextColor="#6E7278"
+                        placeholder="Buscar restaurantes, platos..."
+                        placeholderTextColor="#9CA3AF"
                         style={styles.searchInput}
                         value={searchQuery}
                         onChangeText={setSearchQuery}
@@ -331,15 +331,15 @@ export default function HomeScreen() {
                         onFocus={handleFocus}
                       />
                        {searching ? (
-                              <ActivityIndicator size="small" color="#6E7278" style={{ marginLeft: 8 }} />
+                              <ActivityIndicator size="small" color="#6B7280" style={{ marginLeft: 8 }} />
                           ) : searchQuery.length > 0 ? (
                                 <TouchableOpacity onPress={() => setSearchQuery("")} hitSlop={10}>
-                                    <Ionicons name="close-circle" size={18} color="#CCCCCC" />
+                                    <Ionicons name="close-circle" size={18} color="#D1D5DB" />
                                 </TouchableOpacity>
                           ) : null}
                   </View>
                    <TouchableOpacity onPress={handleCancelSearch} style={styles.cancelButton}>
-                        <Text style={styles.cancelButtonText}>Cerrar búsqueda</Text>
+                        <Text style={styles.cancelButtonText}>Cancelar</Text>
                    </TouchableOpacity>
               </Animated.View>
           )}
@@ -347,12 +347,12 @@ export default function HomeScreen() {
           {!isSearching && (
               <>
                   {/* Marketing Banners */}
-                  <View style={{ marginTop: 20 }}>
+                  <View style={{ marginTop: 24 }}>
                     <MarketingSlider banners={banners} />
                   </View>
 
                   {/* Categories */}
-                  <View style={{ marginBottom: 10 }}>
+                  <View style={{ marginBottom: 32 }}>
                       <ScrollView
                         horizontal
                         showsHorizontalScrollIndicator={false}
@@ -387,7 +387,7 @@ export default function HomeScreen() {
                       </>
                   ) : !searching && searchQuery.length >= 3 ? (
                       <View style={styles.noResultsContainer}>
-                          <Ionicons name="search" size={48} color="#E0E0E0" />
+                          <Ionicons name="search" size={48} color="#E5E7EB" />
                           <Text style={styles.noResultsText}>No se encontraron resultados</Text>
                       </View>
                   ) : null}
@@ -398,9 +398,10 @@ export default function HomeScreen() {
                 {rewardItems.length > 0 && (
                     <Animated.View entering={FadeInDown.delay(100).springify()} style={styles.sectionContainer}>
                         <View style={styles.sectionHeader}>
-                            <Text style={styles.sectionTitle}>Recompensas Activas</Text>
-                            <TouchableOpacity style={styles.arrowButton}>
-                                <Ionicons name="arrow-forward" size={20} color="#000" />
+                            <Text style={styles.sectionTitle}>Recompensas</Text>
+                            <TouchableOpacity style={styles.viewAllButton}>
+                                <Text style={styles.viewAllText}>Ver todo</Text>
+                                <Ionicons name="chevron-forward" size={16} color="#4F46E5" />
                             </TouchableOpacity>
                         </View>
                         <FlatList
@@ -416,8 +417,12 @@ export default function HomeScreen() {
 
                 {/* Restaurants List */}
                 <Animated.View entering={FadeInDown.delay(200).springify()} style={styles.sectionContainer}>
-                    <View style={{ paddingHorizontal: 24, marginBottom: 16 }}>
+                    <View style={styles.sectionHeader}>
                         <Text style={styles.sectionTitle}>Comercios Nexe</Text>
+                         <TouchableOpacity style={styles.viewAllButton}>
+                            <Text style={styles.viewAllText}>Filtros</Text>
+                            <Ionicons name="options-outline" size={16} color="#4F46E5" />
+                        </TouchableOpacity>
                     </View>
                     <View style={styles.listContainer}>
                         {sortedRestaurants.map((restaurant, index) => {
@@ -464,29 +469,25 @@ function DishResultCard({ item }: { item: MenuItemResult }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FAFAFA', // Very light gray for depth
+    backgroundColor: '#F9FAFB', // Cool Gray 50 - Cleaner look
   },
   searchBar: {
       flexDirection: 'row',
       alignItems: 'center',
       backgroundColor: '#FFFFFF',
       paddingHorizontal: 16,
-      height: 56,
-      borderRadius: 28, // Fully rounded pill
+      height: 52, // Slightly shorter
+      borderRadius: 16, // Matches other elements
       shadowColor: '#000',
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.1,
-      shadowRadius: 12,
-      elevation: 6,
-  },
-  searchBarFocused: {
-      borderColor: '#2C2C2E',
-      borderWidth: 1,
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.05,
+      shadowRadius: 4,
+      elevation: 2,
   },
   searchInput: {
       flex: 1,
-      fontSize: 16,
-      color: '#121212',
+      fontSize: 15,
+      color: '#111827',
       height: '100%',
   },
   cancelButton: {
@@ -494,13 +495,12 @@ const styles = StyleSheet.create({
       padding: 10,
   },
   cancelButtonText: {
-      color: '#007AFF',
-      fontSize: 16,
+      color: '#4F46E5', // Indigo 600
+      fontSize: 15,
       fontWeight: '600',
   },
   filterScroll: {
       paddingLeft: 20,
-      marginBottom: 32,
   },
   filterContent: {
       paddingRight: 20,
@@ -513,21 +513,24 @@ const styles = StyleSheet.create({
       justifyContent: 'space-between',
       alignItems: 'center',
       paddingHorizontal: 24,
-      marginBottom: 20,
+      marginBottom: 16,
   },
   sectionTitle: {
-      fontSize: 24, // Larger title
-      fontWeight: '800',
-      color: '#121212',
+      fontSize: 20, // Clean size
+      fontWeight: '700',
+      color: '#111827', // Gray 900
       letterSpacing: -0.5,
   },
-  arrowButton: {
-      width: 36,
-      height: 36,
-      borderRadius: 12,
-      backgroundColor: '#F0F0F0',
-      justifyContent: 'center',
+  viewAllButton: {
+      flexDirection: 'row',
       alignItems: 'center',
+      gap: 4,
+      padding: 4,
+  },
+  viewAllText: {
+      color: '#4F46E5', // Indigo 600
+      fontSize: 14,
+      fontWeight: '600',
   },
   carouselContent: {
       paddingHorizontal: 24,
@@ -543,18 +546,9 @@ const styles = StyleSheet.create({
   },
   noResultsText: {
       marginTop: 16,
-      fontSize: 18,
-      fontWeight: 'bold',
-      color: '#121212',
-  },
-  recentSearchesContainer: {
-    paddingHorizontal: 24,
-    marginTop: 10,
-  },
-  recentSearchesTitle: {
-      fontSize: 14,
-      color: '#6E7278',
+      fontSize: 16,
       fontWeight: '600',
+      color: '#374151',
   },
   dishResultRow: {
       flexDirection: 'row',
@@ -565,10 +559,10 @@ const styles = StyleSheet.create({
       marginBottom: 12,
       borderRadius: 16,
       shadowColor: '#000',
-      shadowOffset: { width: 0, height: 2 },
+      shadowOffset: { width: 0, height: 1 },
       shadowOpacity: 0.05,
-      shadowRadius: 4,
-      elevation: 2,
+      shadowRadius: 2,
+      elevation: 1,
   },
   dishImage: {
       width: 48,
@@ -581,17 +575,17 @@ const styles = StyleSheet.create({
       flex: 1,
   },
   dishName: {
-      fontSize: 16,
-      fontWeight: 'bold',
-      color: '#121212',
+      fontSize: 15,
+      fontWeight: '600',
+      color: '#111827',
   },
   dishMeta: {
       fontSize: 13,
-      color: '#6E7278',
+      color: '#6B7280',
   },
   dishPrice: {
-      fontSize: 16,
+      fontSize: 15,
       fontWeight: '600',
-      color: '#121212',
+      color: '#111827',
   },
 });
