@@ -62,10 +62,14 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
             {/* Custom Icons for cleaner aesthetic */}
             {route.name === 'index' ? (
                 <Ionicons name={isFocused ? "home" : "home-outline"} size={24} color={isFocused ? activeColor : inactiveColor} />
-            ) : route.name === 'scan' ? (
-                <Ionicons name={isFocused ? "scan" : "scan-outline"} size={24} color={isFocused ? activeColor : inactiveColor} />
             ) : route.name === 'explore' ? (
                 <Ionicons name={isFocused ? "compass" : "compass-outline"} size={26} color={isFocused ? activeColor : inactiveColor} />
+            ) : route.name === 'scan' ? (
+                <Ionicons name={isFocused ? "scan" : "scan-outline"} size={24} color={isFocused ? activeColor : inactiveColor} />
+            ) : route.name === 'wallet' ? (
+                <Ionicons name={isFocused ? "wallet" : "wallet-outline"} size={24} color={isFocused ? activeColor : inactiveColor} />
+            ) : route.name === 'profile' ? (
+                <Ionicons name={isFocused ? "person" : "person-outline"} size={24} color={isFocused ? activeColor : inactiveColor} />
             ) : (
                 options.tabBarIcon?.({
                     focused: isFocused,
