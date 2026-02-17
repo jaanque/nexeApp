@@ -1,271 +1,184 @@
-import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, LayoutAnimation, Platform, UIManager } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import React from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Image as RNImage } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 
-if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
-  UIManager.setLayoutAnimationEnabledExperimental(true);
-}
-
 interface ModernHeaderProps {
-  greeting: string;
-  points: number;
-  initials: string;
-  isGuest?: boolean; // New prop
-  onScanPress: () => void;
-  onWalletPress: () => void;
-  onProfilePress: () => void;
-  onSearchPress: () => void;
+    greeting: string;
+    points: number;
+    initials: string;
+    isGuest: boolean;
+    onScanPress: () => void;
+    onWalletPress: () => void;
+    onProfilePress: () => void;
+    onSearchPress: () => void;
 }
 
 export function ModernHeader({
     greeting,
     points,
     initials,
-    isGuest = false,
+    isGuest,
     onScanPress,
     onWalletPress,
     onProfilePress,
     onSearchPress
 }: ModernHeaderProps) {
-  const insets = useSafeAreaInsets();
-  const router = useRouter();
-  const HEADER_HEIGHT = 200;
+    const insets = useSafeAreaInsets();
 
-  // Trigger animation when isGuest changes
-  useEffect(() => {
-      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-  }, [isGuest]);
+    const handlePress = (action: () => void) => {
+        if (process.env.EXPO_OS === 'ios') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        action();
+    };
 
-  const handleLoginPress = () => {
-      Haptics.selectionAsync();
-      router.push('/login');
-  };
-
-  const handleRegisterPress = () => {
-      Haptics.selectionAsync();
-      router.push('/register');
-  };
-
-  return (
-    <View style={[styles.container, { height: HEADER_HEIGHT, backgroundColor: '#121212' }]}>
-        <View style={styles.background}>
-            <View style={[styles.content, { paddingTop: insets.top + 10 }]}>
-                {/* Top Row: Avatar & Actions */}
-                <View style={styles.topRow}>
-                    <TouchableOpacity onPress={onProfilePress} style={styles.avatarButton}>
-                        <View style={styles.avatar}>
-                             {isGuest ? (
-                                <Ionicons name="person-outline" size={20} color="#fff" />
-                             ) : (
-                                <Text style={styles.avatarText}>{initials}</Text>
-                             )}
-                        </View>
+    return (
+        <View style={[styles.container, { paddingTop: insets.top + 10 }]}>
+            {/* Top Row: Greeting & Profile */}
+            <View style={styles.topRow}>
+                <View style={styles.greetingContainer}>
+                    <Text style={styles.greetingText}>{greeting}</Text>
+                    <TouchableOpacity onPress={() => handlePress(onWalletPress)} style={styles.pointsPill}>
+                         <Ionicons name="star" size={14} color="#F59E0B" style={{marginRight: 4}} />
+                         <Text style={styles.pointsText}>{points} pts</Text>
+                         <Ionicons name="chevron-forward" size={12} color="#9CA3AF" style={{marginLeft: 2}} />
                     </TouchableOpacity>
-
-                    <View style={styles.actionsRow}>
-                        {!isGuest && (
-                            <TouchableOpacity onPress={onWalletPress} style={styles.iconButton}>
-                                <Ionicons name="wallet-outline" size={24} color="#fff" />
-                            </TouchableOpacity>
-                        )}
-                        <TouchableOpacity onPress={onSearchPress} style={styles.iconButton}>
-                            <Ionicons name="search-outline" size={24} color="#fff" />
-                        </TouchableOpacity>
-                    </View>
                 </View>
 
-                {/* Main Content: Greeting & Points/Login */}
-                <View style={styles.mainContent}>
-                    <Text style={styles.greeting}>{greeting}</Text>
+                <View style={styles.actionsContainer}>
+                     <TouchableOpacity onPress={() => handlePress(onSearchPress)} style={styles.iconButton}>
+                        <Ionicons name="search" size={22} color="#FFFFFF" />
+                    </TouchableOpacity>
 
-                    {isGuest ? (
-                        <View style={styles.guestActions}>
-                            <TouchableOpacity style={styles.primaryButton} onPress={handleLoginPress}>
-                                <Text style={styles.primaryButtonText}>Iniciar Sesión</Text>
-                            </TouchableOpacity>
-                             <TouchableOpacity style={styles.secondaryButton} onPress={handleRegisterPress}>
-                                <Text style={styles.secondaryButtonText}>Registrarse</Text>
-                            </TouchableOpacity>
-                        </View>
-                    ) : (
-                        <View style={styles.bottomRow}>
-                            <View style={styles.pointsRow}>
-                                <Text style={styles.pointsValue}>{points.toLocaleString()}</Text>
-                                <Text style={styles.pointsLabel}> pts</Text>
-                            </View>
-
-                            <TouchableOpacity
-                                style={styles.scanButton}
-                                activeOpacity={0.9}
-                                onPress={onScanPress}
-                            >
-                                <Ionicons name="scan-outline" size={20} color="#000" />
-                                <Text style={styles.scanButtonText}>Escanear</Text>
-                            </TouchableOpacity>
-                        </View>
-                    )}
+                    <TouchableOpacity onPress={() => handlePress(onProfilePress)} style={styles.profileButton}>
+                         {isGuest ? (
+                             <Ionicons name="person" size={20} color="#163D36" />
+                         ) : (
+                             <Text style={styles.initials}>{initials}</Text>
+                         )}
+                    </TouchableOpacity>
                 </View>
             </View>
 
+            {/* Bottom Row: Scan Button (Full Width, Prominent) */}
+            <View style={styles.bottomRow}>
+                <TouchableOpacity
+                    style={styles.scanButton}
+                    onPress={() => handlePress(onScanPress)}
+                    activeOpacity={0.9}
+                >
+                    <View style={styles.scanContent}>
+                        <Ionicons name="scan" size={20} color="#163D36" style={{ marginRight: 8 }} />
+                        <Text style={styles.scanText}>Escanear código QR</Text>
+                    </View>
+                     <View style={styles.scanBadge}>
+                        <Ionicons name="camera" size={12} color="#fff" />
+                    </View>
+                </TouchableOpacity>
+            </View>
         </View>
-    </View>
-  );
+    );
 }
 
 const styles = StyleSheet.create({
-  container: {
-      marginBottom: 0,
-      zIndex: 10,
-  },
-  background: {
-      flex: 1,
-      overflow: 'hidden',
-  },
-  content: {
-      flex: 1,
-      paddingHorizontal: 24,
-      paddingBottom: 24,
-      justifyContent: 'flex-start',
-      gap: 16,
-  },
-  topRow: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      marginBottom: 10,
-  },
-  avatarButton: {
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.3,
-      shadowRadius: 8,
-      elevation: 5,
-  },
-  avatar: {
-      width: 44,
-      height: 44,
-      borderRadius: 16,
-      backgroundColor: 'rgba(255,255,255,0.1)',
-      justifyContent: 'center',
-      alignItems: 'center',
-      borderWidth: 1,
-      borderColor: 'rgba(255,255,255,0.2)',
-  },
-  avatarText: {
-      color: '#fff',
-      fontSize: 16,
-      fontWeight: 'bold',
-  },
-  actionsRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 12,
-  },
-  iconButton: {
-      width: 44,
-      height: 44,
-      borderRadius: 16,
-      backgroundColor: 'rgba(255,255,255,0.1)',
-      justifyContent: 'center',
-      alignItems: 'center',
-      borderWidth: 1,
-      borderColor: 'rgba(255,255,255,0.2)',
-  },
-  mainContent: {
-      marginBottom: 10,
-      justifyContent: 'center', // Center vertically in the remaining space
-      flex: 1,
-  },
-  greeting: {
-      fontSize: 24,
-      color: '#FFFFFF',
-      marginBottom: 8,
-      fontWeight: '700',
-      letterSpacing: 0.5,
-  },
-  bottomRow: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      width: '100%',
-  },
-  pointsRow: {
-      flexDirection: 'row',
-      alignItems: 'baseline',
-  },
-  pointsValue: {
-      fontSize: 40,
-      fontWeight: '800',
-      color: '#F59E0B',
-      letterSpacing: -1,
-      lineHeight: 44,
-  },
-  pointsLabel: {
-      fontSize: 16,
-      fontWeight: '600',
-      color: 'rgba(255,255,255,0.6)',
-      marginLeft: 4,
-  },
-  scanButton: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      backgroundColor: '#fff',
-      paddingVertical: 10,
-      paddingHorizontal: 16,
-      borderRadius: 16,
-      gap: 6,
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.1,
-      shadowRadius: 8,
-      elevation: 4,
-  },
-  scanButtonText: {
-      color: '#000',
-      fontSize: 14,
-      fontWeight: '700',
-  },
-  bottomOverlay: {
-      position: 'absolute',
-      bottom: 0,
-      left: 0,
-      right: 0,
-      height: 60,
-  },
-  guestActions: {
-      flexDirection: 'row',
-      gap: 12,
-      marginTop: 4,
-  },
-  primaryButton: {
-      backgroundColor: '#fff',
-      paddingVertical: 10,
-      paddingHorizontal: 20,
-      borderRadius: 12,
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.1,
-      shadowRadius: 4,
-      elevation: 2,
-  },
-  primaryButtonText: {
-      color: '#121212',
-      fontWeight: '700',
-      fontSize: 14,
-  },
-  secondaryButton: {
-      paddingVertical: 10,
-      paddingHorizontal: 20,
-      borderRadius: 12,
-      borderWidth: 1,
-      borderColor: 'rgba(255,255,255,0.3)',
-  },
-  secondaryButtonText: {
-      color: '#fff',
-      fontWeight: '600',
-      fontSize: 14,
-  }
+    container: {
+        backgroundColor: '#121212',
+        paddingHorizontal: 20,
+        paddingBottom: 24,
+        borderBottomLeftRadius: 32,
+        borderBottomRightRadius: 32,
+    },
+    topRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'flex-start',
+        marginBottom: 20,
+    },
+    greetingContainer: {
+        flex: 1,
+        marginRight: 16,
+    },
+    greetingText: {
+        fontSize: 28,
+        fontWeight: '800', // Heavy bold
+        color: '#FFFFFF',
+        marginBottom: 6,
+        letterSpacing: -0.5,
+    },
+    pointsPill: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: 'rgba(255,255,255,0.1)',
+        paddingHorizontal: 10,
+        paddingVertical: 6,
+        borderRadius: 20,
+        alignSelf: 'flex-start',
+    },
+    pointsText: {
+        color: '#E5E7EB', // Gray 200
+        fontSize: 14,
+        fontWeight: '600',
+    },
+    actionsContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 12,
+    },
+    iconButton: {
+        width: 44,
+        height: 44,
+        borderRadius: 22,
+        backgroundColor: 'rgba(255,255,255,0.1)',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    profileButton: {
+        width: 44,
+        height: 44,
+        borderRadius: 22,
+        backgroundColor: '#F3F4F6', // Light background for contrast
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 2,
+        borderColor: '#163D36', // Brand color border
+    },
+    initials: {
+        fontSize: 18,
+        fontWeight: '700',
+        color: '#163D36',
+    },
+    bottomRow: {
+        marginTop: 4,
+    },
+    scanButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        backgroundColor: '#FFFFFF',
+        paddingVertical: 14,
+        paddingHorizontal: 16,
+        borderRadius: 20, // Modern rounded shape
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.15,
+        shadowRadius: 12,
+        elevation: 6,
+    },
+    scanContent: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    scanText: {
+        color: '#163D36',
+        fontSize: 16,
+        fontWeight: '700',
+    },
+    scanBadge: {
+        backgroundColor: '#163D36',
+        width: 28,
+        height: 28,
+        borderRadius: 14,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
 });

@@ -40,17 +40,19 @@ export function ModernRewardCard({ item }: ModernRewardCardProps) {
             activeOpacity={0.9}
             onPress={handlePress}
         >
-            <Image
-                source={{ uri: item.image_url }}
-                style={styles.image}
-                contentFit="cover"
-                transition={200}
-            />
+            <View style={styles.imageContainer}>
+                <Image
+                    source={{ uri: item.image_url }}
+                    style={styles.image}
+                    contentFit="cover"
+                    transition={200}
+                />
+            </View>
 
             {/* Gradient Overlay */}
             <LinearGradient
-                colors={['transparent', 'rgba(0,0,0,0.4)', 'rgba(0,0,0,0.95)']}
-                locations={[0, 0.5, 1]}
+                colors={['transparent', 'rgba(0,0,0,0.6)', 'rgba(0,0,0,0.95)']}
+                locations={[0, 0.4, 1]}
                 style={styles.gradient}
             >
                 <View style={styles.content}>
@@ -73,19 +75,24 @@ export function ModernRewardCard({ item }: ModernRewardCardProps) {
 const styles = StyleSheet.create({
     card: {
         width: CARD_WIDTH,
-        height: CARD_WIDTH * 1.5, // 2:3 Aspect Ratio (approx 180x270)
+        height: CARD_WIDTH * 1.5, // 2:3 Poster Ratio
         borderRadius: 20,
         marginRight: 16,
-        backgroundColor: '#E5E7EB', // Gray 200 placeholder
+        backgroundColor: '#E5E7EB',
         shadowColor: "#000",
         shadowOffset: {
             width: 0,
             height: 8,
         },
-        shadowOpacity: 0.1,
+        shadowOpacity: 0.15,
         shadowRadius: 10,
         elevation: 6,
         overflow: 'hidden',
+    },
+    imageContainer: {
+        width: '100%',
+        height: '100%',
+        backgroundColor: '#D1D5DB', // Placeholder color
     },
     image: {
         width: '100%',
@@ -96,7 +103,7 @@ const styles = StyleSheet.create({
         left: 0,
         right: 0,
         bottom: 0,
-        height: '100%', // Full height to manage top badge visibility too
+        height: '100%',
         justifyContent: 'flex-end',
         padding: 16,
     },
@@ -113,29 +120,34 @@ const styles = StyleSheet.create({
         paddingHorizontal: 10,
         paddingVertical: 6,
         borderRadius: 20,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
     },
     pointsText: {
-        color: '#121212',
+        color: '#163D36', // Brand Color
         fontSize: 12,
-        fontWeight: '800', // Heaviest weight
+        fontWeight: '800',
     },
     bottomInfo: {
         gap: 4,
     },
     restaurantName: {
-        color: 'rgba(255,255,255,0.8)', // Lighter
-        fontSize: 12,
+        color: 'rgba(255,255,255,0.7)',
+        fontSize: 11,
         fontWeight: '600',
         textTransform: 'uppercase',
-        letterSpacing: 0.5,
+        letterSpacing: 0.8,
     },
     itemName: {
         color: '#fff',
-        fontSize: 20, // Larger
+        fontSize: 18,
         fontWeight: '800',
-        lineHeight: 24,
+        lineHeight: 22,
+        letterSpacing: -0.3,
         textShadowColor: 'rgba(0,0,0,0.5)',
-        textShadowOffset: { width: 0, height: 1 },
-        textShadowRadius: 3,
+        textShadowOffset: { width: 0, height: 2 },
+        textShadowRadius: 4,
     },
 });
