@@ -13,7 +13,7 @@ import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect, useState } from 'react';
 import { FlatList, ListRenderItem, Platform, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, UIManager, View } from 'react-native';
-import Animated, { FadeInDown, useAnimatedScrollHandler, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
+import Animated, { FadeInDown, useAnimatedScrollHandler, useSharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 // Enable LayoutAnimation on Android
@@ -252,14 +252,10 @@ export default function HomeScreen() {
       <ModernRewardCard item={item} />
   );
 
-  const [categoryLayoutY, setCategoryLayoutY] = useState(250); // Default estimate
-
   if (loading) return <HomeScreenSkeleton />;
 
   // Calculate approximate header height for padding
   const HEADER_MAX_HEIGHT = insets.top + 100;
-  // Category sticky offset: insets.top (where header is collapsed)
-  const STICKY_OFFSET = insets.top;
 
   return (
     <View style={styles.container}>
@@ -302,15 +298,25 @@ export default function HomeScreen() {
                 <MarketingSlider banners={banners} />
             </View>
 
-            {/* Placeholder for Sticky Categories */}
-            <View
-                style={{ height: 60, marginBottom: 24 }} // Height matches sticky bar content
-                onLayout={(event) => {
-                    const { y } = event.nativeEvent.layout;
-                    // Correct absolute scroll offset calculation is critical
-                    setCategoryLayoutY(y);
-                }}
-            />
+            {/* Categories List */}
+            <View style={[styles.sectionHeader, { marginBottom: 0, marginTop: 8 }]}>
+                <Text style={styles.sectionTitle}>Categorías</Text>
+            </View>
+            <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.filterContent}
+                style={{ flexGrow: 0, marginBottom: 24 }}
+            >
+                {categories.map((cat) => (
+                    <CategoryFilterItem
+                        key={cat.id}
+                        item={cat}
+                        isActive={activeCategory === cat.id}
+                        onPress={() => setActiveCategory(activeCategory === cat.id ? null : cat.id)}
+                    />
+                ))}
+            </ScrollView>
 
             {/* Restaurants List - Food Priority #2 */}
             <Animated.View entering={FadeInDown.delay(200).springify()} style={styles.sectionContainer}>
@@ -362,83 +368,8 @@ export default function HomeScreen() {
           </View>
       </Animated.ScrollView>
 
-      {/* Absolute Sticky Category Bar */}
-      <StickyCategoryBar
-        categories={categories}
-        activeCategory={activeCategory}
-        setActiveCategory={setActiveCategory}
-        scrollY={scrollY}
-        layoutY={categoryLayoutY}
-        headerMaxHeight={HEADER_MAX_HEIGHT}
-        stickyTop={STICKY_OFFSET}
-      />
     </View>
   );
-}
-
-interface StickyCategoryBarProps {
-    categories: Category[];
-    activeCategory: number | null;
-    setActiveCategory: (id: number | null) => void;
-    scrollY: any;
-    layoutY: number;
-    headerMaxHeight: number;
-    stickyTop: number;
-}
-
-function StickyCategoryBar({ categories, activeCategory, setActiveCategory, scrollY, layoutY, headerMaxHeight, stickyTop }: StickyCategoryBarProps) {
-    const animatedStyle = useAnimatedStyle(() => {
-        const initialTop = headerMaxHeight - 12 + layoutY;
-        const currentY = initialTop - scrollY.value;
-
-        // When currentY (moving up as we scroll) hits stickyTop, stop it.
-        const translateY = Math.max(stickyTop, currentY);
-
-        return {
-            transform: [{ translateY }],
-            zIndex: 1000,
-        };
-    });
-
-    // Animate background color and shadow based on stickiness
-    const containerStyle = useAnimatedStyle(() => {
-         const initialTop = headerMaxHeight - 12 + layoutY;
-         const currentY = initialTop - scrollY.value;
-
-         const isSticky = currentY <= stickyTop;
-
-         // Transition to background color (#F9FAFB) to match content
-         const backgroundColor = withTiming(isSticky ? '#F9FAFB' : 'transparent', { duration: 250 });
-         const borderBottomColor = withTiming(isSticky ? '#E5E7EB' : 'transparent', { duration: 250 });
-
-         return {
-             backgroundColor,
-             borderBottomColor,
-             borderBottomWidth: 1,
-             // Apply shadow only when sticky
-             shadowOpacity: withTiming(isSticky ? 0.05 : 0, { duration: 250 }),
-             elevation: isSticky ? 3 : 0,
-         };
-    });
-
-    return (
-        <Animated.View style={[styles.stickyBar, animatedStyle, containerStyle]}>
-             <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.filterContent}
-            >
-                {categories.map((cat) => (
-                    <CategoryFilterItem
-                        key={cat.id}
-                        item={cat}
-                        isActive={activeCategory === cat.id}
-                        onPress={() => setActiveCategory(activeCategory === cat.id ? null : cat.id)}
-                    />
-                ))}
-            </ScrollView>
-        </Animated.View>
-    );
 }
 
 const styles = StyleSheet.create({
@@ -496,16 +427,5 @@ const styles = StyleSheet.create({
   },
   listContainer: {
       paddingHorizontal: 20,
-  },
-  stickyBar: {
-      position: 'absolute',
-      top: 0,
-      left: 0,
-      right: 0,
-      height: 72, // Fixed height for consistent menu feel
-      justifyContent: 'center',
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 2 },
-      shadowRadius: 4,
   },
 });
