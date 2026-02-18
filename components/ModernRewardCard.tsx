@@ -16,7 +16,7 @@ interface MenuItemResult {
     restaurant_id: number;
     restaurants?: {
         name: string;
-    };
+    } | null;
     category_id?: number;
 }
 
