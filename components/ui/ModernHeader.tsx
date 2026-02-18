@@ -1,12 +1,9 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import Animated, { interpolate, Extrapolation, useAnimatedStyle, SharedValue, useDerivedValue } from 'react-native-reanimated';
-import { BlurView } from 'expo-blur';
-
-const AnimatedBlurView = Animated.createAnimatedComponent(BlurView);
+import React from 'react';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import Animated, { Extrapolation, interpolate, SharedValue, useAnimatedStyle } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface ModernHeaderProps {
     greeting: string;
@@ -30,72 +27,36 @@ export function ModernHeader({
     const insets = useSafeAreaInsets();
 
     const handlePress = (action: () => void) => {
-        if (Platform.OS === 'ios') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        if (process.env.EXPO_OS === 'ios') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         action();
     };
 
-    const formattedPoints = points.toLocaleString('es-ES');
-
-    // Derived values for animations
-    const headerHeight = useDerivedValue(() => {
-        return interpolate(
+    const animatedContainerStyle = useAnimatedStyle(() => {
+        const paddingBottom = interpolate(
             scrollY.value,
             [0, 100],
-            [insets.top + 80, insets.top + 60], // Collapses slightly
+            [40, 16], // Expanded: 40, Collapsed: 16
             Extrapolation.CLAMP
         );
-    });
 
-    const blurIntensity = useDerivedValue(() => {
-        return interpolate(
+        const paddingTop = interpolate(
             scrollY.value,
-            [0, 50],
-            [0, 80], // Becomes blurry quickly
+            [0, 100],
+            [insets.top + 24, insets.top + 8], // Expanded: +24, Collapsed: +8
             Extrapolation.CLAMP
         );
-    });
 
-    const contentOpacity = useDerivedValue(() => {
-        return interpolate(
-            scrollY.value,
-            [0, 50],
-            [1, 0], // Greeting fades out
-            Extrapolation.CLAMP
-        );
-    });
-
-    const containerStyle = useAnimatedStyle(() => {
         return {
-            height: headerHeight.value,
-            backgroundColor: interpolate(
-                scrollY.value,
-                [0, 100],
-                ['rgba(18,18,18,0)', 'rgba(18,18,18,0.8)'], // Transparent to semi-transparent dark
-                Extrapolation.CLAMP
-            )
+            paddingBottom,
+            paddingTop
         };
     });
 
-    const greetingStyle = useAnimatedStyle(() => {
-        return {
-            opacity: contentOpacity.value,
-            transform: [
-                { translateY: interpolate(scrollY.value, [0, 50], [0, -10], Extrapolation.CLAMP) }
-            ]
-        };
-    });
+    const formattedPoints = points.toLocaleString('es-ES');
 
     return (
-        <Animated.View style={[styles.container, containerStyle]}>
-            {Platform.OS === 'ios' && (
-                <AnimatedBlurView
-                    intensity={blurIntensity}
-                    tint="dark"
-                    style={StyleSheet.absoluteFill}
-                />
-            )}
-
-            <View style={[styles.contentRow, { paddingTop: insets.top }]}>
+        <Animated.View style={[styles.container, animatedContainerStyle]}>
+            <View style={styles.contentRow}>
                 {/* Profile Avatar */}
                 <TouchableOpacity
                     onPress={() => handlePress(onProfilePress)}
@@ -109,14 +70,14 @@ export function ModernHeader({
                      )}
                 </TouchableOpacity>
 
-                {/* Greeting Text - Fades Out */}
-                <Animated.View style={[styles.greetingContainer, greetingStyle]}>
+                {/* Greeting Text */}
+                <View style={styles.greetingContainer}>
                     <Text style={styles.greetingText} numberOfLines={1} adjustsFontSizeToFit>
                         {greeting}
                     </Text>
-                </Animated.View>
+                </View>
 
-                {/* Points Pill - Always Visible */}
+                {/* Points Pill */}
                 <TouchableOpacity
                     onPress={() => handlePress(onWalletPress)}
                     style={styles.pointsPill}
@@ -132,21 +93,20 @@ export function ModernHeader({
 
 const styles = StyleSheet.create({
     container: {
+        backgroundColor: '#121212',
+        paddingHorizontal: 20,
+        // paddingBottom and paddingTop are animated
+        borderBottomLeftRadius: 24,
+        borderBottomRightRadius: 24,
         position: 'absolute',
         top: 0,
         left: 0,
         right: 0,
         zIndex: 100,
-        overflow: 'hidden',
-        borderBottomLeftRadius: 24,
-        borderBottomRightRadius: 24,
     },
     contentRow: {
-        flex: 1,
         flexDirection: 'row',
         alignItems: 'center',
-        paddingHorizontal: 20,
-        paddingBottom: 10,
         gap: 12,
     },
     profileButton: {
