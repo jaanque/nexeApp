@@ -55,6 +55,9 @@ interface MenuItemResult {
     restaurant_id: number;
     restaurants?: {
         name: string;
+        latitude?: number;
+        longitude?: number;
+        rating?: number;
     };
     category_id?: number;
 }
@@ -68,6 +71,7 @@ export default function HomeScreen() {
   const [trendingItems, setTrendingItems] = useState<MenuItemResult[]>([]);
   const [allRestaurants, setAllRestaurants] = useState<Restaurant[]>([]);
   const [allRewards, setAllRewards] = useState<MenuItemResult[]>([]);
+  const [allTrending, setAllTrending] = useState<MenuItemResult[]>([]); // Base trending list
   const [loading, setLoading] = useState(true);
   const [categories, setCategories] = useState<Category[]>([]);
   const [banners, setBanners] = useState<Banner[]>([]); // Banners State
@@ -132,46 +136,70 @@ export default function HomeScreen() {
     setRefreshing(false);
   }, [session]);
 
-  // Filtering Logic
+  // Unified Filtering & Sorting Logic
   useEffect(() => {
-      if (activeCategory === null) {
-          setPopularRestaurants(allRestaurants);
-          setRewardItems(allRewards);
-      } else {
-          const filteredRest = allRestaurants.filter(r => r.category_id === activeCategory);
-          setPopularRestaurants(filteredRest);
-
-          const filteredRewards = allRewards.filter(i => i.category_id === activeCategory);
-          setRewardItems(filteredRewards);
+      // 1. Filter Restaurants
+      let filteredRest = allRestaurants;
+      if (activeCategory !== null) {
+          filteredRest = filteredRest.filter(r => r.category_id === activeCategory);
       }
-  }, [activeCategory, allRestaurants, allRewards]);
+      setPopularRestaurants(filteredRest); // Keep unsorted filtered list if needed, or just use sorted
 
-  // Sorting Logic
-  useEffect(() => {
-      if (popularRestaurants.length > 0) {
-          let sorted = [...popularRestaurants];
+      // 2. Sort Restaurants
+      let sortedRest = [...filteredRest];
+      if (sortBy === 'distance' && userLocation) {
+           sortedRest.sort((a, b) => {
+              const distA = (a.latitude && a.longitude) ? getDistanceInMeters(userLocation.latitude, userLocation.longitude, a.latitude, a.longitude) : Infinity;
+              const distB = (b.latitude && b.longitude) ? getDistanceInMeters(userLocation.latitude, userLocation.longitude, b.latitude, b.longitude) : Infinity;
+              return distA - distB;
+          });
+      } else if (sortBy === 'rating') {
+          sortedRest.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+      } else {
+           // Default Sort
+           if (userLocation) {
+                sortedRest.sort((a, b) => {
+                    const distA = (a.latitude && a.longitude) ? getDistanceInMeters(userLocation.latitude, userLocation.longitude, a.latitude, a.longitude) : Infinity;
+                    const distB = (b.latitude && b.longitude) ? getDistanceInMeters(userLocation.latitude, userLocation.longitude, b.latitude, b.longitude) : Infinity;
+                    return distA - distB;
+                });
+           }
+      }
+      setSortedRestaurants(sortedRest);
 
+      // 3. Filter & Sort Items (Rewards & Trending)
+      const processItems = (items: MenuItemResult[]) => {
+          let filtered = items;
+
+          // Filter by Category
+          if (activeCategory !== null) {
+              filtered = filtered.filter(i => i.category_id === activeCategory);
+          }
+
+          // Sort items based on their restaurant's data
           if (sortBy === 'distance' && userLocation) {
-               sorted.sort((a, b) => {
-                  const distA = (a.latitude && a.longitude) ? getDistanceInMeters(userLocation.latitude, userLocation.longitude, a.latitude, a.longitude) : Infinity;
-                  const distB = (b.latitude && b.longitude) ? getDistanceInMeters(userLocation.latitude, userLocation.longitude, b.latitude, b.longitude) : Infinity;
+              filtered.sort((a, b) => {
+                  const restA = a.restaurants;
+                  const restB = b.restaurants;
+                  const distA = (restA?.latitude && restA?.longitude) ? getDistanceInMeters(userLocation.latitude, userLocation.longitude, restA.latitude, restA.longitude) : Infinity;
+                  const distB = (restB?.latitude && restB?.longitude) ? getDistanceInMeters(userLocation.latitude, userLocation.longitude, restB.latitude, restB.longitude) : Infinity;
                   return distA - distB;
               });
           } else if (sortBy === 'rating') {
-              sorted.sort((a, b) => (b.rating || 0) - (a.rating || 0));
-          } else {
-               // Default: Sort by distance if available, otherwise ID (or "Smart Sort" in future)
-               if (userLocation) {
-                    sorted.sort((a, b) => {
-                        const distA = (a.latitude && a.longitude) ? getDistanceInMeters(userLocation.latitude, userLocation.longitude, a.latitude, a.longitude) : Infinity;
-                        const distB = (b.latitude && b.longitude) ? getDistanceInMeters(userLocation.latitude, userLocation.longitude, b.latitude, b.longitude) : Infinity;
-                        return distA - distB;
-                    });
-               }
+              filtered.sort((a, b) => {
+                  const ratingA = a.restaurants?.rating || 0;
+                  const ratingB = b.restaurants?.rating || 0;
+                  return ratingB - ratingA;
+              });
           }
-          setSortedRestaurants(sorted);
-      }
-  }, [popularRestaurants, userLocation, sortBy]);
+
+          return filtered;
+      };
+
+      setRewardItems(processItems([...allRewards]));
+      setTrendingItems(processItems([...allTrending]));
+
+  }, [activeCategory, sortBy, userLocation, allRestaurants, allRewards, allTrending]);
 
   async function getUserLocation() {
     try {
@@ -255,17 +283,18 @@ export default function HomeScreen() {
       const { data: restData } = await supabase.from('restaurants').select('*').limit(100);
       if (restData) {
           setAllRestaurants(restData);
-          setPopularRestaurants(restData);
       }
-      const { data: menuData } = await supabase.from('menu_items').select('*, restaurants(name)').limit(50);
+      const { data: menuData } = await supabase.from('menu_items')
+        .select('*, restaurants(name, latitude, longitude, rating)')
+        .limit(50);
       if (menuData) {
-          setAllRewards(menuData as any);
-          setRewardItems(menuData as any);
+          const items = menuData as any;
+          setAllRewards(items);
 
           // For trending, we'll shuffle and pick 5 distinct items or just use a slice for demo
           // In a real app, this would be based on order count
-          const shuffled = [...(menuData as any)].sort(() => 0.5 - Math.random());
-          setTrendingItems(shuffled.slice(0, 5));
+          const shuffled = [...items].sort(() => 0.5 - Math.random());
+          setAllTrending(shuffled.slice(0, 5));
       }
     } catch (error) { console.error("Error data:", error); }
   }
