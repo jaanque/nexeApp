@@ -4,17 +4,15 @@ import { Banner, MarketingSlider } from '@/components/MarketingSlider';
 import { ModernBusinessCard } from '@/components/ModernBusinessCard';
 import { ModernRewardCard } from '@/components/ModernRewardCard';
 import { ModernHeader } from '@/components/ui/ModernHeader';
-import { useDebounce } from '@/hooks/useDebounce';
 import { supabase } from '@/lib/supabase';
 import { Ionicons } from '@expo/vector-icons';
 import { Session } from '@supabase/supabase-js';
 import * as Haptics from 'expo-haptics';
-import { Image } from 'expo-image';
 import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, FlatList, Keyboard, LayoutAnimation, ListRenderItem, Platform, RefreshControl, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, UIManager, View } from 'react-native';
+import { FlatList, ListRenderItem, Platform, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, UIManager, View } from 'react-native';
 import Animated, { FadeInDown, useAnimatedScrollHandler, useSharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -69,12 +67,6 @@ export default function HomeScreen() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [banners, setBanners] = useState<Banner[]>([]); // Banners State
   const [userLocation, setUserLocation] = useState<{ latitude: number, longitude: number } | null>(null);
-  const [searchQuery, setSearchQuery] = useState<string>("");
-  const debouncedSearchQuery = useDebounce(searchQuery, 300);
-  const [searchResultsRestaurants, setSearchResultsRestaurants] = useState<Restaurant[]>([]);
-  const [searchResultsDishes, setSearchResultsDishes] = useState<MenuItemResult[]>([]);
-  const [isSearching, setIsSearching] = useState<boolean>(false);
-  const [searching, setSearching] = useState<boolean>(false);
   const [activeCategory, setActiveCategory] = useState<number | null>(null);
   const [refreshing, setRefreshing] = useState(false); // Pull to refresh
 
@@ -146,11 +138,6 @@ export default function HomeScreen() {
       }
   }, [activeCategory, allRestaurants, allRewards]);
 
-  // Search Logic
-  useEffect(() => {
-      handleSearch(debouncedSearchQuery);
-  }, [debouncedSearchQuery]);
-
   // Location Sorting Logic
   useEffect(() => {
       if (popularRestaurants.length > 0) {
@@ -192,42 +179,6 @@ export default function HomeScreen() {
   function formatDistance(lat1: number, lon1: number, lat2: number, lon2: number) {
       const d = getDistanceInMeters(lat1, lon1, lat2, lon2);
       return d < 1000 ? `a ${Math.round(d)}m` : `a ${(d / 1000).toFixed(1)} km`;
-  }
-
-  function handleCancelSearch() {
-      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-      setSearchQuery("");
-      setSearchResultsRestaurants([]);
-      setSearchResultsDishes([]);
-      setIsSearching(false);
-      Keyboard.dismiss();
-  }
-
-  function handleFocus() {
-      if (!isSearching) {
-          LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-          setIsSearching(true);
-      }
-  }
-
-  async function handleSearch(query: string) {
-      if (query.length < 3) {
-          setSearchResultsRestaurants([]);
-          setSearchResultsDishes([]);
-          return;
-      }
-      setSearching(true);
-      try {
-          const { data: restData } = await supabase.from('restaurants').select('*').ilike('name', `%${query}%`).limit(5);
-          if (restData) setSearchResultsRestaurants(restData);
-
-          const { data: menuData } = await supabase.from('menu_items').select('*, restaurants(name)').ilike('name', `%${query}%`).limit(10);
-          if (menuData) setSearchResultsDishes(menuData as any);
-      } catch (error) {
-          console.error("Search error:", error);
-      } finally {
-          setSearching(false);
-      }
   }
 
   async function fetchPoints(userId: string) {
@@ -307,7 +258,7 @@ export default function HomeScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 0, paddingTop: HEADER_MAX_HEIGHT }}
         keyboardDismissMode="on-drag"
-        scrollEnabled={!isSearching || searchResultsRestaurants.length > 0 || searchResultsDishes.length > 0}
+        scrollEnabled={true}
         onScroll={scrollHandler}
         scrollEventThrottle={16}
         refreshControl={
@@ -323,157 +274,81 @@ export default function HomeScreen() {
         style={{ backgroundColor: '#121212' }}
       >
           <View style={styles.contentWrapper}>
-            {/* Search Input Area */}
-            <View style={{ paddingHorizontal: 20, marginBottom: 20, marginTop: 24, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                <View style={[styles.searchBar, { borderColor: '#E5E7EB', borderWidth: 1, flex: 1 }]}>
-                    <Ionicons name="search-outline" size={20} color="#6B7280" style={{marginRight: 10}} />
-                    <TextInput
-                        placeholder="Buscar restaurantes, platos..."
-                        placeholderTextColor="#9CA3AF"
-                        style={styles.searchInput}
-                        value={searchQuery}
-                        onChangeText={setSearchQuery}
-                        onFocus={handleFocus}
-                    />
-                    {searching ? (
-                            <ActivityIndicator size="small" color="#6B7280" style={{ marginLeft: 8 }} />
-                        ) : searchQuery.length > 0 ? (
-                                <TouchableOpacity onPress={() => setSearchQuery("")} hitSlop={10}>
-                                    <Ionicons name="close-circle" size={18} color="#D1D5DB" />
-                                </TouchableOpacity>
-                        ) : null}
-                </View>
-                {(isSearching || searchQuery.length > 0) && (
-                    <Animated.View entering={FadeInDown.duration(200)}>
-                        <TouchableOpacity onPress={handleCancelSearch} style={styles.cancelButton}>
-                            <Text style={styles.cancelButtonText}>Cancelar</Text>
-                        </TouchableOpacity>
-                    </Animated.View>
-                )}
+            {/* Marketing Banners */}
+            <View style={{ marginTop: 24 }}>
+                <MarketingSlider banners={banners} />
             </View>
 
-            {!isSearching && (
-                <>
-                    {/* Marketing Banners */}
-                    <View style={{ marginTop: 24 }}>
-                        <MarketingSlider banners={banners} />
-                    </View>
+            {/* Categories */}
+            <View style={{ marginBottom: 24 }}>
+                <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    style={styles.filterScroll}
+                    contentContainerStyle={styles.filterContent}
+                >
+                    {categories.map((cat) => (
+                        <CategoryFilterItem
+                            key={cat.id}
+                            item={cat}
+                            isActive={activeCategory === cat.id}
+                            onPress={() => setActiveCategory(activeCategory === cat.id ? null : cat.id)}
+                        />
+                    ))}
+                </ScrollView>
+            </View>
 
-                    {/* Categories */}
-                    <View style={{ marginBottom: 24 }}>
-                        <ScrollView
-                            horizontal
-                            showsHorizontalScrollIndicator={false}
-                            style={styles.filterScroll}
-                            contentContainerStyle={styles.filterContent}
-                        >
-                            {categories.map((cat) => (
-                                <CategoryFilterItem
-                                    key={cat.id}
-                                    item={cat}
-                                    isActive={activeCategory === cat.id}
-                                    onPress={() => setActiveCategory(activeCategory === cat.id ? null : cat.id)}
-                                />
-                            ))}
-                        </ScrollView>
+            {/* Rewards Section (Others) */}
+            {rewardItems.length > 0 && (
+                <Animated.View entering={FadeInDown.delay(100).springify()} style={styles.sectionContainer}>
+                    <View style={styles.sectionHeader}>
+                        <Text style={styles.sectionTitle}>Más recompensas</Text>
+                        <TouchableOpacity style={styles.viewAllButton}>
+                            <Text style={styles.viewAllText}>Ver todo</Text>
+                            <Ionicons name="chevron-forward" size={16} color="#121212" />
+                        </TouchableOpacity>
                     </View>
-
-                </>
+                    <FlatList
+                        data={rewardItems}
+                        renderItem={renderRewardItem}
+                        keyExtractor={(item) => item.id.toString()}
+                        horizontal
+                        showsHorizontalScrollIndicator={false}
+                        contentContainerStyle={styles.carouselContent}
+                    />
+                </Animated.View>
             )}
 
-
-            {isSearching ? (
-                <View style={styles.sectionContainer}>
-                    {searchResultsRestaurants.length > 0 || searchResultsDishes.length > 0 ? (
-                        <>
-                            <Text style={[styles.sectionTitle, { marginLeft: 20, marginBottom: 16 }]}>Resultados</Text>
-                            {searchResultsRestaurants.map(item => (
-                                <ModernBusinessCard key={`rest-${item.id}`} restaurant={item} isLast={false} />
-                            ))}
-                            {searchResultsDishes.map(item => (
-                                <DishResultCard key={`dish-${item.id}`} item={item} />
-                            ))}
-                        </>
-                    ) : !searching && searchQuery.length >= 3 ? (
-                        <View style={styles.noResultsContainer}>
-                            <Ionicons name="search" size={48} color="#E5E7EB" />
-                            <Text style={styles.noResultsText}>No se encontraron resultados</Text>
-                        </View>
-                    ) : null}
+            {/* Restaurants List */}
+            <Animated.View entering={FadeInDown.delay(200).springify()} style={styles.sectionContainer}>
+                <View style={styles.sectionHeader}>
+                    <Text style={styles.sectionTitle}>Comercios Nexe</Text>
+                    <TouchableOpacity style={styles.viewAllButton}>
+                        <Text style={styles.viewAllText}>Filtros</Text>
+                        <Ionicons name="options-outline" size={16} color="#121212" />
+                    </TouchableOpacity>
                 </View>
-            ) : (
-                <>
-                    {/* Rewards Section (Others) */}
-                    {rewardItems.length > 0 && (
-                        <Animated.View entering={FadeInDown.delay(100).springify()} style={styles.sectionContainer}>
-                            <View style={styles.sectionHeader}>
-                                <Text style={styles.sectionTitle}>Más recompensas</Text>
-                                <TouchableOpacity style={styles.viewAllButton}>
-                                    <Text style={styles.viewAllText}>Ver todo</Text>
-                                    <Ionicons name="chevron-forward" size={16} color="#121212" />
-                                </TouchableOpacity>
-                            </View>
-                            <FlatList
-                                data={rewardItems}
-                                renderItem={renderRewardItem}
-                                keyExtractor={(item) => item.id.toString()}
-                                horizontal
-                                showsHorizontalScrollIndicator={false}
-                                contentContainerStyle={styles.carouselContent}
+                <View style={styles.listContainer}>
+                    {sortedRestaurants.map((restaurant, index) => {
+                        const distance = (userLocation && restaurant.latitude && restaurant.longitude)
+                            ? formatDistance(userLocation.latitude, userLocation.longitude, restaurant.latitude, restaurant.longitude)
+                            : undefined;
+
+                        return (
+                            <ModernBusinessCard
+                                key={restaurant.id}
+                                restaurant={restaurant}
+                                isLast={index === sortedRestaurants.length - 1}
+                                distance={distance}
                             />
-                        </Animated.View>
-                    )}
-
-                    {/* Restaurants List */}
-                    <Animated.View entering={FadeInDown.delay(200).springify()} style={styles.sectionContainer}>
-                        <View style={styles.sectionHeader}>
-                            <Text style={styles.sectionTitle}>Comercios Nexe</Text>
-                            <TouchableOpacity style={styles.viewAllButton}>
-                                <Text style={styles.viewAllText}>Filtros</Text>
-                                <Ionicons name="options-outline" size={16} color="#121212" />
-                            </TouchableOpacity>
-                        </View>
-                        <View style={styles.listContainer}>
-                            {sortedRestaurants.map((restaurant, index) => {
-                                const distance = (userLocation && restaurant.latitude && restaurant.longitude)
-                                    ? formatDistance(userLocation.latitude, userLocation.longitude, restaurant.latitude, restaurant.longitude)
-                                    : undefined;
-
-                                return (
-                                    <ModernBusinessCard
-                                        key={restaurant.id}
-                                        restaurant={restaurant}
-                                        isLast={index === sortedRestaurants.length - 1}
-                                        distance={distance}
-                                    />
-                                );
-                            })}
-                        </View>
-                    </Animated.View>
-                </>
-            )}
+                        );
+                    })}
+                </View>
+            </Animated.View>
           </View>
       </Animated.ScrollView>
     </View>
   );
-}
-
-// Simple Dish Card for Search
-function DishResultCard({ item }: { item: MenuItemResult }) {
-    const router = useRouter();
-    return (
-        <TouchableOpacity
-            style={styles.dishResultRow}
-            onPress={() => router.push(`/restaurant/${item.restaurant_id}`)}
-        >
-             <Image source={{ uri: item.image_url }} style={styles.dishImage} contentFit="cover" />
-             <View style={styles.dishInfo}>
-                <Text style={styles.dishName}>{item.name}</Text>
-                <Text style={styles.dishMeta}>{item.restaurants?.name}</Text>
-            </View>
-            <Text style={styles.dishPrice}>${item.price}</Text>
-        </TouchableOpacity>
-    );
 }
 
 const styles = StyleSheet.create({
@@ -491,34 +366,6 @@ const styles = StyleSheet.create({
       overflow: 'hidden',
       paddingBottom: 100, // Bottom padding moved here
       minHeight: '100%',
-  },
-  searchBar: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      backgroundColor: '#FFFFFF',
-      paddingHorizontal: 16,
-      height: 52, // Slightly shorter
-      borderRadius: 16, // Matches other elements
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.05,
-      shadowRadius: 4,
-      elevation: 2,
-  },
-  searchInput: {
-      flex: 1,
-      fontSize: 15,
-      color: '#111827',
-      height: '100%',
-  },
-  cancelButton: {
-      alignSelf: 'center',
-      padding: 10,
-  },
-  cancelButtonText: {
-      color: '#121212', // Primary Green
-      fontSize: 15,
-      fontWeight: '600',
   },
   filterScroll: {
       paddingLeft: 20,
@@ -560,54 +407,5 @@ const styles = StyleSheet.create({
   },
   listContainer: {
       paddingHorizontal: 20,
-  },
-  noResultsContainer: {
-      alignItems: 'center',
-      justifyContent: 'center',
-      paddingVertical: 40,
-  },
-  noResultsText: {
-      marginTop: 16,
-      fontSize: 16,
-      fontWeight: '600',
-      color: '#374151',
-  },
-  dishResultRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      padding: 16,
-      backgroundColor: '#fff',
-      marginHorizontal: 20,
-      marginBottom: 12,
-      borderRadius: 16,
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.05,
-      shadowRadius: 2,
-      elevation: 1,
-  },
-  dishImage: {
-      width: 48,
-      height: 48,
-      borderRadius: 12,
-      marginRight: 16,
-      backgroundColor: '#f0f0f0',
-  },
-  dishInfo: {
-      flex: 1,
-  },
-  dishName: {
-      fontSize: 15,
-      fontWeight: '600',
-      color: '#111827',
-  },
-  dishMeta: {
-      fontSize: 13,
-      color: '#6B7280',
-  },
-  dishPrice: {
-      fontSize: 15,
-      fontWeight: '600',
-      color: '#111827',
   },
 });
