@@ -343,14 +343,11 @@ export default function HomeScreen() {
                     </View>
                     <FlatList
                         data={trendingItems}
-                        renderItem={({ item }) => <ModernRewardCard item={item} isTrending={true} />}
+                        renderItem={renderRewardItem}
                         keyExtractor={(item) => item.id.toString()}
                         horizontal
                         showsHorizontalScrollIndicator={false}
                         contentContainerStyle={styles.carouselContent}
-                        decelerationRate="fast"
-                        snapToInterval={Dimensions.get('window').width * 0.8 + 16} // Custom snap
-                        snapToAlignment="start"
                     />
                 </Animated.View>
             )}
