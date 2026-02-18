@@ -11,6 +11,7 @@ interface MenuItemResult {
     description: string;
     price: number;
     price_euros?: number;
+    discount_percentage?: number;
     image_url: string;
     restaurant_id: number;
     restaurants?: {
@@ -33,6 +34,16 @@ export function ModernRewardCard({ item }: ModernRewardCardProps) {
         ? `${item.price_euros.toLocaleString('es-ES', { minimumFractionDigits: 2 })} €`
         : `${Math.round(item.price * 10)} pts`;
 
+    // Calculate discounted price if applicable
+    const hasDiscount = item.discount_percentage && item.discount_percentage > 0;
+    const finalPrice = (hasDiscount && item.price_euros)
+        ? (item.price_euros * (1 - item.discount_percentage! / 100))
+        : null;
+
+    const finalDisplayPrice = finalPrice
+        ? `${finalPrice.toLocaleString('es-ES', { minimumFractionDigits: 2 })} €`
+        : displayPrice;
+
     const handlePress = () => {
         if (process.env.EXPO_OS === 'ios') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         router.push(`/restaurant/${item.restaurant_id}`);
@@ -51,6 +62,11 @@ export function ModernRewardCard({ item }: ModernRewardCardProps) {
                     contentFit="cover"
                     transition={200}
                 />
+                {hasDiscount && (
+                    <View style={styles.discountBadge}>
+                        <Text style={styles.discountText}>-{item.discount_percentage}%</Text>
+                    </View>
+                )}
             </View>
 
             <View style={styles.content}>
@@ -61,7 +77,17 @@ export function ModernRewardCard({ item }: ModernRewardCardProps) {
                     <View style={styles.priceContainer}>
                         {/* Only show star if points, otherwise just text */}
                         {!item.price_euros && <Ionicons name="star" size={12} color="#F59E0B" />}
-                        <Text style={styles.pointsText}>{displayPrice}</Text>
+
+                        {hasDiscount && item.price_euros ? (
+                            <>
+                                <Text style={styles.originalPriceText}>
+                                    {item.price_euros.toLocaleString('es-ES', { minimumFractionDigits: 2 })} €
+                                </Text>
+                                <Text style={[styles.pointsText, { color: '#EF4444' }]}>{finalDisplayPrice}</Text>
+                            </>
+                        ) : (
+                            <Text style={styles.pointsText}>{displayPrice}</Text>
+                        )}
                     </View>
                 </View>
             </View>
@@ -115,5 +141,26 @@ const styles = StyleSheet.create({
         color: '#111827',
         fontSize: 14,
         fontWeight: '800', // Bold points
+    },
+    originalPriceText: {
+        color: '#9CA3AF',
+        fontSize: 12,
+        textDecorationLine: 'line-through',
+        fontWeight: '500',
+    },
+    discountBadge: {
+        position: 'absolute',
+        top: 8,
+        right: 8,
+        backgroundColor: '#EF4444', // Red
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: 12,
+        zIndex: 10,
+    },
+    discountText: {
+        color: '#FFFFFF',
+        fontSize: 12,
+        fontWeight: '700',
     },
 });
