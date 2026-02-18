@@ -453,7 +453,7 @@ export default function HomeScreen() {
         data={sortedRestaurants}
         renderItem={renderRestaurantItem}
         keyExtractor={(item) => item.id.toString()}
-        ListHeaderComponent={renderHeader}
+        ListHeaderComponent={renderHeader()}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 100, paddingTop: HEADER_MAX_HEIGHT }}
         keyboardDismissMode="on-drag"
