@@ -42,9 +42,9 @@ export function CategoryFilterItem({ item, isActive, onPress }: CategoryFilterIt
             onPress={handlePress}
             onPressIn={handlePressIn}
             onPressOut={handlePressOut}
-            activeOpacity={1}
+            activeOpacity={0.9} // Slight feedback
         >
-            <View style={[styles.emojiContainer, isActive && styles.activeEmojiContainer]}>
+            <View style={[styles.emojiContainer]}>
                 <Text style={styles.emoji}>{item.emoji}</Text>
             </View>
             <Text style={[styles.label, isActive && styles.activeLabel]}>
@@ -57,47 +57,46 @@ export function CategoryFilterItem({ item, isActive, onPress }: CategoryFilterIt
 
 const styles = StyleSheet.create({
   wrapper: {
-      marginRight: 12,
+      marginRight: 10, // Compact spacing
   },
   container: {
       flexDirection: 'row',
       alignItems: 'center',
-      paddingVertical: 12, // Increased touch area
-      paddingHorizontal: 20, // Wider pill for better readability
-      borderRadius: 24,
-      backgroundColor: '#F3F4F6',
+      paddingVertical: 10,
+      paddingHorizontal: 16,
+      borderRadius: 16, // Consistent border radius with other UI elements
+      backgroundColor: '#FFFFFF', // Clean white for inactive
       borderWidth: 1,
-      borderColor: 'transparent',
-      // added subtle shadow for depth
+      borderColor: '#E5E7EB', // Subtle border
       shadowColor: '#000',
       shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.05,
+      shadowOpacity: 0.03, // Very subtle shadow
       shadowRadius: 2,
       elevation: 1,
   },
   activeContainer: {
       backgroundColor: '#121212',
-      shadowOpacity: 0.2, // Stronger shadow when active
-      shadowRadius: 4,
+      borderColor: '#121212',
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.15,
+      shadowRadius: 8,
       elevation: 4,
   },
   emojiContainer: {
-      marginRight: 10, // More spacing
-  },
-  activeEmojiContainer: {
-      // No change needed
+      marginRight: 8,
   },
   emoji: {
-      fontSize: 20, // Slightly larger emoji
+      fontSize: 18,
   },
   label: {
-      fontSize: 15, // Larger text
-      fontWeight: '600',
-      color: '#374151',
-      letterSpacing: -0.3,
+      fontSize: 14,
+      fontWeight: '600', // Semibold
+      color: '#4B5563', // Gray 600
+      letterSpacing: -0.2,
   },
   activeLabel: {
       color: '#FFFFFF',
-      fontWeight: '700',
+      fontWeight: '700', // Bold when active
   },
 });

@@ -288,14 +288,7 @@ export default function HomeScreen() {
                 style={{ height: 60, marginBottom: 24 }} // Height matches sticky bar content
                 onLayout={(event) => {
                     const { y } = event.nativeEvent.layout;
-                    // y is relative to contentWrapper top (which is paddingTop: 24 from top of scroll content)
-                    // The actual scroll content y is: y + 24 (marginTop of wrapper? no wrapper is inside scrollview)
-                    // Wait, contentWrapper is inside ScrollView.
-                    // y is relative to contentWrapper.
-                    // contentWrapper is first child.
-                    // But we have paddingTop on ScrollView contentContainer.
-                    // The y reported by onLayout is relative to the *parent view* (contentWrapper).
-                    // Correct absolute scroll offset = y
+                    // Correct absolute scroll offset calculation is critical
                     setCategoryLayoutY(y);
                 }}
             />
@@ -376,55 +369,41 @@ interface StickyCategoryBarProps {
 
 function StickyCategoryBar({ categories, activeCategory, setActiveCategory, scrollY, layoutY, headerMaxHeight, stickyTop }: StickyCategoryBarProps) {
     const animatedStyle = useAnimatedStyle(() => {
-        // Calculate the initial absolute Y position on screen (when scrollY is 0)
-        // contentWrapper starts at headerMaxHeight? No, contentContainerStyle paddingTop pushes content down.
-        // But the View inside starts at 0 relative to content container.
-        // Wait, layoutY is relative to contentWrapper.
-        // contentWrapper has marginTop: -12.
-        // So absolute Y relative to ScrollView content start = layoutY - 12?
-        // Let's assume layoutY is correct relative to scroll content origin (after padding).
-        // Initial Screen Y = layoutY + headerMaxHeight (padding) - 12 (margin) - scrollY.
-
-        // Wait, contentWrapper is just a View inside ScrollView.
-        // ScrollView has paddingTop: headerMaxHeight.
-        // contentWrapper has marginTop: -12.
-        // So the first pixel of contentWrapper is at (headerMaxHeight - 12).
-        // The category placeholder is at `layoutY` inside contentWrapper.
-        // So its Y position relative to ScrollView top (0) is: (headerMaxHeight - 12 + layoutY).
-
         const initialTop = headerMaxHeight - 12 + layoutY;
         const currentY = initialTop - scrollY.value;
 
+        // When currentY (moving up as we scroll) hits stickyTop, stop it.
         const translateY = Math.max(stickyTop, currentY);
-
-        // Add shadow/background opacity based on stickiness
-        // We want full opacity when it hits stickyTop
-        const isSticky = currentY <= stickyTop;
 
         return {
             transform: [{ translateY }],
-            // We can animate shadow opacity here if needed, but simple translation is key.
-            zIndex: isSticky ? 1000 : 1, // Ensure it pops over content when sticky
+            zIndex: 1000,
         };
     });
 
-    // Shadow style for sticky state
-    const shadowStyle = useAnimatedStyle(() => {
+    // Animate background color and shadow based on stickiness
+    const containerStyle = useAnimatedStyle(() => {
          const initialTop = headerMaxHeight - 12 + layoutY;
          const currentY = initialTop - scrollY.value;
-         // Fully show shadow when passed sticky point
-         const opacity = currentY <= stickyTop ? withTiming(1, { duration: 200 }) : withTiming(0, { duration: 200 });
+
+         const isSticky = currentY <= stickyTop;
+
+         // Smoothly transition background
+         const backgroundColor = withTiming(isSticky ? '#FFFFFF' : 'transparent', { duration: 250 });
+         const borderBottomColor = withTiming(isSticky ? '#F3F4F6' : 'transparent', { duration: 250 });
 
          return {
-             shadowOpacity: opacity,
-             elevation: opacity.value > 0.5 ? 4 : 0,
-             borderBottomWidth: opacity.value > 0.5 ? 1 : 0,
-             backgroundColor: currentY <= stickyTop ? 'rgba(255,255,255,0.95)' : 'transparent', // Solid when sticky
+             backgroundColor,
+             borderBottomColor,
+             borderBottomWidth: 1,
+             // Apply shadow only when sticky
+             shadowOpacity: withTiming(isSticky ? 0.05 : 0, { duration: 250 }),
+             elevation: isSticky ? 3 : 0,
          };
     });
 
     return (
-        <Animated.View style={[styles.stickyBar, animatedStyle, shadowStyle]}>
+        <Animated.View style={[styles.stickyBar, animatedStyle, containerStyle]}>
              <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
@@ -461,7 +440,7 @@ const styles = StyleSheet.create({
   },
   filterContent: {
       paddingHorizontal: 20,
-      paddingVertical: 10, // Add vertical padding inside the scroll
+      paddingVertical: 12,
       alignItems: 'center',
   },
   sectionContainer: {
@@ -504,12 +483,10 @@ const styles = StyleSheet.create({
       top: 0,
       left: 0,
       right: 0,
-      height: 60, // Fixed height for bar
+      height: 72, // Fixed height for consistent menu feel
       justifyContent: 'center',
-      // Background and shadow handled by animated style
       shadowColor: '#000',
       shadowOffset: { width: 0, height: 2 },
       shadowRadius: 4,
-      borderBottomColor: 'rgba(0,0,0,0.05)',
   },
 });
