@@ -48,30 +48,17 @@ export function ModernRewardCard({ item, isTrending = false }: ModernRewardCardP
                     contentFit="cover"
                     transition={200}
                 />
-                <View style={styles.badgeContainer}>
-                    {isTrending ? (
-                         <View style={[styles.pointsBadge, { backgroundColor: '#FFFFFF' }]}>
-                            <Text style={[styles.pointsText, { color: '#121212', fontSize: 13 }]}>
-                                ${(item.price || 0).toFixed(2)}
-                            </Text>
-                        </View>
-                    ) : (
-                         <View style={styles.pointsBadge}>
-                            <Ionicons name="star" size={10} color="#FFFFFF" style={{ marginRight: 4 }} />
-                            <Text style={styles.pointsText}>{pointsPrice} pts</Text>
-                        </View>
-                    )}
-                </View>
             </View>
 
             <View style={styles.content}>
                 <View style={styles.textContainer}>
                     <Text style={styles.itemName} numberOfLines={1}>{item.name}</Text>
                     <Text style={styles.restaurantName} numberOfLines={1}>{item.restaurants?.name}</Text>
-                </View>
-                
-                <View style={styles.actionButton}>
-                    <Ionicons name="arrow-forward" size={18} color="#FFFFFF" />
+
+                    <View style={styles.priceContainer}>
+                        <Ionicons name="star" size={12} color="#F59E0B" />
+                        <Text style={styles.pointsText}>{pointsPrice} pts</Text>
+                    </View>
                 </View>
             </View>
         </TouchableOpacity>
@@ -83,54 +70,23 @@ const styles = StyleSheet.create({
         backgroundColor: '#FFFFFF',
         borderRadius: 20,
         marginRight: 16,
-        shadowColor: "#000",
-        shadowOffset: {
-            width: 0,
-            height: 4,
-        },
-        shadowOpacity: 0.08,
-        shadowRadius: 8,
-        elevation: 4,
         overflow: 'hidden',
+        // Removed shadows/elevation for cleaner look
     },
     imageContainer: {
         width: '100%',
-        height: 180, // Default fixed height
+        height: 180,
         backgroundColor: '#F3F4F6',
-        position: 'relative',
     },
     image: {
         width: '100%',
         height: '100%',
     },
-    badgeContainer: {
-        position: 'absolute',
-        top: 12,
-        left: 12,
-    },
-    pointsBadge: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: 'rgba(0, 0, 0, 0.75)',
-        paddingHorizontal: 10,
-        paddingVertical: 6,
-        borderRadius: 100,
-        backdropFilter: 'blur(4px)',
-    },
-    pointsText: {
-        color: '#FFFFFF',
-        fontSize: 12,
-        fontWeight: '700',
-    },
     content: {
-        padding: 16,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        gap: 12,
+        padding: 12,
+        paddingTop: 12,
     },
     textContainer: {
-        flex: 1,
         gap: 4,
     },
     itemName: {
@@ -144,12 +100,15 @@ const styles = StyleSheet.create({
         fontSize: 13,
         fontWeight: '500',
     },
-    actionButton: {
-        width: 32,
-        height: 32,
-        borderRadius: 16,
-        backgroundColor: '#111827', // Dark button
+    priceContainer: {
+        flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'center',
+        gap: 4,
+        marginTop: 4,
+    },
+    pointsText: {
+        color: '#111827',
+        fontSize: 14,
+        fontWeight: '800', // Bold points
     },
 });
