@@ -30,20 +30,17 @@ const CARD_WIDTH = width * 0.7; // Wider
 export function ModernRewardCard({ item }: ModernRewardCardProps) {
     const router = useRouter();
 
-    // Calculate prices
+    // Price Calculations
+    const originalPrice = item.price_euros || 0;
     const hasDiscount = item.discount_percentage && item.discount_percentage > 0;
 
-    // Final Euro Price Calculation
-    let finalEuroPrice = item.price_euros;
-    if (hasDiscount && item.price_euros) {
-        finalEuroPrice = item.price_euros * (1 - item.discount_percentage! / 100);
+    let finalPrice = originalPrice;
+    if (hasDiscount) {
+        finalPrice = originalPrice * (1 - item.discount_percentage! / 100);
     }
 
-    const formattedEuroPrice = finalEuroPrice
-        ? `${finalEuroPrice.toLocaleString('es-ES', { minimumFractionDigits: 2 })} €`
-        : '0,00 €';
-
-    // Points calculation (from renamed column points_needed)
+    const formattedOriginal = originalPrice.toLocaleString('es-ES', { minimumFractionDigits: 2 }) + ' €';
+    const formattedFinal = finalPrice.toLocaleString('es-ES', { minimumFractionDigits: 2 }) + ' €';
     const pointsNeeded = item.points_needed ? Math.round(item.points_needed) : 0;
 
     const handlePress = () => {
@@ -77,14 +74,19 @@ export function ModernRewardCard({ item }: ModernRewardCardProps) {
                     <Text style={styles.restaurantName} numberOfLines={1}>{item.restaurants?.name}</Text>
 
                     <View style={styles.priceContainer}>
-                        {/* Display Price in Euros */}
-                        <Text style={styles.euroText}>{formattedEuroPrice}</Text>
-
-                        {/* Display Points Needed */}
-                        <View style={styles.pointsPill}>
-                            <Ionicons name="star" size={10} color="#F59E0B" />
-                            <Text style={styles.pointsText}>+{pointsNeeded} pts</Text>
-                        </View>
+                        {hasDiscount ? (
+                            <View style={styles.discountRow}>
+                                <Text style={styles.originalPriceText}>{formattedOriginal}</Text>
+                                <View style={styles.pointsPill}>
+                                    <Ionicons name="star" size={10} color="#F59E0B" />
+                                    <Text style={styles.pointsText}>{pointsNeeded}</Text>
+                                </View>
+                                <Text style={styles.finalPriceText}>{formattedFinal}</Text>
+                            </View>
+                        ) : (
+                            // Fallback if no discount/points logic applies (just show price)
+                            <Text style={styles.finalPriceText}>{formattedOriginal}</Text>
+                        )}
                     </View>
                 </View>
             </View>
@@ -129,14 +131,23 @@ const styles = StyleSheet.create({
         fontWeight: '500',
     },
     priceContainer: {
+        marginTop: 8,
+    },
+    discountRow: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        marginTop: 8,
+        width: '100%',
     },
-    euroText: {
+    originalPriceText: {
+        color: '#9CA3AF', // Gray 400
+        fontSize: 12,
+        textDecorationLine: 'line-through',
+        fontWeight: '500',
+    },
+    finalPriceText: {
         color: '#111827',
-        fontSize: 16,
+        fontSize: 15,
         fontWeight: '800',
         letterSpacing: -0.5,
     },
@@ -144,14 +155,14 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         backgroundColor: '#FFFBEB', // Amber 50
-        paddingHorizontal: 8,
-        paddingVertical: 4,
-        borderRadius: 8,
-        gap: 4,
+        paddingHorizontal: 6,
+        paddingVertical: 2,
+        borderRadius: 6,
+        gap: 2,
     },
     pointsText: {
         color: '#B45309', // Amber 700
-        fontSize: 12,
+        fontSize: 11,
         fontWeight: '700',
     },
     discountBadge: {
