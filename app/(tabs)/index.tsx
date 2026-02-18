@@ -313,9 +313,6 @@ export default function HomeScreen() {
             </View>
 
             {/* Categories List */}
-            <View style={[styles.sectionHeader, { marginBottom: 0, marginTop: 8 }]}>
-                <Text style={styles.sectionTitle}>Categorías</Text>
-            </View>
             <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
@@ -331,6 +328,27 @@ export default function HomeScreen() {
                     />
                 ))}
             </ScrollView>
+
+            {/* Rewards Section - Points Priority #3 */}
+            {rewardItems.length > 0 && (
+                <Animated.View entering={FadeInDown.delay(100).springify()} style={styles.sectionContainer}>
+                    <View style={styles.sectionHeader}>
+                        <Text style={styles.sectionTitle}>Canjea y Ahorra</Text>
+                        <TouchableOpacity style={styles.viewAllButton}>
+                            <Text style={styles.viewAllText}>Ver todo</Text>
+                            <Ionicons name="chevron-forward" size={16} color="#121212" />
+                        </TouchableOpacity>
+                    </View>
+                    <FlatList
+                        data={rewardItems}
+                        renderItem={renderRewardItem}
+                        keyExtractor={(item) => item.id.toString()}
+                        horizontal
+                        showsHorizontalScrollIndicator={false}
+                        contentContainerStyle={styles.carouselContent}
+                    />
+                </Animated.View>
+            )}
 
             {/* Restaurants List - Food Priority #2 */}
             <Animated.View entering={FadeInDown.delay(200).springify()} style={styles.sectionContainer}>
@@ -395,27 +413,6 @@ export default function HomeScreen() {
                     })}
                 </View>
             </Animated.View>
-
-            {/* Rewards Section - Points Priority #3 */}
-            {rewardItems.length > 0 && (
-                <Animated.View entering={FadeInDown.delay(100).springify()} style={styles.sectionContainer}>
-                    <View style={styles.sectionHeader}>
-                        <Text style={styles.sectionTitle}>Canjea y Ahorra</Text>
-                        <TouchableOpacity style={styles.viewAllButton}>
-                            <Text style={styles.viewAllText}>Ver todo</Text>
-                            <Ionicons name="chevron-forward" size={16} color="#121212" />
-                        </TouchableOpacity>
-                    </View>
-                    <FlatList
-                        data={rewardItems}
-                        renderItem={renderRewardItem}
-                        keyExtractor={(item) => item.id.toString()}
-                        horizontal
-                        showsHorizontalScrollIndicator={false}
-                        contentContainerStyle={styles.carouselContent}
-                    />
-                </Animated.View>
-            )}
           </View>
       </Animated.ScrollView>
 
