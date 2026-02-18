@@ -10,6 +10,7 @@ interface MenuItemResult {
     name: string;
     description: string;
     price: number;
+    price_euros?: number;
     image_url: string;
     restaurant_id: number;
     restaurants?: {
@@ -23,11 +24,14 @@ interface ModernRewardCardProps {
 }
 
 const { width } = Dimensions.get('window');
-const CARD_WIDTH = width * 0.65; // Slightly wider than 0.6
+const CARD_WIDTH = width * 0.7; // Wider
 
 export function ModernRewardCard({ item }: ModernRewardCardProps) {
     const router = useRouter();
-    const pointsPrice = Math.round(item.price * 10);
+    // Display Euro price if available, fallback to points (though instruction implies euros always)
+    const displayPrice = item.price_euros
+        ? `${item.price_euros.toLocaleString('es-ES', { minimumFractionDigits: 2 })} €`
+        : `${Math.round(item.price * 10)} pts`;
 
     const handlePress = () => {
         if (process.env.EXPO_OS === 'ios') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -55,8 +59,9 @@ export function ModernRewardCard({ item }: ModernRewardCardProps) {
                     <Text style={styles.restaurantName} numberOfLines={1}>{item.restaurants?.name}</Text>
 
                     <View style={styles.priceContainer}>
-                        <Ionicons name="star" size={12} color="#F59E0B" />
-                        <Text style={styles.pointsText}>{pointsPrice} pts</Text>
+                        {/* Only show star if points, otherwise just text */}
+                        {!item.price_euros && <Ionicons name="star" size={12} color="#F59E0B" />}
+                        <Text style={styles.pointsText}>{displayPrice}</Text>
                     </View>
                 </View>
             </View>
@@ -67,24 +72,24 @@ export function ModernRewardCard({ item }: ModernRewardCardProps) {
 const styles = StyleSheet.create({
     card: {
         width: CARD_WIDTH,
-        backgroundColor: '#FFFFFF',
-        borderRadius: 20,
+        backgroundColor: 'transparent',
         marginRight: 16,
-        overflow: 'hidden',
-        // No borders or visible shadows
+        // Removed overflow hidden from container to allow potential future effects, but image has radius
     },
     imageContainer: {
         width: '100%',
-        height: CARD_WIDTH * 0.75, // Aspect ratio to match image example
+        height: CARD_WIDTH * 0.6, // Less tall (0.6 aspect ratio instead of 0.75)
         backgroundColor: '#F3F4F6',
+        borderRadius: 20, // Radius on image only
+        overflow: 'hidden',
     },
     image: {
         width: '100%',
         height: '100%',
     },
     content: {
-        padding: 12,
-        paddingTop: 12,
+        paddingVertical: 8,
+        paddingHorizontal: 4, // Slight padding alignment
     },
     textContainer: {
         gap: 4,

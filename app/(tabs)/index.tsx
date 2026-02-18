@@ -49,6 +49,7 @@ interface MenuItemResult {
     name: string;
     description: string;
     price: number;
+    price_euros?: number;
     image_url: string;
     restaurant_id: number;
     restaurants?: {
