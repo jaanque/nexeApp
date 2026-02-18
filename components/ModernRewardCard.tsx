@@ -20,15 +20,14 @@ interface MenuItemResult {
 
 interface ModernRewardCardProps {
     item: MenuItemResult;
-    isTrending?: boolean;
 }
 
 const { width } = Dimensions.get('window');
+const CARD_WIDTH = width * 0.65; // Slightly wider than 0.6
 
-export function ModernRewardCard({ item, isTrending = false }: ModernRewardCardProps) {
+export function ModernRewardCard({ item }: ModernRewardCardProps) {
     const router = useRouter();
     const pointsPrice = Math.round(item.price * 10);
-    const CARD_WIDTH = isTrending ? width * 0.8 : width * 0.6; // Wider for trending
 
     const handlePress = () => {
         if (process.env.EXPO_OS === 'ios') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -37,11 +36,11 @@ export function ModernRewardCard({ item, isTrending = false }: ModernRewardCardP
 
     return (
         <TouchableOpacity
-            style={[styles.card, { width: CARD_WIDTH }]}
+            style={styles.card}
             activeOpacity={0.9}
             onPress={handlePress}
         >
-            <View style={[styles.imageContainer, isTrending && { height: CARD_WIDTH * 0.55 }]}>
+            <View style={styles.imageContainer}>
                 <Image
                     source={{ uri: item.image_url }}
                     style={styles.image}
@@ -67,15 +66,16 @@ export function ModernRewardCard({ item, isTrending = false }: ModernRewardCardP
 
 const styles = StyleSheet.create({
     card: {
+        width: CARD_WIDTH,
         backgroundColor: '#FFFFFF',
         borderRadius: 20,
         marginRight: 16,
         overflow: 'hidden',
-        // Removed shadows/elevation for cleaner look
+        // No borders or visible shadows
     },
     imageContainer: {
         width: '100%',
-        height: 180,
+        height: CARD_WIDTH * 0.75, // Aspect ratio to match image example
         backgroundColor: '#F3F4F6',
     },
     image: {
