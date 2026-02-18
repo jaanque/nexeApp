@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import Animated, { Extrapolation, interpolate, SharedValue, useAnimatedStyle } from 'react-native-reanimated';
+import Animated, { Extrapolation, interpolate, runOnJS, SharedValue, useAnimatedReaction, useAnimatedStyle } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface ModernHeaderProps {
@@ -25,23 +25,44 @@ export function ModernHeader({
     scrollY
 }: ModernHeaderProps) {
     const insets = useSafeAreaInsets();
+    // Calculate the full height of the header including safe area
+    // Padding Top (20) + Content (36) + Padding Bottom (20) = 76
+    // Adding insets.top gives the full height needed to hide it.
+    const HEADER_HEIGHT = insets.top + 76;
+    const COLLAPSE_THRESHOLD = 80; // Scroll distance to trigger full collapse
 
     const handlePress = (action: () => void) => {
         if (process.env.EXPO_OS === 'ios') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         action();
     };
 
+    const triggerHaptic = () => {
+        if (process.env.EXPO_OS === 'ios') {
+             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        }
+    };
+
+    useAnimatedReaction(
+        () => scrollY.value > COLLAPSE_THRESHOLD,
+        (isCollapsed, prevIsCollapsed) => {
+            if (isCollapsed !== prevIsCollapsed) {
+                runOnJS(triggerHaptic)();
+            }
+        },
+        [scrollY]
+    );
+
     const animatedContainerStyle = useAnimatedStyle(() => {
         const translateY = interpolate(
             scrollY.value,
-            [0, 100],
-            [0, -100],
+            [0, COLLAPSE_THRESHOLD],
+            [0, -HEADER_HEIGHT],
             Extrapolation.CLAMP
         );
 
         const opacity = interpolate(
             scrollY.value,
-            [0, 60],
+            [0, COLLAPSE_THRESHOLD * 0.8], // Fade out slightly before full collapse
             [1, 0],
             Extrapolation.CLAMP
         );
@@ -110,6 +131,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         gap: 12,
+        height: 36, // Explicit height for calculations
     },
     profileButton: {
         width: 36,
