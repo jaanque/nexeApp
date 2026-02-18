@@ -13,6 +13,8 @@ interface Restaurant {
     rating: number;
     cuisine_type: string;
     address: string;
+    opening_time?: string;
+    closing_time?: string;
 }
 
 interface ModernBusinessCardProps {
@@ -33,6 +35,25 @@ export function ModernBusinessCard({ restaurant, distance, isLast }: ModernBusin
 
     if (!restaurant) return null;
 
+    const isOpen = React.useMemo(() => {
+        if (!restaurant.opening_time || !restaurant.closing_time) return true;
+        const now = new Date();
+        const currentHours = now.getHours();
+        const currentMinutes = now.getMinutes();
+        const currentTime = currentHours * 60 + currentMinutes;
+
+        const [openHour, openMinute] = restaurant.opening_time.split(':').map(Number);
+        const [closeHour, closeMinute] = restaurant.closing_time.split(':').map(Number);
+        const openTime = openHour * 60 + openMinute;
+        const closeTime = closeHour * 60 + closeMinute;
+
+        if (closeTime < openTime) {
+            // Closes next day (e.g. 10 AM to 2 AM)
+            return currentTime >= openTime || currentTime < closeTime;
+        }
+        return currentTime >= openTime && currentTime < closeTime;
+    }, [restaurant.opening_time, restaurant.closing_time]);
+
     return (
         <TouchableOpacity
             style={[styles.container, isLast && { marginBottom: 100 }]}
@@ -46,6 +67,13 @@ export function ModernBusinessCard({ restaurant, distance, isLast }: ModernBusin
                     contentFit="cover"
                     transition={300}
                 />
+
+                {/* Open/Closed Badge */}
+                {!isOpen && (
+                    <View style={styles.closedBadge}>
+                        <Text style={styles.closedText}>Cerrado</Text>
+                    </View>
+                )}
 
                 {/* Gradient Overlay for Text Readability */}
                 <LinearGradient
@@ -166,5 +194,22 @@ const styles = StyleSheet.create({
         fontSize: 13,
         color: '#D1D5DB', // Gray 300
         fontWeight: '500',
+    },
+    closedBadge: {
+        position: 'absolute',
+        top: 20,
+        left: 20,
+        backgroundColor: 'rgba(239, 68, 68, 0.9)', // Red 500
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 8,
+        zIndex: 10,
+    },
+    closedText: {
+        color: '#FFFFFF',
+        fontWeight: '700',
+        fontSize: 12,
+        textTransform: 'uppercase',
+        letterSpacing: 0.5,
     },
 });
