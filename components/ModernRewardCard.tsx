@@ -61,11 +61,6 @@ export function ModernRewardCard({ item }: ModernRewardCardProps) {
                     contentFit="cover"
                     transition={200}
                 />
-                {hasDiscount && (
-                    <View style={styles.discountBadge}>
-                        <Text style={styles.discountText}>-{item.discount_percentage}%</Text>
-                    </View>
-                )}
             </View>
 
             <View style={styles.content}>
@@ -79,7 +74,7 @@ export function ModernRewardCard({ item }: ModernRewardCardProps) {
                                 <Text style={styles.originalPriceText}>{formattedOriginal}</Text>
                                 <View style={styles.pointsPill}>
                                     <Ionicons name="star" size={10} color="#F59E0B" />
-                                    <Text style={styles.pointsText}>{pointsNeeded}</Text>
+                                    <Text style={styles.pointsText}>{pointsNeeded} pts · -{item.discount_percentage}%</Text>
                                 </View>
                                 <Text style={styles.finalPriceText}>{formattedFinal}</Text>
                             </View>
