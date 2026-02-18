@@ -14,6 +14,7 @@ import { HomeScreenSkeleton } from '@/components/HomeScreenSkeleton';
 import { CategoryFilterItem } from '@/components/CategoryFilterItem';
 import { ModernHeader } from '@/components/ui/ModernHeader';
 import { ModernRewardCard } from '@/components/ModernRewardCard';
+import { HeroRewardCard } from '@/components/HeroRewardCard';
 import { ModernBusinessCard } from '@/components/ModernBusinessCard';
 import { MarketingSlider, Banner } from '@/components/MarketingSlider';
 import Animated, { FadeInDown } from 'react-native-reanimated';
@@ -340,7 +341,7 @@ export default function HomeScreen() {
                     </View>
 
                     {/* Categories */}
-                    <View style={{ marginBottom: 32 }}>
+                    <View style={{ marginBottom: 24 }}>
                         <ScrollView
                             horizontal
                             showsHorizontalScrollIndicator={false}
@@ -357,6 +358,13 @@ export default function HomeScreen() {
                             ))}
                         </ScrollView>
                     </View>
+
+                    {/* Hero Reward Section */}
+                    {rewardItems.length > 0 && (
+                        <Animated.View entering={FadeInDown.delay(100).springify()}>
+                            <HeroRewardCard item={rewardItems[0]} />
+                        </Animated.View>
+                    )}
                 </>
             )}
 
@@ -382,18 +390,18 @@ export default function HomeScreen() {
                 </View>
             ) : (
                 <>
-                    {/* Rewards Section */}
-                    {rewardItems.length > 0 && (
+                    {/* Rewards Section (Others) */}
+                    {rewardItems.length > 1 && (
                         <Animated.View entering={FadeInDown.delay(100).springify()} style={styles.sectionContainer}>
                             <View style={styles.sectionHeader}>
-                                <Text style={styles.sectionTitle}>Recompensas</Text>
+                                <Text style={styles.sectionTitle}>Más recompensas</Text>
                                 <TouchableOpacity style={styles.viewAllButton}>
                                     <Text style={styles.viewAllText}>Ver todo</Text>
                                     <Ionicons name="chevron-forward" size={16} color="#121212" />
                                 </TouchableOpacity>
                             </View>
                             <FlatList
-                                data={rewardItems}
+                                data={rewardItems.slice(1)}
                                 renderItem={renderRewardItem}
                                 keyExtractor={(item) => item.id.toString()}
                                 horizontal
@@ -465,8 +473,8 @@ const styles = StyleSheet.create({
       backgroundColor: '#F9FAFB',
       borderTopLeftRadius: 32,
       borderTopRightRadius: 32,
-      marginTop: -24, // Pull up to cover header bottom radius
-      paddingTop: 32,
+      marginTop: -12, // Reduced overlap for compact header
+      paddingTop: 24,
       overflow: 'hidden',
       paddingBottom: 100, // Bottom padding moved here
       minHeight: '100%',
