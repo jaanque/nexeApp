@@ -20,14 +20,15 @@ interface MenuItemResult {
 
 interface ModernRewardCardProps {
     item: MenuItemResult;
+    isTrending?: boolean;
 }
 
 const { width } = Dimensions.get('window');
-const CARD_WIDTH = width * 0.6; // Wider card (60% of screen)
 
-export function ModernRewardCard({ item }: ModernRewardCardProps) {
+export function ModernRewardCard({ item, isTrending = false }: ModernRewardCardProps) {
     const router = useRouter();
     const pointsPrice = Math.round(item.price * 10);
+    const CARD_WIDTH = isTrending ? width * 0.8 : width * 0.6; // Wider for trending
 
     const handlePress = () => {
         if (process.env.EXPO_OS === 'ios') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -36,11 +37,11 @@ export function ModernRewardCard({ item }: ModernRewardCardProps) {
 
     return (
         <TouchableOpacity
-            style={styles.card}
+            style={[styles.card, { width: CARD_WIDTH }]}
             activeOpacity={0.9}
             onPress={handlePress}
         >
-            <View style={styles.imageContainer}>
+            <View style={[styles.imageContainer, isTrending && { height: CARD_WIDTH * 0.55 }]}>
                 <Image
                     source={{ uri: item.image_url }}
                     style={styles.image}
@@ -48,10 +49,18 @@ export function ModernRewardCard({ item }: ModernRewardCardProps) {
                     transition={200}
                 />
                 <View style={styles.badgeContainer}>
-                     <View style={styles.pointsBadge}>
-                        <Ionicons name="star" size={10} color="#FFFFFF" style={{ marginRight: 4 }} />
-                        <Text style={styles.pointsText}>{pointsPrice} pts</Text>
-                    </View>
+                    {isTrending ? (
+                         <View style={[styles.pointsBadge, { backgroundColor: '#FFFFFF' }]}>
+                            <Text style={[styles.pointsText, { color: '#121212', fontSize: 13 }]}>
+                                ${(item.price || 0).toFixed(2)}
+                            </Text>
+                        </View>
+                    ) : (
+                         <View style={styles.pointsBadge}>
+                            <Ionicons name="star" size={10} color="#FFFFFF" style={{ marginRight: 4 }} />
+                            <Text style={styles.pointsText}>{pointsPrice} pts</Text>
+                        </View>
+                    )}
                 </View>
             </View>
 
@@ -71,7 +80,6 @@ export function ModernRewardCard({ item }: ModernRewardCardProps) {
 
 const styles = StyleSheet.create({
     card: {
-        width: CARD_WIDTH,
         backgroundColor: '#FFFFFF',
         borderRadius: 20,
         marginRight: 16,
@@ -87,7 +95,7 @@ const styles = StyleSheet.create({
     },
     imageContainer: {
         width: '100%',
-        height: CARD_WIDTH * 0.75, // 4:3 Aspect Ratio
+        height: 180, // Default fixed height
         backgroundColor: '#F3F4F6',
         position: 'relative',
     },
