@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Image as RNImage } from 'reac
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
+import Animated, { interpolate, Extrapolation, useAnimatedStyle, SharedValue } from 'react-native-reanimated';
 
 interface ModernHeaderProps {
     greeting: string;
@@ -11,6 +12,7 @@ interface ModernHeaderProps {
     isGuest: boolean;
     onWalletPress: () => void;
     onProfilePress: () => void;
+    scrollY: SharedValue<number>;
 }
 
 export function ModernHeader({
@@ -19,7 +21,8 @@ export function ModernHeader({
     initials,
     isGuest,
     onWalletPress,
-    onProfilePress
+    onProfilePress,
+    scrollY
 }: ModernHeaderProps) {
     const insets = useSafeAreaInsets();
 
@@ -28,8 +31,31 @@ export function ModernHeader({
         action();
     };
 
+    const animatedContainerStyle = useAnimatedStyle(() => {
+        const paddingBottom = interpolate(
+            scrollY.value,
+            [0, 100],
+            [40, 16], // Expanded: 40, Collapsed: 16
+            Extrapolation.CLAMP
+        );
+
+        const paddingTop = interpolate(
+            scrollY.value,
+            [0, 100],
+            [insets.top + 24, insets.top + 8], // Expanded: +24, Collapsed: +8
+            Extrapolation.CLAMP
+        );
+
+        return {
+            paddingBottom,
+            paddingTop
+        };
+    });
+
+    const formattedPoints = points.toLocaleString('es-ES');
+
     return (
-        <View style={[styles.container, { paddingTop: insets.top + 8 }]}>
+        <Animated.View style={[styles.container, animatedContainerStyle]}>
             <View style={styles.contentRow}>
                 {/* Profile Avatar */}
                 <TouchableOpacity
@@ -58,10 +84,10 @@ export function ModernHeader({
                     activeOpacity={0.7}
                 >
                      <Ionicons name="star" size={12} color="#F59E0B" style={{marginRight: 4}} />
-                     <Text style={styles.pointsText}>{points}</Text>
+                     <Text style={styles.pointsText}>{formattedPoints}</Text>
                 </TouchableOpacity>
             </View>
-        </View>
+        </Animated.View>
     );
 }
 
@@ -69,9 +95,14 @@ const styles = StyleSheet.create({
     container: {
         backgroundColor: '#121212',
         paddingHorizontal: 20,
-        paddingBottom: 16, // Reduced bottom padding (Compact)
+        // paddingBottom and paddingTop are animated
         borderBottomLeftRadius: 24,
         borderBottomRightRadius: 24,
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        zIndex: 100,
     },
     contentRow: {
         flexDirection: 'row',

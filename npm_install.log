@@ -5,7 +5,7 @@ npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and cont
 npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
 npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
 
-added 952 packages, and audited 953 packages in 50s
+added 952 packages, and audited 953 packages in 40s
 
 177 packages are looking for funding
   run `npm fund` for details

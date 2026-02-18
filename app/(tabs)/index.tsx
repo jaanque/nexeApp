@@ -17,7 +17,7 @@ import { ModernRewardCard } from '@/components/ModernRewardCard';
 import { HeroRewardCard } from '@/components/HeroRewardCard';
 import { ModernBusinessCard } from '@/components/ModernBusinessCard';
 import { MarketingSlider, Banner } from '@/components/MarketingSlider';
-import Animated, { FadeInDown } from 'react-native-reanimated';
+import Animated, { FadeInDown, useSharedValue, useAnimatedScrollHandler } from 'react-native-reanimated';
 
 // Enable LayoutAnimation on Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -81,6 +81,13 @@ export default function HomeScreen() {
 
   const router = useRouter();
   const insets = useSafeAreaInsets();
+
+  const scrollY = useSharedValue(0);
+  const scrollHandler = useAnimatedScrollHandler({
+      onScroll: (event) => {
+          scrollY.value = event.contentOffset.y;
+      },
+  });
 
   // Load initial session
   useEffect(() => {
@@ -280,29 +287,42 @@ export default function HomeScreen() {
 
   if (loading) return <HomeScreenSkeleton />;
 
+  // Calculate approximate header height for padding
+  const HEADER_MAX_HEIGHT = insets.top + 100;
+
   return (
     <View style={styles.container}>
       <StatusBar style="light" />
 
-      <ScrollView
+      <ModernHeader
+        greeting={getGreeting()}
+        points={points}
+        initials={getInitials()}
+        isGuest={!session?.user}
+        onWalletPress={() => router.push('/(tabs)/wallet')}
+        onProfilePress={() => router.push('/(tabs)/profile')}
+        scrollY={scrollY}
+      />
+
+      <Animated.ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 0 }}
+        contentContainerStyle={{ paddingBottom: 0, paddingTop: HEADER_MAX_HEIGHT }}
         keyboardDismissMode="on-drag"
         scrollEnabled={!isSearching || searchResultsRestaurants.length > 0 || searchResultsDishes.length > 0}
+        onScroll={scrollHandler}
+        scrollEventThrottle={16}
         refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#FFFFFF" colors={['#121212']} progressBackgroundColor="#FFFFFF" />
+            <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                tintColor="#FFFFFF"
+                colors={['#121212']}
+                progressBackgroundColor="#FFFFFF"
+                progressViewOffset={HEADER_MAX_HEIGHT}
+            />
         }
         style={{ backgroundColor: '#121212' }}
       >
-          <ModernHeader
-            greeting={getGreeting()}
-            points={points}
-            initials={getInitials()}
-            isGuest={!session?.user}
-            onWalletPress={() => router.push('/(tabs)/wallet')}
-            onProfilePress={() => router.push('/(tabs)/profile')}
-          />
-
           <View style={styles.contentWrapper}>
             {/* Search Input Area */}
             <View style={{ paddingHorizontal: 20, marginBottom: 20, marginTop: 24, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
@@ -440,7 +460,7 @@ export default function HomeScreen() {
                 </>
             )}
           </View>
-      </ScrollView>
+      </Animated.ScrollView>
     </View>
   );
 }
