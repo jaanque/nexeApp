@@ -169,7 +169,10 @@ export default function HomeScreen() {
 
       // 3. Filter & Sort Items (Rewards & Trending)
       const processItems = (items: MenuItemResult[]) => {
-          let filtered = items;
+          // Safety check
+          if (!items || items.length === 0) return [];
+
+          let filtered = [...items];
 
           // Filter by Category
           if (activeCategory !== null) {
@@ -181,8 +184,13 @@ export default function HomeScreen() {
               filtered.sort((a, b) => {
                   const restA = a.restaurants;
                   const restB = b.restaurants;
-                  const distA = (restA?.latitude && restA?.longitude) ? getDistanceInMeters(userLocation.latitude, userLocation.longitude, restA.latitude, restA.longitude) : Infinity;
-                  const distB = (restB?.latitude && restB?.longitude) ? getDistanceInMeters(userLocation.latitude, userLocation.longitude, restB.latitude, restB.longitude) : Infinity;
+                  // If restaurant location is missing, push to end (Infinity)
+                  const distA = (restA?.latitude && restA?.longitude)
+                    ? getDistanceInMeters(userLocation.latitude, userLocation.longitude, restA.latitude, restA.longitude)
+                    : Infinity;
+                  const distB = (restB?.latitude && restB?.longitude)
+                    ? getDistanceInMeters(userLocation.latitude, userLocation.longitude, restB.latitude, restB.longitude)
+                    : Infinity;
                   return distA - distB;
               });
           } else if (sortBy === 'rating') {
@@ -196,8 +204,8 @@ export default function HomeScreen() {
           return filtered;
       };
 
-      setRewardItems(processItems([...allRewards]));
-      setTrendingItems(processItems([...allTrending]));
+      setRewardItems(processItems(allRewards));
+      setTrendingItems(processItems(allTrending));
 
   }, [activeCategory, sortBy, userLocation, allRestaurants, allRewards, allTrending]);
 
