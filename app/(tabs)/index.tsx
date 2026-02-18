@@ -69,6 +69,7 @@ export default function HomeScreen() {
   const [userLocation, setUserLocation] = useState<{ latitude: number, longitude: number } | null>(null);
   const [activeCategory, setActiveCategory] = useState<number | null>(null);
   const [refreshing, setRefreshing] = useState(false); // Pull to refresh
+  const [address, setAddress] = useState<string>("Seleccionando ubicación...");
 
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -119,7 +120,8 @@ export default function HomeScreen() {
         fetchCategories(),
         fetchRestaurantsAndRewards(),
         fetchBanners(),
-        session?.user ? fetchPoints(session.user.id) : Promise.resolve()
+        session?.user ? fetchPoints(session.user.id) : Promise.resolve(),
+        getUserLocation()
     ]);
     setRefreshing(false);
   }, [session]);
@@ -157,11 +159,38 @@ export default function HomeScreen() {
   async function getUserLocation() {
     try {
       let { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') return;
+      if (status !== 'granted') {
+          setAddress("Ubicación denegada");
+          return;
+      }
+
       let location = await Location.getCurrentPositionAsync({});
       setUserLocation(location.coords);
+
+      // Reverse Geocode
+      try {
+          const reverseGeocode = await Location.reverseGeocodeAsync({
+              latitude: location.coords.latitude,
+              longitude: location.coords.longitude
+          });
+
+          if (reverseGeocode && reverseGeocode.length > 0) {
+              const addr = reverseGeocode[0];
+              // Format: Street + Number (or Name)
+              const street = addr.street || addr.name || "Ubicación actual";
+              const number = addr.streetNumber ? ` ${addr.streetNumber}` : "";
+              setAddress(`${street}${number}`);
+          } else {
+              setAddress("Ubicación actual");
+          }
+      } catch (geoError) {
+          console.error("Reverse geocode error:", geoError);
+          setAddress("Ubicación actual");
+      }
+
     } catch (error) {
       console.error("Error getting location:", error);
+      setAddress("Error al obtener ubicación");
     }
   }
 
@@ -219,18 +248,6 @@ export default function HomeScreen() {
     } catch (error) { console.error("Error data:", error); }
   }
 
-  const getGreeting = () => {
-      if (!session?.user) return 'Hola, Invitado';
-      const meta = session.user.user_metadata;
-      return `Hola, ${meta?.full_name?.split(' ')[0] || meta?.username || 'Viajero'}`;
-  };
-
-  const getInitials = () => {
-      if (!session?.user) return '?';
-      const name = session.user.user_metadata?.full_name || session.user.user_metadata?.username || 'U';
-      return name.charAt(0).toUpperCase();
-  };
-
   const renderRewardItem: ListRenderItem<MenuItemResult> = ({ item }) => (
       <ModernRewardCard item={item} />
   );
@@ -249,10 +266,12 @@ export default function HomeScreen() {
       <StatusBar style="light" />
 
       <ModernHeader
-        greeting={getGreeting()}
+        address={address}
         points={points}
-        initials={getInitials()}
-        isGuest={!session?.user}
+        onAddressPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+            // Future: Open address selector modal
+        }}
         onWalletPress={() => router.push('/(tabs)/wallet')}
         onProfilePress={() => router.push('/(tabs)/profile')}
         scrollY={scrollY}
@@ -278,7 +297,7 @@ export default function HomeScreen() {
         style={{ backgroundColor: '#121212' }}
       >
           <View style={styles.contentWrapper}>
-            {/* Marketing Banners */}
+            {/* Marketing Banners - Visual Priority #1 */}
             <View style={{ marginTop: 24 }}>
                 <MarketingSlider banners={banners} />
             </View>
@@ -293,31 +312,10 @@ export default function HomeScreen() {
                 }}
             />
 
-            {/* Rewards Section (Others) */}
-            {rewardItems.length > 0 && (
-                <Animated.View entering={FadeInDown.delay(100).springify()} style={styles.sectionContainer}>
-                    <View style={styles.sectionHeader}>
-                        <Text style={styles.sectionTitle}>Más recompensas</Text>
-                        <TouchableOpacity style={styles.viewAllButton}>
-                            <Text style={styles.viewAllText}>Ver todo</Text>
-                            <Ionicons name="chevron-forward" size={16} color="#121212" />
-                        </TouchableOpacity>
-                    </View>
-                    <FlatList
-                        data={rewardItems}
-                        renderItem={renderRewardItem}
-                        keyExtractor={(item) => item.id.toString()}
-                        horizontal
-                        showsHorizontalScrollIndicator={false}
-                        contentContainerStyle={styles.carouselContent}
-                    />
-                </Animated.View>
-            )}
-
-            {/* Restaurants List */}
+            {/* Restaurants List - Food Priority #2 */}
             <Animated.View entering={FadeInDown.delay(200).springify()} style={styles.sectionContainer}>
                 <View style={styles.sectionHeader}>
-                    <Text style={styles.sectionTitle}>Comercios Nexe</Text>
+                    <Text style={styles.sectionTitle}>Recomendado para ti</Text>
                     <TouchableOpacity style={styles.viewAllButton}>
                         <Text style={styles.viewAllText}>Filtros</Text>
                         <Ionicons name="options-outline" size={16} color="#121212" />
@@ -340,6 +338,27 @@ export default function HomeScreen() {
                     })}
                 </View>
             </Animated.View>
+
+            {/* Rewards Section - Points Priority #3 */}
+            {rewardItems.length > 0 && (
+                <Animated.View entering={FadeInDown.delay(100).springify()} style={styles.sectionContainer}>
+                    <View style={styles.sectionHeader}>
+                        <Text style={styles.sectionTitle}>Canjea y Ahorra</Text>
+                        <TouchableOpacity style={styles.viewAllButton}>
+                            <Text style={styles.viewAllText}>Ver todo</Text>
+                            <Ionicons name="chevron-forward" size={16} color="#121212" />
+                        </TouchableOpacity>
+                    </View>
+                    <FlatList
+                        data={rewardItems}
+                        renderItem={renderRewardItem}
+                        keyExtractor={(item) => item.id.toString()}
+                        horizontal
+                        showsHorizontalScrollIndicator={false}
+                        contentContainerStyle={styles.carouselContent}
+                    />
+                </Animated.View>
+            )}
           </View>
       </Animated.ScrollView>
 
