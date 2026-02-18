@@ -78,8 +78,8 @@ export function ModernRewardCard({ item }: ModernRewardCardProps) {
                             <View style={styles.discountRow}>
                                 <Text style={styles.originalPriceText}>{formattedOriginal}</Text>
                                 <View style={styles.pointsPill}>
-                                    <Ionicons name="pricetag" size={10} color="#B45309" />
-                                    <Text style={styles.pointsText}>Canjea {pointsNeeded} pts</Text>
+                                    <Ionicons name="star" size={10} color="#F59E0B" />
+                                    <Text style={styles.pointsText}>{pointsNeeded}</Text>
                                 </View>
                                 <Text style={styles.finalPriceText}>{formattedFinal}</Text>
                             </View>
