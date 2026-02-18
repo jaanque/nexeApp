@@ -9,7 +9,7 @@ interface MenuItemResult {
     id: number;
     name: string;
     description: string;
-    price: number;
+    points_needed: number;
     price_euros?: number;
     discount_percentage?: number;
     image_url: string;
@@ -29,20 +29,22 @@ const CARD_WIDTH = width * 0.7; // Wider
 
 export function ModernRewardCard({ item }: ModernRewardCardProps) {
     const router = useRouter();
-    // Display Euro price if available, fallback to points (though instruction implies euros always)
-    const displayPrice = item.price_euros
-        ? `${item.price_euros.toLocaleString('es-ES', { minimumFractionDigits: 2 })} €`
-        : `${Math.round(item.price * 10)} pts`;
 
-    // Calculate discounted price if applicable
+    // Calculate prices
     const hasDiscount = item.discount_percentage && item.discount_percentage > 0;
-    const finalPrice = (hasDiscount && item.price_euros)
-        ? (item.price_euros * (1 - item.discount_percentage! / 100))
-        : null;
 
-    const finalDisplayPrice = finalPrice
-        ? `${finalPrice.toLocaleString('es-ES', { minimumFractionDigits: 2 })} €`
-        : displayPrice;
+    // Final Euro Price Calculation
+    let finalEuroPrice = item.price_euros;
+    if (hasDiscount && item.price_euros) {
+        finalEuroPrice = item.price_euros * (1 - item.discount_percentage! / 100);
+    }
+
+    const formattedEuroPrice = finalEuroPrice
+        ? `${finalEuroPrice.toLocaleString('es-ES', { minimumFractionDigits: 2 })} €`
+        : '0,00 €';
+
+    // Points calculation (from renamed column points_needed)
+    const pointsNeeded = item.points_needed ? Math.round(item.points_needed) : 0;
 
     const handlePress = () => {
         if (process.env.EXPO_OS === 'ios') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -75,19 +77,14 @@ export function ModernRewardCard({ item }: ModernRewardCardProps) {
                     <Text style={styles.restaurantName} numberOfLines={1}>{item.restaurants?.name}</Text>
 
                     <View style={styles.priceContainer}>
-                        {/* Only show star if points, otherwise just text */}
-                        {!item.price_euros && <Ionicons name="star" size={12} color="#F59E0B" />}
+                        {/* Display Price in Euros */}
+                        <Text style={styles.euroText}>{formattedEuroPrice}</Text>
 
-                        {hasDiscount && item.price_euros ? (
-                            <>
-                                <Text style={styles.originalPriceText}>
-                                    {item.price_euros.toLocaleString('es-ES', { minimumFractionDigits: 2 })} €
-                                </Text>
-                                <Text style={[styles.pointsText, { color: '#EF4444' }]}>{finalDisplayPrice}</Text>
-                            </>
-                        ) : (
-                            <Text style={styles.pointsText}>{displayPrice}</Text>
-                        )}
+                        {/* Display Points Needed */}
+                        <View style={styles.pointsPill}>
+                            <Ionicons name="star" size={10} color="#F59E0B" />
+                            <Text style={styles.pointsText}>+{pointsNeeded} pts</Text>
+                        </View>
                     </View>
                 </View>
             </View>
@@ -134,19 +131,28 @@ const styles = StyleSheet.create({
     priceContainer: {
         flexDirection: 'row',
         alignItems: 'center',
+        justifyContent: 'space-between',
+        marginTop: 8,
+    },
+    euroText: {
+        color: '#111827',
+        fontSize: 16,
+        fontWeight: '800',
+        letterSpacing: -0.5,
+    },
+    pointsPill: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#FFFBEB', // Amber 50
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: 8,
         gap: 4,
-        marginTop: 4,
     },
     pointsText: {
-        color: '#111827',
-        fontSize: 14,
-        fontWeight: '800', // Bold points
-    },
-    originalPriceText: {
-        color: '#9CA3AF',
+        color: '#B45309', // Amber 700
         fontSize: 12,
-        textDecorationLine: 'line-through',
-        fontWeight: '500',
+        fontWeight: '700',
     },
     discountBadge: {
         position: 'absolute',
