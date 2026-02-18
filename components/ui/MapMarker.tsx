@@ -1,17 +1,15 @@
 import React from 'react';
 import { View, StyleSheet, Text } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Image } from 'expo-image';
 
 interface MapMarkerProps {
   isSelected?: boolean;
   onPress?: () => void;
   category?: string; // e.g., 'Restauración', 'Moda'
   price?: number; // Optional price to show instead of icon
-  imageUrl?: string; // URL for the logo/image
 }
 
-export default function MapMarker({ isSelected, onPress, category, price, imageUrl }: MapMarkerProps) {
+export default function MapMarker({ isSelected, onPress, category, price }: MapMarkerProps) {
 
   // Choose icon based on category
   const getIconName = () => {
@@ -26,14 +24,7 @@ export default function MapMarker({ isSelected, onPress, category, price, imageU
 
   return (
     <View style={[styles.container, isSelected && styles.containerSelected]}>
-      {imageUrl ? (
-          <Image
-            source={{ uri: imageUrl }}
-            style={styles.logo}
-            contentFit="cover"
-            transition={200}
-          />
-      ) : price ? (
+      {price ? (
           <Text style={[styles.text, isSelected && styles.textSelected]}>
              ${price}
           </Text>
@@ -54,8 +45,8 @@ const styles = StyleSheet.create({
   container: {
     backgroundColor: '#FFFFFF',
     borderRadius: 20,
-    // If we have an image, remove padding so image fills the circle
-    padding: 2,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: "#000",
@@ -66,8 +57,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
     elevation: 5,
-    width: 40,
-    height: 40,
+    minWidth: 36,
+    height: 36,
     borderWidth: 1,
     borderColor: '#E0E0E0',
   },
@@ -76,13 +67,6 @@ const styles = StyleSheet.create({
     borderColor: '#121212',
     transform: [{ scale: 1.2 }],
     zIndex: 10,
-    padding: 0, // Ensure selected marker also has no padding for image
-  },
-  logo: {
-      width: '100%',
-      height: '100%',
-      borderRadius: 18, // Slightly less than container for padding effect
-      backgroundColor: '#f0f0f0',
   },
   text: {
     fontWeight: 'bold',

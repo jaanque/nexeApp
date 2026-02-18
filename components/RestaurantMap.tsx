@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { StyleSheet, View, TouchableOpacity } from 'react-native';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
-import { customMapStyle } from '@/constants/darkMapStyle'; // Use dark style
+import { customMapStyle } from '@/constants/mapStyle';
 import MapMarker from '@/components/ui/MapMarker';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -98,19 +98,18 @@ export default function RestaurantMap({ restaurants, selectedRestaurant, onSelec
                 <MapMarker
                     isSelected={selectedRestaurant?.id === restaurant.id}
                     category={restaurant.cuisine_type}
-                    imageUrl={restaurant.image_url} // Pass image URL for logo
                 />
             </Marker>
         ))}
         </MapView>
 
-        {/* Recenter Button - Styled for Dark Mode */}
+        {/* Recenter Button */}
         <TouchableOpacity
-            style={[styles.recenterButton, { top: insets.top + 80 }]}
+            style={[styles.recenterButton, { top: insets.top + 60 }]}
             onPress={handleRecenter}
             activeOpacity={0.8}
         >
-            <Ionicons name="navigate" size={20} color="#FFFFFF" />
+            <Ionicons name="navigate" size={20} color="#121212" />
         </TouchableOpacity>
     </View>
   );
@@ -119,7 +118,6 @@ export default function RestaurantMap({ restaurants, selectedRestaurant, onSelec
 const styles = StyleSheet.create({
   container: {
       flex: 1,
-      backgroundColor: '#212121', // Dark background while map loads
   },
   map: {
     width: '100%',
@@ -131,7 +129,7 @@ const styles = StyleSheet.create({
       width: 44,
       height: 44,
       borderRadius: 22,
-      backgroundColor: '#333333', // Dark grey button
+      backgroundColor: '#FFFFFF',
       justifyContent: 'center',
       alignItems: 'center',
       shadowColor: "#000",
@@ -139,11 +137,9 @@ const styles = StyleSheet.create({
         width: 0,
         height: 2,
       },
-      shadowOpacity: 0.5, // Stronger shadow for dark mode
+      shadowOpacity: 0.25,
       shadowRadius: 3.84,
       elevation: 5,
       zIndex: 10,
-      borderWidth: 1,
-      borderColor: '#444',
   }
 });
