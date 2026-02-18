@@ -388,9 +388,9 @@ function StickyCategoryBar({ categories, activeCategory, setActiveCategory, scro
 
          const isSticky = currentY <= stickyTop;
 
-         // Smoothly transition background
-         const backgroundColor = withTiming(isSticky ? '#FFFFFF' : 'transparent', { duration: 250 });
-         const borderBottomColor = withTiming(isSticky ? '#F3F4F6' : 'transparent', { duration: 250 });
+         // Transition to background color (#F9FAFB) to match content
+         const backgroundColor = withTiming(isSticky ? '#F9FAFB' : 'transparent', { duration: 250 });
+         const borderBottomColor = withTiming(isSticky ? '#E5E7EB' : 'transparent', { duration: 250 });
 
          return {
              backgroundColor,
