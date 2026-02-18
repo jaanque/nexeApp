@@ -192,7 +192,9 @@ export default function HomeScreen() {
           return;
       }
 
-      let location = await Location.getCurrentPositionAsync({});
+      let location = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.Highest,
+      });
       const newLat = location.coords.latitude;
       const newLong = location.coords.longitude;
 
