@@ -50,6 +50,7 @@ interface MenuItemResult {
     description: string;
     price: number;
     price_euros?: number;
+    discount_percentage?: number;
     image_url: string;
     restaurant_id: number;
     restaurants?: {
