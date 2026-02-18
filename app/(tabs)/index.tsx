@@ -1,23 +1,22 @@
-import { View, StyleSheet, Text, TextInput, ScrollView, TouchableOpacity, FlatList, ListRenderItem, ActivityIndicator, LayoutAnimation, Platform, UIManager, Keyboard, RefreshControl } from 'react-native';
-import { useRouter } from 'expo-router';
-import { useEffect, useState, useCallback } from 'react';
-import { supabase } from '@/lib/supabase';
-import { Session } from '@supabase/supabase-js';
-import { Ionicons } from '@expo/vector-icons';
-import { Image } from 'expo-image';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import * as Haptics from 'expo-haptics';
-import * as Location from 'expo-location';
-import { StatusBar } from 'expo-status-bar';
-import { useDebounce } from '@/hooks/useDebounce';
-import { HomeScreenSkeleton } from '@/components/HomeScreenSkeleton';
 import { CategoryFilterItem } from '@/components/CategoryFilterItem';
-import { ModernHeader } from '@/components/ui/ModernHeader';
-import { ModernRewardCard } from '@/components/ModernRewardCard';
-import { HeroRewardCard } from '@/components/HeroRewardCard';
+import { HomeScreenSkeleton } from '@/components/HomeScreenSkeleton';
+import { Banner, MarketingSlider } from '@/components/MarketingSlider';
 import { ModernBusinessCard } from '@/components/ModernBusinessCard';
-import { MarketingSlider, Banner } from '@/components/MarketingSlider';
-import Animated, { FadeInDown, useSharedValue, useAnimatedScrollHandler } from 'react-native-reanimated';
+import { ModernRewardCard } from '@/components/ModernRewardCard';
+import { ModernHeader } from '@/components/ui/ModernHeader';
+import { useDebounce } from '@/hooks/useDebounce';
+import { supabase } from '@/lib/supabase';
+import { Ionicons } from '@expo/vector-icons';
+import { Session } from '@supabase/supabase-js';
+import * as Haptics from 'expo-haptics';
+import { Image } from 'expo-image';
+import * as Location from 'expo-location';
+import { useRouter } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
+import { useCallback, useEffect, useState } from 'react';
+import { ActivityIndicator, FlatList, Keyboard, LayoutAnimation, ListRenderItem, Platform, RefreshControl, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, UIManager, View } from 'react-native';
+import Animated, { FadeInDown, useAnimatedScrollHandler, useSharedValue } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 // Enable LayoutAnimation on Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -379,12 +378,6 @@ export default function HomeScreen() {
                         </ScrollView>
                     </View>
 
-                    {/* Hero Reward Section */}
-                    {rewardItems.length > 0 && (
-                        <Animated.View entering={FadeInDown.delay(100).springify()}>
-                            <HeroRewardCard item={rewardItems[0]} />
-                        </Animated.View>
-                    )}
                 </>
             )}
 
@@ -411,7 +404,7 @@ export default function HomeScreen() {
             ) : (
                 <>
                     {/* Rewards Section (Others) */}
-                    {rewardItems.length > 1 && (
+                    {rewardItems.length > 0 && (
                         <Animated.View entering={FadeInDown.delay(100).springify()} style={styles.sectionContainer}>
                             <View style={styles.sectionHeader}>
                                 <Text style={styles.sectionTitle}>Más recompensas</Text>
@@ -421,7 +414,7 @@ export default function HomeScreen() {
                                 </TouchableOpacity>
                             </View>
                             <FlatList
-                                data={rewardItems.slice(1)}
+                                data={rewardItems}
                                 renderItem={renderRewardItem}
                                 keyExtractor={(item) => item.id.toString()}
                                 horizontal

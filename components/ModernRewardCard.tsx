@@ -1,9 +1,9 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
-import { Image } from 'expo-image';
-import { LinearGradient } from 'expo-linear-gradient';
-import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
+import { Image } from 'expo-image';
+import { useRouter } from 'expo-router';
+import React from 'react';
+import { Dimensions, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 interface MenuItemResult {
     id: number;
@@ -23,7 +23,7 @@ interface ModernRewardCardProps {
 }
 
 const { width } = Dimensions.get('window');
-const CARD_WIDTH = width * 0.45; // Increased width (45% of screen)
+const CARD_WIDTH = width * 0.6; // Wider card (60% of screen)
 
 export function ModernRewardCard({ item }: ModernRewardCardProps) {
     const router = useRouter();
@@ -47,27 +47,24 @@ export function ModernRewardCard({ item }: ModernRewardCardProps) {
                     contentFit="cover"
                     transition={200}
                 />
-            </View>
-
-            {/* Gradient Overlay */}
-            <LinearGradient
-                colors={['transparent', 'rgba(0,0,0,0.6)', 'rgba(0,0,0,0.95)']}
-                locations={[0, 0.4, 1]}
-                style={styles.gradient}
-            >
-                <View style={styles.content}>
-                    <View style={styles.topRow}>
-                        <View style={styles.pointsBadge}>
-                             <Text style={styles.pointsText}>{pointsPrice} pts</Text>
-                        </View>
-                    </View>
-
-                    <View style={styles.bottomInfo}>
-                        <Text style={styles.itemName} numberOfLines={2}>{item.name}</Text>
-                        <Text style={styles.restaurantName} numberOfLines={1}>{item.restaurants?.name}</Text>
+                <View style={styles.badgeContainer}>
+                     <View style={styles.pointsBadge}>
+                        <Ionicons name="star" size={10} color="#FFFFFF" style={{ marginRight: 4 }} />
+                        <Text style={styles.pointsText}>{pointsPrice} pts</Text>
                     </View>
                 </View>
-            </LinearGradient>
+            </View>
+
+            <View style={styles.content}>
+                <View style={styles.textContainer}>
+                    <Text style={styles.itemName} numberOfLines={1}>{item.name}</Text>
+                    <Text style={styles.restaurantName} numberOfLines={1}>{item.restaurants?.name}</Text>
+                </View>
+                
+                <View style={styles.actionButton}>
+                    <Ionicons name="arrow-forward" size={18} color="#FFFFFF" />
+                </View>
+            </View>
         </TouchableOpacity>
     );
 }
@@ -75,79 +72,76 @@ export function ModernRewardCard({ item }: ModernRewardCardProps) {
 const styles = StyleSheet.create({
     card: {
         width: CARD_WIDTH,
-        height: CARD_WIDTH * 1.5, // 2:3 Poster Ratio
+        backgroundColor: '#FFFFFF',
         borderRadius: 20,
         marginRight: 16,
-        backgroundColor: '#E5E7EB',
         shadowColor: "#000",
         shadowOffset: {
             width: 0,
-            height: 8,
+            height: 4,
         },
-        shadowOpacity: 0.15,
-        shadowRadius: 10,
-        elevation: 6,
+        shadowOpacity: 0.08,
+        shadowRadius: 8,
+        elevation: 4,
         overflow: 'hidden',
     },
     imageContainer: {
         width: '100%',
-        height: '100%',
-        backgroundColor: '#D1D5DB', // Placeholder color
+        height: CARD_WIDTH * 0.75, // 4:3 Aspect Ratio
+        backgroundColor: '#F3F4F6',
+        position: 'relative',
     },
     image: {
         width: '100%',
         height: '100%',
     },
-    gradient: {
+    badgeContainer: {
         position: 'absolute',
-        left: 0,
-        right: 0,
-        bottom: 0,
-        height: '100%',
-        justifyContent: 'flex-end',
-        padding: 16,
-    },
-    content: {
-        flex: 1,
-        justifyContent: 'space-between',
-    },
-    topRow: {
-        alignItems: 'flex-start',
-        marginTop: 12,
+        top: 12,
+        left: 12,
     },
     pointsBadge: {
-        backgroundColor: '#fff',
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: 'rgba(0, 0, 0, 0.75)',
         paddingHorizontal: 10,
         paddingVertical: 6,
-        borderRadius: 20,
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
+        borderRadius: 100,
+        backdropFilter: 'blur(4px)',
     },
     pointsText: {
-        color: '#121212', // Brand Color
+        color: '#FFFFFF',
         fontSize: 12,
-        fontWeight: '800',
+        fontWeight: '700',
     },
-    bottomInfo: {
+    content: {
+        padding: 16,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: 12,
+    },
+    textContainer: {
+        flex: 1,
         gap: 4,
     },
-    restaurantName: {
-        color: 'rgba(255,255,255,0.7)',
-        fontSize: 11,
-        fontWeight: '600',
-        textTransform: 'uppercase',
-        letterSpacing: 0.8,
-    },
     itemName: {
-        color: '#fff',
-        fontSize: 18,
-        fontWeight: '800',
-        lineHeight: 22,
+        color: '#111827',
+        fontSize: 16,
+        fontWeight: '700',
         letterSpacing: -0.3,
-        textShadowColor: 'rgba(0,0,0,0.5)',
-        textShadowOffset: { width: 0, height: 2 },
-        textShadowRadius: 4,
+    },
+    restaurantName: {
+        color: '#6B7280',
+        fontSize: 13,
+        fontWeight: '500',
+    },
+    actionButton: {
+        width: 32,
+        height: 32,
+        borderRadius: 16,
+        backgroundColor: '#111827', // Dark button
+        alignItems: 'center',
+        justifyContent: 'center',
     },
 });
