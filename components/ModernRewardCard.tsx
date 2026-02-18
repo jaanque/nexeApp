@@ -136,8 +136,8 @@ const styles = StyleSheet.create({
     discountRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'space-between',
-        width: '100%',
+        justifyContent: 'flex-start', // Pack items together
+        gap: 8, // Space between items
     },
     originalPriceText: {
         color: '#9CA3AF', // Gray 400
