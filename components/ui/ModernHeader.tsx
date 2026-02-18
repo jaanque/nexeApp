@@ -82,29 +82,35 @@ export function ModernHeader({
                     style={styles.locationButton}
                     activeOpacity={0.7}
                 >
-                    <View style={styles.iconContainer}>
-                        <Ionicons name="location-sharp" size={18} color="#FF4B4B" />
-                    </View>
+                    <Ionicons name="location-sharp" size={20} color="#FF4B4B" style={{ marginRight: 8 }} />
                     <View style={styles.addressContainer}>
-                        <Text style={styles.addressLabel}>Entregar en</Text>
-                        <View style={styles.addressRow}>
-                            <Text style={styles.addressText} numberOfLines={1} ellipsizeMode="tail">
-                                {address}
-                            </Text>
-                            <Ionicons name="chevron-down" size={14} color="#FFFFFF" style={{marginLeft: 4, opacity: 0.7}} />
-                        </View>
+                        <Text style={styles.addressLabel}>Entregar en ▾</Text>
+                        <Text style={styles.addressText} numberOfLines={1} ellipsizeMode="tail">
+                            {address}
+                        </Text>
                     </View>
                 </TouchableOpacity>
 
-                {/* Points Pill (Right) */}
-                <TouchableOpacity
-                    onPress={() => handlePress(onWalletPress)}
-                    style={styles.pointsPill}
-                    activeOpacity={0.7}
-                >
-                     <Ionicons name="star" size={14} color="#F59E0B" style={{marginRight: 6}} />
-                     <Text style={styles.pointsText}>{formattedPoints}</Text>
-                </TouchableOpacity>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                    {/* Points Pill (Right) */}
+                    <TouchableOpacity
+                        onPress={() => handlePress(onWalletPress)}
+                        style={styles.pointsPill}
+                        activeOpacity={0.7}
+                    >
+                         <Ionicons name="star" size={14} color="#F59E0B" style={{marginRight: 6}} />
+                         <Text style={styles.pointsText}>{formattedPoints} Pts</Text>
+                    </TouchableOpacity>
+
+                    {/* Profile Button */}
+                    <TouchableOpacity
+                        onPress={() => handlePress(onProfilePress)}
+                        activeOpacity={0.7}
+                        style={styles.profileButton}
+                    >
+                         <Ionicons name="person-circle-outline" size={28} color="rgba(255,255,255,0.8)" />
+                    </TouchableOpacity>
+                </View>
             </View>
         </Animated.View>
     );
@@ -134,15 +140,6 @@ const styles = StyleSheet.create({
         flex: 1,
         marginRight: 16,
     },
-    iconContainer: {
-        width: 36,
-        height: 36,
-        borderRadius: 12,
-        backgroundColor: 'rgba(255, 75, 75, 0.1)', // Subtle red tint for location
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginRight: 10,
-    },
     addressContainer: {
         justifyContent: 'center',
         flex: 1,
@@ -152,10 +149,6 @@ const styles = StyleSheet.create({
         color: '#9CA3AF', // Gray 400
         fontWeight: '500',
         marginBottom: 2,
-    },
-    addressRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
     },
     addressText: {
         fontSize: 15,
@@ -169,15 +162,19 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         backgroundColor: 'rgba(255,255,255,0.1)',
         paddingHorizontal: 12,
-        paddingVertical: 8,
+        paddingVertical: 6,
         borderRadius: 20,
         borderWidth: 1,
         borderColor: 'rgba(255,255,255,0.1)',
     },
     pointsText: {
         color: '#FFFFFF',
-        fontSize: 14,
+        fontSize: 13,
         fontWeight: '700',
         letterSpacing: 0.5,
+    },
+    profileButton: {
+        justifyContent: 'center',
+        alignItems: 'center',
     },
 });

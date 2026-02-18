@@ -65,23 +65,10 @@ const styles = StyleSheet.create({
       paddingVertical: 10,
       paddingHorizontal: 16,
       borderRadius: 16, // Consistent border radius with other UI elements
-      backgroundColor: '#FFFFFF', // Clean white for inactive
-      borderWidth: 1,
-      borderColor: '#E5E7EB', // Subtle border
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.03, // Very subtle shadow
-      shadowRadius: 2,
-      elevation: 1,
+      backgroundColor: '#F3F4F6', // Light gray background for inactive state instead of white+border
   },
   activeContainer: {
       backgroundColor: '#121212',
-      borderColor: '#121212',
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.15,
-      shadowRadius: 8,
-      elevation: 4,
   },
   emojiContainer: {
       marginRight: 8,
@@ -96,7 +83,6 @@ const styles = StyleSheet.create({
       letterSpacing: -0.2,
   },
   activeLabel: {
-      color: '#FFFFFF',
-      fontWeight: '700', // Bold when active
+      color: '#121212',
   },
 });
