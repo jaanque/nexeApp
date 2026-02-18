@@ -13,7 +13,7 @@ import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect, useState } from 'react';
 import { FlatList, ListRenderItem, Platform, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, UIManager, View } from 'react-native';
-import Animated, { FadeInDown, useAnimatedScrollHandler, useSharedValue } from 'react-native-reanimated';
+import Animated, { FadeInDown, useAnimatedScrollHandler, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 // Enable LayoutAnimation on Android
@@ -235,10 +235,14 @@ export default function HomeScreen() {
       <ModernRewardCard item={item} />
   );
 
+  const [categoryLayoutY, setCategoryLayoutY] = useState(250); // Default estimate
+
   if (loading) return <HomeScreenSkeleton />;
 
   // Calculate approximate header height for padding
   const HEADER_MAX_HEIGHT = insets.top + 100;
+  // Category sticky offset: insets.top (where header is collapsed)
+  const STICKY_OFFSET = insets.top;
 
   return (
     <View style={styles.container}>
@@ -279,24 +283,22 @@ export default function HomeScreen() {
                 <MarketingSlider banners={banners} />
             </View>
 
-            {/* Categories */}
-            <View style={{ marginBottom: 24 }}>
-                <ScrollView
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                    style={styles.filterScroll}
-                    contentContainerStyle={styles.filterContent}
-                >
-                    {categories.map((cat) => (
-                        <CategoryFilterItem
-                            key={cat.id}
-                            item={cat}
-                            isActive={activeCategory === cat.id}
-                            onPress={() => setActiveCategory(activeCategory === cat.id ? null : cat.id)}
-                        />
-                    ))}
-                </ScrollView>
-            </View>
+            {/* Placeholder for Sticky Categories */}
+            <View
+                style={{ height: 60, marginBottom: 24 }} // Height matches sticky bar content
+                onLayout={(event) => {
+                    const { y } = event.nativeEvent.layout;
+                    // y is relative to contentWrapper top (which is paddingTop: 24 from top of scroll content)
+                    // The actual scroll content y is: y + 24 (marginTop of wrapper? no wrapper is inside scrollview)
+                    // Wait, contentWrapper is inside ScrollView.
+                    // y is relative to contentWrapper.
+                    // contentWrapper is first child.
+                    // But we have paddingTop on ScrollView contentContainer.
+                    // The y reported by onLayout is relative to the *parent view* (contentWrapper).
+                    // Correct absolute scroll offset = y
+                    setCategoryLayoutY(y);
+                }}
+            />
 
             {/* Rewards Section (Others) */}
             {rewardItems.length > 0 && (
@@ -347,8 +349,98 @@ export default function HomeScreen() {
             </Animated.View>
           </View>
       </Animated.ScrollView>
+
+      {/* Absolute Sticky Category Bar */}
+      <StickyCategoryBar
+        categories={categories}
+        activeCategory={activeCategory}
+        setActiveCategory={setActiveCategory}
+        scrollY={scrollY}
+        layoutY={categoryLayoutY}
+        headerMaxHeight={HEADER_MAX_HEIGHT}
+        stickyTop={STICKY_OFFSET}
+      />
     </View>
   );
+}
+
+interface StickyCategoryBarProps {
+    categories: Category[];
+    activeCategory: number | null;
+    setActiveCategory: (id: number | null) => void;
+    scrollY: any;
+    layoutY: number;
+    headerMaxHeight: number;
+    stickyTop: number;
+}
+
+function StickyCategoryBar({ categories, activeCategory, setActiveCategory, scrollY, layoutY, headerMaxHeight, stickyTop }: StickyCategoryBarProps) {
+    const animatedStyle = useAnimatedStyle(() => {
+        // Calculate the initial absolute Y position on screen (when scrollY is 0)
+        // contentWrapper starts at headerMaxHeight? No, contentContainerStyle paddingTop pushes content down.
+        // But the View inside starts at 0 relative to content container.
+        // Wait, layoutY is relative to contentWrapper.
+        // contentWrapper has marginTop: -12.
+        // So absolute Y relative to ScrollView content start = layoutY - 12?
+        // Let's assume layoutY is correct relative to scroll content origin (after padding).
+        // Initial Screen Y = layoutY + headerMaxHeight (padding) - 12 (margin) - scrollY.
+
+        // Wait, contentWrapper is just a View inside ScrollView.
+        // ScrollView has paddingTop: headerMaxHeight.
+        // contentWrapper has marginTop: -12.
+        // So the first pixel of contentWrapper is at (headerMaxHeight - 12).
+        // The category placeholder is at `layoutY` inside contentWrapper.
+        // So its Y position relative to ScrollView top (0) is: (headerMaxHeight - 12 + layoutY).
+
+        const initialTop = headerMaxHeight - 12 + layoutY;
+        const currentY = initialTop - scrollY.value;
+
+        const translateY = Math.max(stickyTop, currentY);
+
+        // Add shadow/background opacity based on stickiness
+        // We want full opacity when it hits stickyTop
+        const isSticky = currentY <= stickyTop;
+
+        return {
+            transform: [{ translateY }],
+            // We can animate shadow opacity here if needed, but simple translation is key.
+            zIndex: isSticky ? 1000 : 1, // Ensure it pops over content when sticky
+        };
+    });
+
+    // Shadow style for sticky state
+    const shadowStyle = useAnimatedStyle(() => {
+         const initialTop = headerMaxHeight - 12 + layoutY;
+         const currentY = initialTop - scrollY.value;
+         // Fully show shadow when passed sticky point
+         const opacity = currentY <= stickyTop ? withTiming(1, { duration: 200 }) : withTiming(0, { duration: 200 });
+
+         return {
+             shadowOpacity: opacity,
+             elevation: opacity.value > 0.5 ? 4 : 0,
+             borderBottomWidth: opacity.value > 0.5 ? 1 : 0,
+             backgroundColor: currentY <= stickyTop ? 'rgba(255,255,255,0.95)' : 'transparent', // Solid when sticky
+         };
+    });
+
+    return (
+        <Animated.View style={[styles.stickyBar, animatedStyle, shadowStyle]}>
+             <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.filterContent}
+            >
+                {categories.map((cat) => (
+                    <CategoryFilterItem
+                        key={cat.id}
+                        item={cat}
+                        isActive={activeCategory === cat.id}
+                        onPress={() => setActiveCategory(activeCategory === cat.id ? null : cat.id)}
+                    />
+                ))}
+            </ScrollView>
+        </Animated.View>
+    );
 }
 
 const styles = StyleSheet.create({
@@ -367,11 +459,10 @@ const styles = StyleSheet.create({
       paddingBottom: 100, // Bottom padding moved here
       minHeight: '100%',
   },
-  filterScroll: {
-      paddingLeft: 20,
-  },
   filterContent: {
-      paddingRight: 20,
+      paddingHorizontal: 20,
+      paddingVertical: 10, // Add vertical padding inside the scroll
+      alignItems: 'center',
   },
   sectionContainer: {
       marginBottom: 40, // Increased spacing
@@ -407,5 +498,18 @@ const styles = StyleSheet.create({
   },
   listContainer: {
       paddingHorizontal: 20,
+  },
+  stickyBar: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      height: 60, // Fixed height for bar
+      justifyContent: 'center',
+      // Background and shadow handled by animated style
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowRadius: 4,
+      borderBottomColor: 'rgba(0,0,0,0.05)',
   },
 });

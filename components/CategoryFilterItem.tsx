@@ -62,30 +62,39 @@ const styles = StyleSheet.create({
   container: {
       flexDirection: 'row',
       alignItems: 'center',
-      paddingVertical: 10,
-      paddingHorizontal: 16,
-      borderRadius: 24, // Pill shape
-      backgroundColor: '#F3F4F6', // Light gray default
+      paddingVertical: 12, // Increased touch area
+      paddingHorizontal: 20, // Wider pill for better readability
+      borderRadius: 24,
+      backgroundColor: '#F3F4F6',
       borderWidth: 1,
       borderColor: 'transparent',
+      // added subtle shadow for depth
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.05,
+      shadowRadius: 2,
+      elevation: 1,
   },
   activeContainer: {
-      backgroundColor: '#121212', // Primary Brand Color
+      backgroundColor: '#121212',
+      shadowOpacity: 0.2, // Stronger shadow when active
+      shadowRadius: 4,
+      elevation: 4,
   },
   emojiContainer: {
-      marginRight: 8,
+      marginRight: 10, // More spacing
   },
   activeEmojiContainer: {
-      // No change needed, text handles it
+      // No change needed
   },
   emoji: {
-      fontSize: 18,
+      fontSize: 20, // Slightly larger emoji
   },
   label: {
-      fontSize: 14,
+      fontSize: 15, // Larger text
       fontWeight: '600',
-      color: '#374151', // Gray 700
-      letterSpacing: -0.2,
+      color: '#374151',
+      letterSpacing: -0.3,
   },
   activeLabel: {
       color: '#FFFFFF',
