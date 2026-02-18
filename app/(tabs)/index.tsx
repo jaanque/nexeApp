@@ -35,6 +35,8 @@ interface Restaurant {
   closing_time?: string;
 }
 
+type SortOption = 'default' | 'distance' | 'rating';
+
 interface Category {
   id: number;
   name: string;
@@ -68,6 +70,7 @@ export default function HomeScreen() {
   const [banners, setBanners] = useState<Banner[]>([]); // Banners State
   const [userLocation, setUserLocation] = useState<{ latitude: number, longitude: number } | null>(null);
   const [activeCategory, setActiveCategory] = useState<number | null>(null);
+  const [sortBy, setSortBy] = useState<SortOption>('default');
   const [refreshing, setRefreshing] = useState(false); // Pull to refresh
   const [address, setAddress] = useState<string>("Seleccionando ubicación...");
 
@@ -140,21 +143,32 @@ export default function HomeScreen() {
       }
   }, [activeCategory, allRestaurants, allRewards]);
 
-  // Location Sorting Logic
+  // Sorting Logic
   useEffect(() => {
       if (popularRestaurants.length > 0) {
-          if (userLocation) {
-              const sorted = [...popularRestaurants].sort((a, b) => {
+          let sorted = [...popularRestaurants];
+
+          if (sortBy === 'distance' && userLocation) {
+               sorted.sort((a, b) => {
                   const distA = (a.latitude && a.longitude) ? getDistanceInMeters(userLocation.latitude, userLocation.longitude, a.latitude, a.longitude) : Infinity;
                   const distB = (b.latitude && b.longitude) ? getDistanceInMeters(userLocation.latitude, userLocation.longitude, b.latitude, b.longitude) : Infinity;
                   return distA - distB;
               });
-              setSortedRestaurants(sorted);
+          } else if (sortBy === 'rating') {
+              sorted.sort((a, b) => (b.rating || 0) - (a.rating || 0));
           } else {
-              setSortedRestaurants(popularRestaurants);
+               // Default: Sort by distance if available, otherwise ID (or "Smart Sort" in future)
+               if (userLocation) {
+                    sorted.sort((a, b) => {
+                        const distA = (a.latitude && a.longitude) ? getDistanceInMeters(userLocation.latitude, userLocation.longitude, a.latitude, a.longitude) : Infinity;
+                        const distB = (b.latitude && b.longitude) ? getDistanceInMeters(userLocation.latitude, userLocation.longitude, b.latitude, b.longitude) : Infinity;
+                        return distA - distB;
+                    });
+               }
           }
+          setSortedRestaurants(sorted);
       }
-  }, [popularRestaurants, userLocation]);
+  }, [popularRestaurants, userLocation, sortBy]);
 
   async function getUserLocation() {
     try {
@@ -320,13 +334,50 @@ export default function HomeScreen() {
 
             {/* Restaurants List - Food Priority #2 */}
             <Animated.View entering={FadeInDown.delay(200).springify()} style={styles.sectionContainer}>
-                <View style={styles.sectionHeader}>
+                <View style={[styles.sectionHeader, { marginBottom: 12 }]}>
                     <Text style={styles.sectionTitle}>Recomendado para ti</Text>
-                    <TouchableOpacity style={styles.viewAllButton}>
-                        <Text style={styles.viewAllText}>Filtros</Text>
-                        <Ionicons name="options-outline" size={16} color="#121212" />
-                    </TouchableOpacity>
                 </View>
+
+                {/* Sort Chips */}
+                <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={styles.chipsContent}
+                    style={{ marginBottom: 20 }}
+                >
+                    <TouchableOpacity
+                        style={[styles.chip, sortBy === 'default' && styles.activeChip]}
+                        onPress={() => {
+                            Haptics.selectionAsync();
+                            setSortBy('default');
+                        }}
+                    >
+                        <Text style={[styles.chipText, sortBy === 'default' && styles.activeChipText]}>Recomendados</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                        style={[styles.chip, sortBy === 'distance' && styles.activeChip]}
+                        onPress={() => {
+                            Haptics.selectionAsync();
+                            setSortBy('distance');
+                        }}
+                    >
+                        <Ionicons name="location-sharp" size={14} color={sortBy === 'distance' ? '#FFF' : '#374151'} />
+                        <Text style={[styles.chipText, sortBy === 'distance' && styles.activeChipText]}>Cerca de mí</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                        style={[styles.chip, sortBy === 'rating' && styles.activeChip]}
+                        onPress={() => {
+                            Haptics.selectionAsync();
+                            setSortBy('rating');
+                        }}
+                    >
+                        <Ionicons name="star" size={14} color={sortBy === 'rating' ? '#FFF' : '#374151'} />
+                        <Text style={[styles.chipText, sortBy === 'rating' && styles.activeChipText]}>Mejor valorados</Text>
+                    </TouchableOpacity>
+                </ScrollView>
+
                 <View style={styles.listContainer}>
                     {sortedRestaurants.map((restaurant, index) => {
                         const distance = (userLocation && restaurant.latitude && restaurant.longitude)
@@ -427,5 +478,32 @@ const styles = StyleSheet.create({
   },
   listContainer: {
       paddingHorizontal: 20,
+  },
+  chipsContent: {
+      paddingHorizontal: 20,
+      gap: 10,
+  },
+  chip: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: 16,
+      paddingVertical: 8,
+      borderRadius: 20,
+      backgroundColor: '#FFFFFF',
+      borderWidth: 1,
+      borderColor: '#E5E7EB',
+      gap: 6,
+  },
+  activeChip: {
+      backgroundColor: '#121212',
+      borderColor: '#121212',
+  },
+  chipText: {
+      fontSize: 14,
+      fontWeight: '600',
+      color: '#374151',
+  },
+  activeChipText: {
+      color: '#FFFFFF',
   },
 });
