@@ -12,7 +12,7 @@ import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect, useState } from 'react';
-import { FlatList, ListRenderItem, Platform, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, UIManager, View } from 'react-native';
+import { FlatList, ListRenderItem, Platform, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, UIManager, View, Dimensions } from 'react-native';
 import Animated, { FadeInDown, useAnimatedScrollHandler, useSharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -63,6 +63,7 @@ export default function HomeScreen() {
   const [popularRestaurants, setPopularRestaurants] = useState<Restaurant[]>([]);
   const [sortedRestaurants, setSortedRestaurants] = useState<Restaurant[]>([]);
   const [rewardItems, setRewardItems] = useState<MenuItemResult[]>([]);
+  const [trendingItems, setTrendingItems] = useState<MenuItemResult[]>([]);
   const [allRestaurants, setAllRestaurants] = useState<Restaurant[]>([]);
   const [allRewards, setAllRewards] = useState<MenuItemResult[]>([]);
   const [loading, setLoading] = useState(true);
@@ -258,6 +259,11 @@ export default function HomeScreen() {
       if (menuData) {
           setAllRewards(menuData as any);
           setRewardItems(menuData as any);
+
+          // For trending, we'll shuffle and pick 5 distinct items or just use a slice for demo
+          // In a real app, this would be based on order count
+          const shuffled = [...(menuData as any)].sort(() => 0.5 - Math.random());
+          setTrendingItems(shuffled.slice(0, 5));
       }
     } catch (error) { console.error("Error data:", error); }
   }
@@ -328,6 +334,26 @@ export default function HomeScreen() {
                     />
                 ))}
             </ScrollView>
+
+            {/* Trending Section - Visual Priority #2 */}
+            {trendingItems.length > 0 && (
+                <Animated.View entering={FadeInDown.delay(100).springify()} style={styles.sectionContainer}>
+                    <View style={styles.sectionHeader}>
+                        <Text style={styles.sectionTitle}>🔥 Tendencias en tu zona</Text>
+                    </View>
+                    <FlatList
+                        data={trendingItems}
+                        renderItem={({ item }) => <ModernRewardCard item={item} isTrending={true} />}
+                        keyExtractor={(item) => item.id.toString()}
+                        horizontal
+                        showsHorizontalScrollIndicator={false}
+                        contentContainerStyle={styles.carouselContent}
+                        decelerationRate="fast"
+                        snapToInterval={Dimensions.get('window').width * 0.8 + 16} // Custom snap
+                        snapToAlignment="start"
+                    />
+                </Animated.View>
+            )}
 
             {/* Rewards Section - Points Priority #3 */}
             {rewardItems.length > 0 && (
