@@ -32,23 +32,25 @@ export function ModernHeader({
     };
 
     const animatedContainerStyle = useAnimatedStyle(() => {
-        const paddingBottom = interpolate(
+        const translateY = interpolate(
             scrollY.value,
             [0, 100],
-            [40, 16], // Expanded: 40, Collapsed: 16
+            [0, -100],
             Extrapolation.CLAMP
         );
 
-        const paddingTop = interpolate(
+        const opacity = interpolate(
             scrollY.value,
-            [0, 100],
-            [insets.top + 24, insets.top + 8], // Expanded: +24, Collapsed: +8
+            [0, 60],
+            [1, 0],
             Extrapolation.CLAMP
         );
 
         return {
-            paddingBottom,
-            paddingTop
+            transform: [{ translateY }],
+            opacity,
+            paddingTop: insets.top + 20,
+            paddingBottom: 20,
         };
     });
 
@@ -95,7 +97,7 @@ const styles = StyleSheet.create({
     container: {
         backgroundColor: '#121212',
         paddingHorizontal: 20,
-        // paddingBottom and paddingTop are animated
+        // paddingTop and paddingBottom are handled in animated style
         borderBottomLeftRadius: 24,
         borderBottomRightRadius: 24,
         position: 'absolute',
