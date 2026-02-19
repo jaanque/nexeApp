@@ -17,9 +17,10 @@ interface RestaurantMapProps {
   selectedRestaurant: Restaurant | null;
   onSelectRestaurant: (restaurant: Restaurant | null) => void;
   userLocation?: { latitude: number, longitude: number } | null;
+  topOffset?: number;
 }
 
-export default function RestaurantMap({ restaurants, selectedRestaurant, onSelectRestaurant, userLocation }: RestaurantMapProps) {
+export default function RestaurantMap({ restaurants, selectedRestaurant, onSelectRestaurant, userLocation, topOffset }: RestaurantMapProps) {
   return (
     <View style={styles.container}>
       <Text style={styles.text}>Map view is currently optimized for mobile devices.</Text>
