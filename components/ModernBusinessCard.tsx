@@ -1,3 +1,4 @@
+import { getOptimizedImageSource } from '@/lib/imageOptimization';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { Image } from 'expo-image';
@@ -62,10 +63,12 @@ export const ModernBusinessCard = React.memo(({ restaurant, distance, isLast, is
         >
             <View style={[styles.imageWrapper, isGrid && styles.gridImageWrapper]}>
                 <Image
-                    source={{ uri: restaurant.image_url }}
+                    source={getOptimizedImageSource(restaurant.image_url, 400)}
                     style={styles.image}
                     contentFit="cover"
                     transition={300}
+                    allowDownscaling={true}
+                    cachePolicy="memory-disk"
                 />
 
                 {/* Rating Badge - Top Right */}

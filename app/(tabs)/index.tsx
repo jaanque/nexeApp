@@ -1,8 +1,8 @@
-import { Category, HomeBanners, HomeCategories, HomeSection, HomeSortChips, MenuItemResult, SortOption } from '@/components/home/HomeSections';
+import { HomeHeader } from '@/components/home/HomeHeader';
+import { Category, MenuItemResult, SortOption } from '@/components/home/HomeSections';
 import { HomeScreenSkeleton } from '@/components/HomeScreenSkeleton';
 import { Banner } from '@/components/MarketingSlider';
 import { ModernBusinessCard } from '@/components/ModernBusinessCard';
-import { ModernHeader } from '@/components/ui/ModernHeader';
 import { supabase } from '@/lib/supabase';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Session } from '@supabase/supabase-js';
@@ -322,52 +322,22 @@ export default function HomeScreen() {
       );
   }, [loadingMore]);
 
-  const renderHeader = useCallback(() => (
-      <View>
-        <ModernHeader
-            address={address}
-            onAddressPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-            }}
-            onProfilePress={() => router.push('/(tabs)/profile')}
-            isPickup={isPickup}
-            onTogglePickup={setIsPickup}
-        />
-
-        <View style={styles.headerContentWrapper}>
-            <HomeBanners banners={banners} />
-
-            <HomeCategories
-                categories={categories}
-                activeCategory={activeCategory}
-                setActiveCategory={setActiveCategory}
-            />
-
-            <View style={{ opacity: isFiltering ? 0.5 : 1 }}>
-                {trendingItems.length > 0 && (
-                    <HomeSection
-                        title="🔥 Últimas unidades (Vuelan)"
-                        items={trendingItems}
-                        delay={100}
-                    />
-                )}
-
-                {rewardItems.length > 0 && (
-                    <HomeSection
-                        title="Liquidación Total"
-                        items={rewardItems}
-                        delay={100}
-                    />
-                )}
-
-                <HomeSortChips
-                    sortBy={sortBy}
-                    setSortBy={setSortBy}
-                />
-            </View>
-        </View>
-      </View>
-  ), [banners, categories, activeCategory, trendingItems, rewardItems, sortBy, address, isPickup, isFiltering]);
+  const renderHeader = (
+      <HomeHeader
+          address={address}
+          isPickup={isPickup}
+          setIsPickup={setIsPickup}
+          banners={banners}
+          categories={categories}
+          activeCategory={activeCategory}
+          setActiveCategory={setActiveCategory}
+          trendingItems={trendingItems}
+          rewardItems={rewardItems}
+          sortBy={sortBy}
+          setSortBy={setSortBy}
+          isFiltering={isFiltering}
+      />
+  );
 
   const renderRestaurantItem: ListRenderItem<Restaurant> = useCallback(({ item, index }) => {
       const distance = (userLocation && item.latitude && item.longitude)

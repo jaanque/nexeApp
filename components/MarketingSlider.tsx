@@ -4,6 +4,7 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
+import { getOptimizedImageSource } from '@/lib/imageOptimization';
 import { MarketingPopup } from './MarketingPopup';
 import Animated, {
   useAnimatedScrollHandler,
@@ -228,7 +229,7 @@ const BannerItem = ({ item, index, scrollX, windowWidth, cardHeight, onPress }: 
         <View style={styles.imageContainer}>
             <Animated.View style={[StyleSheet.absoluteFill, animatedImageStyle]}>
                 <Image
-                    source={{ uri: item.image_url }}
+                    source={getOptimizedImageSource(item.image_url, windowWidth)}
                     style={{ width: '100%', height: '100%' }}
                     contentFit="cover"
                     transition={200}
