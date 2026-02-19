@@ -24,7 +24,6 @@ interface ItemDetail {
   id: number;
   name: string;
   description: string;
-  points_needed: number;
   price_euros: number;
   discount_percentage: number;
   image_url: string;
@@ -105,6 +104,11 @@ export default function ItemDetailScreen() {
     }
   };
 
+  const hasDiscount = item ? item.discount_percentage > 0 : false;
+  const originalPrice = item ? (item.price_euros || 0) : 0;
+  const finalPrice = hasDiscount ? originalPrice * (1 - item!.discount_percentage / 100) : originalPrice;
+  const pointsNeeded = Math.round(finalPrice * 10);
+
   const handleRedeem = () => {
       if (!item) return;
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -113,7 +117,7 @@ export default function ItemDetailScreen() {
           id: item.id,
           name: item.name,
           quantity: 1,
-          pointsPrice: item.points_needed
+          pointsPrice: pointsNeeded
       }];
 
       router.push({
@@ -134,10 +138,6 @@ export default function ItemDetailScreen() {
   }
 
   if (!item) return null;
-
-  const hasDiscount = item.discount_percentage > 0;
-  const originalPrice = item.price_euros || 0;
-  const finalPrice = hasDiscount ? originalPrice * (1 - item.discount_percentage / 100) : originalPrice;
 
   return (
     <View style={styles.container}>
@@ -192,7 +192,7 @@ export default function ItemDetailScreen() {
                 <View style={styles.priceRow}>
                     <View style={styles.pointsBadge}>
                         <Ionicons name="flash" size={16} color="#B45309" />
-                        <Text style={styles.pointsText}>{item.points_needed} pts</Text>
+                        <Text style={styles.pointsText}>{pointsNeeded} pts</Text>
                     </View>
 
                     <View style={styles.euroPriceContainer}>
@@ -246,7 +246,7 @@ export default function ItemDetailScreen() {
             onPress={handleRedeem}
             activeOpacity={0.9}
           >
-              <Text style={styles.redeemButtonText}>Canjear por {item.points_needed} pts</Text>
+              <Text style={styles.redeemButtonText}>Canjear por {pointsNeeded} pts</Text>
               <Ionicons name="arrow-forward" size={20} color="#FFF" />
           </TouchableOpacity>
       </Animated.View>

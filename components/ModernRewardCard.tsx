@@ -9,7 +9,6 @@ interface MenuItemResult {
     id: number;
     name: string;
     description: string;
-    points_needed: number;
     price_euros?: number;
     discount_percentage?: number;
     image_url: string;
@@ -39,8 +38,8 @@ export function ModernRewardCard({ item }: ModernRewardCardProps) {
         finalPrice = originalPrice * (1 - item.discount_percentage! / 100);
     }
 
-    const formattedOriginal = originalPrice.toLocaleString('es-ES', { minimumFractionDigits: 2 }) + ' €';
-    const formattedFinal = finalPrice.toLocaleString('es-ES', { minimumFractionDigits: 2 }) + ' €';
+    const formattedOriginal = originalPrice.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
+    const formattedFinal = finalPrice.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
     const handlePress = () => {
         if (process.env.EXPO_OS === 'ios') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         router.push(`/item/${item.id}`);

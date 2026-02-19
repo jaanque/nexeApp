@@ -49,7 +49,6 @@ interface MenuItemResult {
     id: number;
     name: string;
     description: string;
-    points_needed: number;
     price_euros?: number;
     discount_percentage?: number;
     image_url: string;
