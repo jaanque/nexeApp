@@ -54,7 +54,7 @@ interface MenuItemResult {
     discount_percentage?: number;
     image_url: string;
     restaurant_id: number;
-    restaurants: {
+    locales: {
         name: string;
     } | null;
     category_id?: number;
@@ -277,12 +277,12 @@ export default function HomeScreen() {
 
   async function fetchRestaurantsAndRewards() {
     try {
-      const { data: restData } = await supabase.from('restaurants').select('*').limit(100);
+      const { data: restData } = await supabase.from('locales').select('*').limit(100);
       if (restData) {
           setAllRestaurants(restData);
           setPopularRestaurants(restData);
       }
-      const { data: menuData } = await supabase.from('items').select('*, restaurants(name)').limit(50);
+      const { data: menuData } = await supabase.from('items').select('*, locales(name)').limit(50);
       if (menuData) {
           // Explicitly cast the Supabase response to our defined type
           const typedMenuData = menuData as unknown as MenuItemResult[];

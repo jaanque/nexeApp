@@ -13,7 +13,7 @@ interface MenuItemResult {
     price: number;
     image_url: string;
     restaurant_id: number;
-    restaurants?: {
+    locales?: {
         name: string;
     };
     category_id?: number;
@@ -67,7 +67,7 @@ export function HeroRewardCard({ item }: HeroRewardCardProps) {
                     <View style={styles.bottomInfo}>
                         <View style={styles.restaurantRow}>
                             <Text style={styles.restaurantName} numberOfLines={1}>
-                                {item.restaurants?.name?.toUpperCase()}
+                                {item.locales?.name?.toUpperCase()}
                             </Text>
                         </View>
 
