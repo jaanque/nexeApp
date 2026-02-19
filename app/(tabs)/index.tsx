@@ -60,6 +60,7 @@ export default function HomeScreen() {
   const [sortBy, setSortBy] = useState<SortOption>('default');
   const [isPickup, setIsPickup] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [isFiltering, setIsFiltering] = useState(false);
   const [address, setAddress] = useState<string>("Seleccionando ubicación...");
 
   const router = useRouter();
@@ -124,8 +125,11 @@ export default function HomeScreen() {
       if (!loading) {
         setPage(0);
         setHasMore(true);
-        setRestaurants([]); // Clear current list to avoid mixing sort orders
-        fetchRestaurants(0, true);
+        setIsFiltering(true);
+        // We don't clear restaurants here to prevent layout jump
+        fetchRestaurants(0, true).finally(() => {
+            setIsFiltering(false);
+        });
       }
   }, [sortBy, activeCategory]); // Also refetch when category changes
 
@@ -339,29 +343,31 @@ export default function HomeScreen() {
                 setActiveCategory={setActiveCategory}
             />
 
-            {trendingItems.length > 0 && (
-                <HomeSection
-                    title="🔥 Últimas unidades (Vuelan)"
-                    items={trendingItems}
-                    delay={100}
-                />
-            )}
+            <View style={{ opacity: isFiltering ? 0.5 : 1 }}>
+                {trendingItems.length > 0 && (
+                    <HomeSection
+                        title="🔥 Últimas unidades (Vuelan)"
+                        items={trendingItems}
+                        delay={100}
+                    />
+                )}
 
-            {rewardItems.length > 0 && (
-                <HomeSection
-                    title="Liquidación Total"
-                    items={rewardItems}
-                    delay={100}
-                />
-            )}
+                {rewardItems.length > 0 && (
+                    <HomeSection
+                        title="Liquidación Total"
+                        items={rewardItems}
+                        delay={100}
+                    />
+                )}
 
-            <HomeSortChips
-                sortBy={sortBy}
-                setSortBy={setSortBy}
-            />
+                <HomeSortChips
+                    sortBy={sortBy}
+                    setSortBy={setSortBy}
+                />
+            </View>
         </View>
       </View>
-  ), [banners, categories, activeCategory, trendingItems, rewardItems, sortBy, address, isPickup]);
+  ), [banners, categories, activeCategory, trendingItems, rewardItems, sortBy, address, isPickup, isFiltering]);
 
   const renderRestaurantItem: ListRenderItem<Restaurant> = useCallback(({ item, index }) => {
       const distance = (userLocation && item.latitude && item.longitude)
@@ -369,7 +375,7 @@ export default function HomeScreen() {
           : undefined;
 
       return (
-          <View style={styles.gridItemContainer}>
+          <View style={[styles.gridItemContainer, { opacity: isFiltering ? 0.5 : 1 }]}>
               <ModernBusinessCard
                   restaurant={item}
                   isLast={false}
@@ -378,7 +384,7 @@ export default function HomeScreen() {
               />
           </View>
       );
-  }, [userLocation]);
+  }, [userLocation, isFiltering]);
 
   const handleLoadMore = () => {
       if (!loadingMore && hasMore && sortBy !== 'distance') {

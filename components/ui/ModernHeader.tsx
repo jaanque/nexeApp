@@ -45,22 +45,22 @@ export function ModernHeader({
                     </TouchableOpacity>
 
                     <View style={styles.addressWrapper}>
-                        {/* Mode Toggle */}
+                        {/* Mode Toggle (Segmented Control) */}
                         <View style={styles.modeSwitch}>
                             <TouchableOpacity
                                 onPress={() => handleToggle(false)}
-                                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                                style={[styles.toggleButton, !isPickup && styles.activeToggleButton]}
+                                activeOpacity={0.9}
                             >
                                 <Text style={[styles.modeText, !isPickup && styles.activeModeText]}>
                                     Entrega
                                 </Text>
                             </TouchableOpacity>
 
-                            <View style={styles.divider} />
-
                             <TouchableOpacity
                                 onPress={() => handleToggle(true)}
-                                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                                style={[styles.toggleButton, isPickup && styles.activeToggleButton]}
+                                activeOpacity={0.9}
                             >
                                 <Text style={[styles.modeText, isPickup && styles.activeModeText]}>
                                     Recogida
@@ -135,24 +135,34 @@ const styles = StyleSheet.create({
     modeSwitch: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginBottom: 2,
-        gap: 8,
+        marginBottom: 4,
+        backgroundColor: '#F3F4F6', // Light gray background
+        borderRadius: 20,
+        padding: 2,
+        alignSelf: 'flex-start', // Fit to content
+    },
+    toggleButton: {
+        paddingHorizontal: 12,
+        paddingVertical: 4,
+        borderRadius: 16,
+    },
+    activeToggleButton: {
+        backgroundColor: '#FFFFFF',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.1,
+        shadowRadius: 2,
+        elevation: 2,
     },
     modeText: {
         fontSize: 12,
-        color: '#9CA3AF', // Gray 400
+        color: '#6B7280', // Gray 500
         fontWeight: '600',
-        textTransform: 'uppercase',
-        letterSpacing: 0.5,
+        letterSpacing: 0.2,
     },
     activeModeText: {
         color: '#111827', // Dark/Black
-        fontWeight: '800',
-    },
-    divider: {
-        width: 1,
-        height: 10,
-        backgroundColor: '#E5E7EB', // Gray 200
+        fontWeight: '700',
     },
     addressRow: {
         flexDirection: 'row',

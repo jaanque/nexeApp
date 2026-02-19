@@ -87,7 +87,7 @@ const styles = StyleSheet.create({
       letterSpacing: -0.2,
   },
   activeLabel: {
-      color: '#FFFFFF', // White text
+      color: '#111827', // Black text
       fontWeight: '700',
   },
 });
