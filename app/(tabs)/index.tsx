@@ -296,11 +296,11 @@ export default function HomeScreen() {
     } catch (error) { console.error("Error data:", error); }
   }
 
-  const renderRewardItem: ListRenderItem<MenuItemResult> = ({ item }) => (
+  const renderRewardItem: ListRenderItem<MenuItemResult> = useCallback(({ item }) => (
       <ModernRewardCard item={item} />
-  );
+  ), []);
 
-  const renderHeader = () => (
+  const renderHeader = useCallback(() => (
       <View style={styles.headerContentWrapper}>
         {/* Marketing Banners - Visual Priority #1 */}
         <View style={{ marginTop: 24 }}>
@@ -409,9 +409,9 @@ export default function HomeScreen() {
             </ScrollView>
         </Animated.View>
       </View>
-  );
+  ), [banners, categories, activeCategory, trendingItems, rewardItems, sortBy]);
 
-  const renderRestaurantItem: ListRenderItem<Restaurant> = ({ item, index }) => {
+  const renderRestaurantItem: ListRenderItem<Restaurant> = useCallback(({ item, index }) => {
       const distance = (userLocation && item.latitude && item.longitude)
           ? formatDistance(userLocation.latitude, userLocation.longitude, item.latitude, item.longitude)
           : undefined;
@@ -427,7 +427,7 @@ export default function HomeScreen() {
             </View>
           </View>
       );
-  };
+  }, [userLocation, sortedRestaurants.length]);
 
   if (loading) return <HomeScreenSkeleton />;
 
@@ -453,13 +453,17 @@ export default function HomeScreen() {
         data={sortedRestaurants}
         renderItem={renderRestaurantItem}
         keyExtractor={(item) => item.id.toString()}
-        ListHeaderComponent={renderHeader()}
+        ListHeaderComponent={renderHeader}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 100, paddingTop: HEADER_MAX_HEIGHT }}
         keyboardDismissMode="on-drag"
         scrollEnabled={true}
         onScroll={scrollHandler}
         scrollEventThrottle={16}
+        initialNumToRender={5}
+        maxToRenderPerBatch={5}
+        windowSize={5}
+        removeClippedSubviews={true}
         refreshControl={
             <RefreshControl
                 refreshing={refreshing}
