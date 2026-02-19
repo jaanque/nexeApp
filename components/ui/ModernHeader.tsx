@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import React, { useEffect } from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { StyleSheet, Text, TouchableOpacity, View, LayoutChangeEvent } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -21,6 +21,7 @@ export function ModernHeader({
     onTogglePickup,
 }: ModernHeaderProps) {
     const insets = useSafeAreaInsets();
+    const [trackWidth, setTrackWidth] = useState(0);
 
     // Animation value (0 for Delivery, 1 for Pickup)
     const togglePosition = useSharedValue(isPickup ? 1 : 0);
@@ -41,10 +42,22 @@ export function ModernHeader({
         }
     };
 
+    const onLayout = (event: LayoutChangeEvent) => {
+        setTrackWidth(event.nativeEvent.layout.width);
+    };
+
+    // Calculate dynamic dimensions
+    // Track padding is 4px total (2px each side potentially, but let's stick to simple padding)
+    // Actually style says padding: 4. So total horizontal padding is 8.
+    const PADDING = 4;
+    const activeWidth = (trackWidth - (PADDING * 2)) / 2;
+
     // Animated Style for the sliding indicator
     const animatedIndicatorStyle = useAnimatedStyle(() => {
+        if (trackWidth === 0) return {};
         return {
-            transform: [{ translateX: togglePosition.value * 90 }], // Assuming button width ~90
+            width: activeWidth,
+            transform: [{ translateX: togglePosition.value * activeWidth }],
         };
     });
 
@@ -89,10 +102,10 @@ export function ModernHeader({
                 </View>
             </View>
 
-            {/* Mode Toggle (Bottom Row - Full Width / Centered) */}
+            {/* Mode Toggle (Bottom Row - Full Width) */}
             <View style={styles.toggleContainer}>
                 {/* Background Track */}
-                <View style={styles.toggleTrack}>
+                <View style={styles.toggleTrack} onLayout={onLayout}>
                     {/* Animated Sliding Indicator */}
                     <Animated.View style={[styles.activeIndicator, animatedIndicatorStyle]} />
 
@@ -195,7 +208,7 @@ const styles = StyleSheet.create({
     },
     // Toggle Styles
     toggleContainer: {
-        alignItems: 'center', // Center the toggle
+        width: '100%',
     },
     toggleTrack: {
         flexDirection: 'row',
@@ -203,14 +216,13 @@ const styles = StyleSheet.create({
         borderRadius: 24,
         padding: 4,
         height: 48,
-        width: 190, // Fixed width for predictable animation (90 * 2 + padding)
+        width: '100%', // Full width
         position: 'relative',
     },
     activeIndicator: {
         position: 'absolute',
         top: 4,
         left: 4,
-        width: 90,
         height: 40,
         borderRadius: 20,
         backgroundColor: '#FFFFFF',
