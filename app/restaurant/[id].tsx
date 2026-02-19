@@ -78,7 +78,7 @@ export default function RestaurantDetailScreen() {
       try {
         setLoading(true);
         const { data: restaurantData, error: restaurantError } = await supabase
-          .from('restaurants')
+          .from('locales')
           .select('*, categories(name)')
           .eq('id', id)
           .single();

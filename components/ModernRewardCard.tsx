@@ -14,7 +14,7 @@ interface MenuItemResult {
     discount_percentage?: number;
     image_url: string;
     restaurant_id: number;
-    restaurants?: {
+    locales?: {
         name: string;
     } | null;
     category_id?: number;
@@ -64,7 +64,7 @@ export function ModernRewardCard({ item }: ModernRewardCardProps) {
             <View style={styles.content}>
                 <View style={styles.textContainer}>
                     <Text style={styles.itemName} numberOfLines={1}>{item.name}</Text>
-                    <Text style={styles.restaurantName} numberOfLines={1}>{item.restaurants?.name}</Text>
+                    <Text style={styles.restaurantName} numberOfLines={1}>{item.locales?.name}</Text>
 
                     <View style={styles.priceContainer}>
                         {hasDiscount ? (

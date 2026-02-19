@@ -74,7 +74,7 @@ export default function ExploreScreen() {
   };
 
   const fetchRestaurants = async () => {
-    const { data } = await supabase.from('restaurants').select('*').order('id');
+    const { data } = await supabase.from('locales').select('*').order('id');
     if (data) {
       setRestaurants(data);
       setFilteredRestaurants(data);
