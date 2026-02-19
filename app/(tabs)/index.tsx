@@ -428,10 +428,20 @@ export default function HomeScreen() {
       );
   }, [userLocation]);
 
-  if (loading) return <HomeScreenSkeleton />;
-
   // Calculate approximate header height for padding
   const HEADER_MAX_HEIGHT = insets.top + 100;
+
+  const renderHeaderContainer = useCallback(() => (
+      <View>
+          {/* Spacer for Header (Black Background) */}
+          <View style={{ height: HEADER_MAX_HEIGHT, backgroundColor: '#121212' }} />
+
+          {/* Main Sheet Content */}
+          {renderHeader()}
+      </View>
+  ), [renderHeader, HEADER_MAX_HEIGHT]);
+
+  if (loading) return <HomeScreenSkeleton />;
 
   return (
     <View style={styles.container}>
@@ -452,9 +462,10 @@ export default function HomeScreen() {
         data={sortedRestaurants}
         renderItem={renderRestaurantItem}
         keyExtractor={(item) => item.id.toString()}
-        ListHeaderComponent={renderHeader}
+        ListHeaderComponent={renderHeaderContainer}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 100, paddingTop: HEADER_MAX_HEIGHT, paddingHorizontal: 12 }} // Added horizontal padding for grid
+        contentContainerStyle={{ paddingBottom: 100 }} // Removed horizontal padding and top padding
+        columnWrapperStyle={{ paddingHorizontal: 14 }} // Apply padding to grid rows instead
         keyboardDismissMode="on-drag"
         scrollEnabled={true}
         onScroll={scrollHandler}
@@ -469,13 +480,13 @@ export default function HomeScreen() {
             <RefreshControl
                 refreshing={refreshing}
                 onRefresh={onRefresh}
-                tintColor="#FFFFFF"
+                tintColor="#121212" // Dark tint for light background
                 colors={['#121212']}
                 progressBackgroundColor="#FFFFFF"
                 progressViewOffset={HEADER_MAX_HEIGHT}
             />
         }
-        style={{ backgroundColor: '#121212' }}
+        style={{ backgroundColor: '#F9FAFB' }} // Light background for the list/grid
       />
 
     </View>
@@ -485,13 +496,13 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#121212', // Dark background to match header
+    backgroundColor: '#121212', // Dark background for top overscroll/header area
   },
   headerContentWrapper: {
       backgroundColor: '#F9FAFB',
       borderTopLeftRadius: 32,
       borderTopRightRadius: 32,
-      marginTop: -12, // Reduced overlap for compact header
+      marginTop: -24, // Overlap deeply into the black spacer
       paddingTop: 24,
       overflow: 'hidden',
   },
