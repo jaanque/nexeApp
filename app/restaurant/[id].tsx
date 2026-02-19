@@ -88,7 +88,7 @@ export default function RestaurantDetailScreen() {
         checkIfOpen(restaurantData.opening_time, restaurantData.closing_time);
 
         const { data: menuData, error: menuError } = await supabase
-          .from('menu_items')
+          .from('items')
           .select('*, categories(name)')
           .eq('restaurant_id', id);
 

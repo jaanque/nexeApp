@@ -22,7 +22,7 @@ export function RewardsCard({ currentPoints }: RewardsCardProps) {
     async function fetchNextReward() {
       try {
         const { data, error } = await supabase
-          .from('menu_items')
+          .from('items')
           .select('id, name, price')
           .gt('price', currentPoints)
           .order('price', { ascending: true })
