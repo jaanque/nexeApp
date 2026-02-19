@@ -22,12 +22,28 @@ interface RestaurantMapProps {
   selectedRestaurant: Restaurant | null;
   onSelectRestaurant: (restaurant: Restaurant | null) => void;
   userLocation?: { latitude: number, longitude: number } | null;
+  topOffset?: number; // Height of the top header/overlay
 }
 
-export default function RestaurantMap({ restaurants, selectedRestaurant, onSelectRestaurant, userLocation }: RestaurantMapProps) {
+export default function RestaurantMap({
+    restaurants,
+    selectedRestaurant,
+    onSelectRestaurant,
+    userLocation,
+    topOffset = 60 // Default fallback
+}: RestaurantMapProps) {
   const mapRef = useRef<MapView>(null);
   const insets = useSafeAreaInsets();
   const hasCenteredOnUser = useRef(false);
+
+  // If topOffset is provided (e.g. from Explore), use it.
+  // If it's the default 60, add insets.top to be safe for legacy usage (if any).
+  // However, Explore passes HEADER_MAX_HEIGHT which INCLUDES insets.
+  // So we need to be careful. Let's assume topOffset is the total obstruction height.
+  // But default 60 was `insets.top + 60` in original code.
+  // So let's calculate the effective top position.
+
+  const effectiveTop = topOffset > 60 ? topOffset : (insets.top + topOffset);
 
   useEffect(() => {
     if (selectedRestaurant && selectedRestaurant.latitude && selectedRestaurant.longitude) {
@@ -72,16 +88,17 @@ export default function RestaurantMap({ restaurants, selectedRestaurant, onSelec
   return (
     <View style={styles.container}>
         <MapView
-        ref={mapRef}
-        style={styles.map}
-        initialRegion={initialRegion}
-        customMapStyle={customMapStyle}
-        provider={PROVIDER_GOOGLE}
-        showsUserLocation={!!userLocation}
-        showsMyLocationButton={false} // Custom button
-        toolbarEnabled={false}
-        moveOnMarkerPress={false}
-        onPress={() => onSelectRestaurant(null)}
+            ref={mapRef}
+            style={styles.map}
+            initialRegion={initialRegion}
+            customMapStyle={customMapStyle}
+            provider={PROVIDER_GOOGLE}
+            showsUserLocation={!!userLocation}
+            showsMyLocationButton={false} // Custom button
+            toolbarEnabled={false}
+            moveOnMarkerPress={false}
+            onPress={() => onSelectRestaurant(null)}
+            mapPadding={{ top: effectiveTop, right: 0, bottom: 0, left: 0 }}
         >
         {restaurants.map((restaurant) => (
             <Marker
@@ -105,7 +122,7 @@ export default function RestaurantMap({ restaurants, selectedRestaurant, onSelec
 
         {/* Recenter Button */}
         <TouchableOpacity
-            style={[styles.recenterButton, { top: insets.top + 60 }]}
+            style={[styles.recenterButton, { top: effectiveTop + 10 }]}
             onPress={handleRecenter}
             activeOpacity={0.8}
         >
