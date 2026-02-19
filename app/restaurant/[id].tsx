@@ -400,10 +400,10 @@ export default function RestaurantDetailScreen() {
                         const pointsPrice = Math.round(item.price_euros * 10);
                         return (
                             <View key={item.id} style={styles.menuItem}>
-                                <TouchableOpacity style={styles.menuItemContent} activeOpacity={0.7} onPress={() => {}}>
+                                <TouchableOpacity style={styles.menuItemContent} activeOpacity={0.7} onPress={() => router.push(`/item/${item.id}`)}>
                                     <View style={styles.textContainer}>
                                         <Text style={styles.itemName}>{item.name}</Text>
-                                        <Text style={styles.itemPrice}>{pointsPrice} pts</Text>
+                                        <Text style={styles.itemPrice}>{item.price_euros.toFixed(2)}€</Text>
                                         {item.description ? <Text style={styles.itemDescription} numberOfLines={2}>{item.description}</Text> : null}
                                     </View>
                                     {item.image_url && (

@@ -21,9 +21,10 @@ interface ModernBusinessCardProps {
     restaurant: Restaurant;
     distance?: string;
     isLast?: boolean;
+    isGrid?: boolean;
 }
 
-export const ModernBusinessCard = React.memo(({ restaurant, distance, isLast }: ModernBusinessCardProps) => {
+export const ModernBusinessCard = React.memo(({ restaurant, distance, isLast, isGrid }: ModernBusinessCardProps) => {
     const router = useRouter();
 
     const handlePress = () => {
@@ -56,11 +57,11 @@ export const ModernBusinessCard = React.memo(({ restaurant, distance, isLast }: 
 
     return (
         <TouchableOpacity
-            style={[styles.container, isLast && { marginBottom: 100 }]}
+            style={[styles.container, isGrid && styles.gridContainer, isLast && { marginBottom: 100 }]}
             activeOpacity={0.95}
             onPress={handlePress}
         >
-            <View style={styles.imageWrapper}>
+            <View style={[styles.imageWrapper, isGrid && styles.gridImageWrapper]}>
                 <Image
                     source={{ uri: restaurant.image_url }}
                     style={styles.image}
@@ -70,8 +71,8 @@ export const ModernBusinessCard = React.memo(({ restaurant, distance, isLast }: 
 
                 {/* Open/Closed Badge */}
                 {!isOpen && (
-                    <View style={styles.closedBadge}>
-                        <Text style={styles.closedText}>Cerrado</Text>
+                    <View style={[styles.closedBadge, isGrid && styles.gridClosedBadge]}>
+                        <Text style={[styles.closedText, isGrid && styles.gridClosedText]}>Cerrado</Text>
                     </View>
                 )}
 
@@ -91,13 +92,13 @@ export const ModernBusinessCard = React.memo(({ restaurant, distance, isLast }: 
                         </View>
 
                         <View>
-                            <Text style={styles.name} numberOfLines={1}>{restaurant.name}</Text>
+                            <Text style={[styles.name, isGrid && styles.gridName]} numberOfLines={1}>{restaurant.name}</Text>
                             <View style={styles.metaRow}>
-                                <Text style={styles.cuisine}>{restaurant.cuisine_type}</Text>
-                                <View style={styles.dot} />
+                                {!isGrid && <Text style={styles.cuisine}>{restaurant.cuisine_type}</Text>}
+                                {!isGrid && <View style={styles.dot} />}
                                 <Ionicons name="location-outline" size={12} color="#D1D5DB" />
-                                <Text style={styles.distance}>
-                                    {distance || 'A calcular...'}
+                                <Text style={styles.distance} numberOfLines={1}>
+                                    {distance || '...'}
                                 </Text>
                             </View>
                         </View>
@@ -205,5 +206,26 @@ const styles = StyleSheet.create({
         fontSize: 12,
         textTransform: 'uppercase',
         letterSpacing: 0.5,
+    },
+    // Grid Modifications
+    gridContainer: {
+        marginBottom: 0,
+        borderRadius: 20,
+    },
+    gridImageWrapper: {
+        height: 180, // Shorter for grid
+    },
+    gridName: {
+        fontSize: 16,
+        marginBottom: 4,
+    },
+    gridClosedBadge: {
+        top: 10,
+        left: 10,
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+    },
+    gridClosedText: {
+        fontSize: 10,
     },
 });

@@ -345,7 +345,7 @@ export default function HomeScreen() {
         {rewardItems.length > 0 && (
             <Animated.View entering={FadeInDown.delay(100).springify()} style={styles.sectionContainer}>
                 <View style={styles.sectionHeader}>
-                    <Text style={styles.sectionTitle}>Liquidación Total: 100% Nuevos</Text>
+                    <Text style={styles.sectionTitle}>Liquidación Total</Text>
                     <TouchableOpacity style={styles.viewAllButton}>
                         <Text style={styles.viewAllText}>Ver todo</Text>
                         <Ionicons name="chevron-forward" size={16} color="#121212" />
@@ -417,17 +417,16 @@ export default function HomeScreen() {
           : undefined;
 
       return (
-          <View style={styles.restaurantItemWrapper}>
-            <View style={styles.listContainer}>
-                <ModernBusinessCard
-                    restaurant={item}
-                    isLast={index === sortedRestaurants.length - 1}
-                    distance={distance}
-                />
-            </View>
+          <View style={styles.gridItemContainer}>
+              <ModernBusinessCard
+                  restaurant={item}
+                  isLast={false} // Handled by grid layout spacing
+                  distance={distance}
+                  isGrid={true}
+              />
           </View>
       );
-  }, [userLocation, sortedRestaurants.length]);
+  }, [userLocation]);
 
   if (loading) return <HomeScreenSkeleton />;
 
@@ -455,13 +454,15 @@ export default function HomeScreen() {
         keyExtractor={(item) => item.id.toString()}
         ListHeaderComponent={renderHeader}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 100, paddingTop: HEADER_MAX_HEIGHT }}
+        contentContainerStyle={{ paddingBottom: 100, paddingTop: HEADER_MAX_HEIGHT, paddingHorizontal: 12 }} // Added horizontal padding for grid
         keyboardDismissMode="on-drag"
         scrollEnabled={true}
         onScroll={scrollHandler}
         scrollEventThrottle={16}
-        initialNumToRender={5}
-        maxToRenderPerBatch={5}
+        numColumns={2}
+        key={2} // Force re-render if switching numColumns
+        initialNumToRender={6}
+        maxToRenderPerBatch={6}
         windowSize={5}
         removeClippedSubviews={true}
         refreshControl={
@@ -494,8 +495,10 @@ const styles = StyleSheet.create({
       paddingTop: 24,
       overflow: 'hidden',
   },
-  restaurantItemWrapper: {
-      backgroundColor: '#F9FAFB',
+  gridItemContainer: {
+      flex: 1,
+      margin: 6, // Spacing between grid items
+      maxWidth: '50%',
   },
   filterContent: {
       paddingHorizontal: 20,
