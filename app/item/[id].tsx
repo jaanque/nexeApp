@@ -46,7 +46,8 @@ export default function ItemDetailScreen() {
   const scrollY = useSharedValue(0);
 
   useEffect(() => {
-    async function fetchItemDetails() {
+    async function fetchItem() {
+      if (!id) return;
       try {
         setLoading(true);
         const { data, error } = await supabase
@@ -58,15 +59,15 @@ export default function ItemDetailScreen() {
         if (error) throw error;
         setItem(data);
       } catch (error) {
-        console.error('Error fetching item details:', error);
+        console.error("Error fetching item:", error);
+        Alert.alert("Error", "No se pudo cargar el item.");
+        router.back();
       } finally {
         setLoading(false);
       }
     }
 
-    if (id) {
-      fetchItemDetails();
-    }
+    fetchItem();
   }, [id]);
 
   const scrollHandler = useAnimatedScrollHandler((event) => {
@@ -124,13 +125,15 @@ export default function ItemDetailScreen() {
       });
   };
 
-  if (loading || !item) {
+  if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#FFFFFF" />
+        <ActivityIndicator size="large" color="#121212" />
       </View>
     );
   }
+
+  if (!item) return null;
 
   const hasDiscount = item.discount_percentage > 0;
   const originalPrice = item.price_euros || 0;
@@ -138,7 +141,7 @@ export default function ItemDetailScreen() {
 
   return (
     <View style={styles.container}>
-      <StatusBar style="light" />
+      <StatusBar style="dark" />
       <Stack.Screen options={{ headerShown: false }} />
 
       {/* Floating Header (Back & Share) */}
@@ -148,7 +151,7 @@ export default function ItemDetailScreen() {
             onPress={() => router.back()}
             activeOpacity={0.8}
          >
-            <Ionicons name="arrow-back" size={24} color="#fff" />
+            <Ionicons name="arrow-back" size={24} color="#121212" />
          </TouchableOpacity>
 
          <TouchableOpacity
@@ -156,7 +159,7 @@ export default function ItemDetailScreen() {
             onPress={handleShare}
             activeOpacity={0.8}
          >
-            <Ionicons name="share-outline" size={22} color="#fff" />
+            <Ionicons name="share-outline" size={22} color="#121212" />
          </TouchableOpacity>
       </View>
 
@@ -170,7 +173,7 @@ export default function ItemDetailScreen() {
         <Animated.View style={[styles.heroImageContainer, headerStyle]}>
             <Image source={{ uri: item.image_url }} style={styles.heroImage} contentFit="cover" transition={300} />
             <LinearGradient
-                colors={['rgba(0,0,0,0.6)', 'transparent', 'transparent', '#121212']}
+                colors={['rgba(255,255,255,0.1)', 'transparent', 'transparent', '#FFFFFF']}
                 style={styles.heroGradient}
                 locations={[0, 0.2, 0.8, 1]}
             />
@@ -188,18 +191,18 @@ export default function ItemDetailScreen() {
                 {/* Price Row */}
                 <View style={styles.priceRow}>
                     <View style={styles.pointsBadge}>
-                        <Ionicons name="flash" size={16} color="#FFD700" />
+                        <Ionicons name="flash" size={16} color="#B45309" />
                         <Text style={styles.pointsText}>{item.points_needed} pts</Text>
                     </View>
 
                     <View style={styles.euroPriceContainer}>
                         {hasDiscount && (
                             <Text style={styles.originalPrice}>
-                                {originalPrice.toLocaleString('es-ES', { minimumFractionDigits: 2 })}€
+                                {originalPrice.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}€
                             </Text>
                         )}
                         <Text style={styles.finalPrice}>
-                            {finalPrice.toLocaleString('es-ES', { minimumFractionDigits: 2 })}€
+                            {finalPrice.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}€
                         </Text>
                     </View>
                 </View>
@@ -228,7 +231,7 @@ export default function ItemDetailScreen() {
                             <Text style={styles.localeName}>{item.locales.name}</Text>
                             <Text style={styles.localeAddress}>{item.locales.address}</Text>
                         </View>
-                        <Ionicons name="chevron-forward" size={20} color="#666" />
+                        <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
                     </TouchableOpacity>
                 </Animated.View>
             )}
@@ -244,7 +247,7 @@ export default function ItemDetailScreen() {
             activeOpacity={0.9}
           >
               <Text style={styles.redeemButtonText}>Canjear por {item.points_needed} pts</Text>
-              <Ionicons name="arrow-forward" size={20} color="#000" />
+              <Ionicons name="arrow-forward" size={20} color="#FFF" />
           </TouchableOpacity>
       </Animated.View>
 
@@ -255,13 +258,13 @@ export default function ItemDetailScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#121212',
+    backgroundColor: '#FFFFFF',
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#121212',
+    backgroundColor: '#FFFFFF',
   },
   floatingHeader: {
     position: 'absolute',
@@ -277,12 +280,14 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: 'rgba(0,0,0,0.4)',
+    backgroundColor: 'rgba(255,255,255,0.8)',
     justifyContent: 'center',
     alignItems: 'center',
-    backdropFilter: 'blur(10px)', // Works on Web/iOS
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
 
   // Hero
@@ -311,30 +316,38 @@ const styles = StyleSheet.create({
   contentContainer: {
     marginTop: PARALLAX_HEADER_HEIGHT - 60,
     paddingHorizontal: 24,
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
+    paddingTop: 32,
+    minHeight: 800,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 5,
   },
   headerSection: {
     marginBottom: 24,
   },
   categoryBadge: {
-      backgroundColor: 'rgba(255,255,255,0.1)',
+      backgroundColor: '#F3F4F6',
       alignSelf: 'flex-start',
-      paddingHorizontal: 10,
-      paddingVertical: 4,
+      paddingHorizontal: 12,
+      paddingVertical: 6,
       borderRadius: 8,
       marginBottom: 12,
-      borderWidth: 1,
-      borderColor: 'rgba(255,255,255,0.2)',
   },
   categoryText: {
-      color: '#A0A0A0',
+      color: '#4B5563',
       fontSize: 12,
-      fontWeight: '600',
+      fontWeight: '700',
       letterSpacing: 1,
   },
   title: {
     fontSize: 32,
     fontWeight: '800',
-    color: '#FFFFFF',
+    color: '#111827',
     marginBottom: 16,
     letterSpacing: -0.5,
     lineHeight: 38,
@@ -347,16 +360,14 @@ const styles = StyleSheet.create({
   pointsBadge: {
       flexDirection: 'row',
       alignItems: 'center',
-      backgroundColor: 'rgba(255,215,0,0.15)',
+      backgroundColor: '#FEF3C7',
       paddingHorizontal: 12,
       paddingVertical: 8,
       borderRadius: 12,
       gap: 6,
-      borderWidth: 1,
-      borderColor: 'rgba(255,215,0,0.3)',
   },
   pointsText: {
-      color: '#FFD700',
+      color: '#B45309',
       fontSize: 18,
       fontWeight: '800',
   },
@@ -365,20 +376,20 @@ const styles = StyleSheet.create({
       alignItems: 'flex-end',
   },
   originalPrice: {
-      color: '#666',
+      color: '#9CA3AF',
       textDecorationLine: 'line-through',
       fontSize: 14,
       fontWeight: '500',
   },
   finalPrice: {
-      color: '#FFF',
+      color: '#111827',
       fontSize: 20,
-      fontWeight: '600',
+      fontWeight: '700',
   },
 
   divider: {
       height: 1,
-      backgroundColor: '#2A2A2A',
+      backgroundColor: '#F3F4F6',
       marginBottom: 24,
   },
 
@@ -388,42 +399,47 @@ const styles = StyleSheet.create({
   sectionTitle: {
       fontSize: 18,
       fontWeight: '700',
-      color: '#FFF',
+      color: '#111827',
       marginBottom: 12,
   },
   descriptionText: {
       fontSize: 16,
-      color: '#A0A0A0',
-      lineHeight: 24,
+      color: '#4B5563',
+      lineHeight: 26,
   },
 
   // Locale Card
   localeCard: {
       flexDirection: 'row',
       alignItems: 'center',
-      backgroundColor: '#1E1E1E',
+      backgroundColor: '#F9FAFB',
       padding: 16,
       borderRadius: 16,
       gap: 16,
       borderWidth: 1,
-      borderColor: '#333',
+      borderColor: '#E5E7EB',
   },
   localeIcon: {
       width: 48,
       height: 48,
       borderRadius: 24,
-      backgroundColor: '#FFF',
+      backgroundColor: '#FFFFFF',
       justifyContent: 'center',
       alignItems: 'center',
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.05,
+      shadowRadius: 2,
+      elevation: 2,
   },
   localeName: {
-      color: '#FFF',
+      color: '#111827',
       fontSize: 16,
       fontWeight: '700',
       marginBottom: 2,
   },
   localeAddress: {
-      color: '#888',
+      color: '#6B7280',
       fontSize: 13,
   },
 
@@ -433,23 +449,28 @@ const styles = StyleSheet.create({
       bottom: 0,
       left: 0,
       right: 0,
-      backgroundColor: 'rgba(18,18,18,0.95)',
+      backgroundColor: 'rgba(255,255,255,0.95)',
       paddingHorizontal: 20,
       paddingTop: 16,
       borderTopWidth: 1,
-      borderTopColor: '#2A2A2A',
+      borderTopColor: '#F3F4F6',
   },
   redeemButton: {
-      backgroundColor: '#FFF',
+      backgroundColor: '#111827',
       height: 56,
       borderRadius: 28,
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
       gap: 8,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.2,
+      shadowRadius: 8,
+      elevation: 4,
   },
   redeemButtonText: {
-      color: '#000',
+      color: '#FFFFFF',
       fontSize: 16,
       fontWeight: 'bold',
   },
