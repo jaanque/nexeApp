@@ -63,7 +63,12 @@ export const ModernRewardCard = React.memo(({ item }: ModernRewardCardProps) => 
             <View style={styles.content}>
                 <View style={styles.textContainer}>
                     <Text style={styles.itemName} numberOfLines={1}>{item.name}</Text>
-                    <Text style={styles.restaurantName} numberOfLines={1}>{item.locales?.name}</Text>
+                    <View style={styles.restaurantRow}>
+                        <Text style={styles.restaurantName} numberOfLines={1}>{item.locales?.name}</Text>
+                        <View style={styles.newBadge}>
+                            <Text style={styles.newBadgeText}>NUEVO</Text>
+                        </View>
+                    </View>
 
                     <View style={styles.priceContainer}>
                         {hasDiscount ? (
@@ -116,10 +121,27 @@ const styles = StyleSheet.create({
         fontWeight: '700',
         letterSpacing: -0.3,
     },
+    restaurantRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+    },
     restaurantName: {
         color: '#6B7280',
         fontSize: 13,
         fontWeight: '500',
+        maxWidth: '75%',
+    },
+    newBadge: {
+        backgroundColor: '#ECFDF5',
+        paddingHorizontal: 6,
+        paddingVertical: 2,
+        borderRadius: 4,
+    },
+    newBadgeText: {
+        color: '#10B981',
+        fontSize: 10,
+        fontWeight: '700',
     },
     priceContainer: {
         marginTop: 8,
