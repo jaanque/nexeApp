@@ -41,8 +41,6 @@ export function ModernRewardCard({ item }: ModernRewardCardProps) {
 
     const formattedOriginal = originalPrice.toLocaleString('es-ES', { minimumFractionDigits: 2 }) + ' €';
     const formattedFinal = finalPrice.toLocaleString('es-ES', { minimumFractionDigits: 2 }) + ' €';
-    const pointsNeeded = item.points_needed ? Math.round(item.points_needed) : 0;
-
     const handlePress = () => {
         if (process.env.EXPO_OS === 'ios') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         router.push(`/restaurant/${item.restaurant_id}`);
@@ -72,9 +70,8 @@ export function ModernRewardCard({ item }: ModernRewardCardProps) {
                         {hasDiscount ? (
                             <View style={styles.discountRow}>
                                 <Text style={styles.originalPriceText}>{formattedOriginal}</Text>
-                                <View style={styles.pointsPill}>
-                                    <Ionicons name="star" size={10} color="#F59E0B" />
-                                    <Text style={styles.pointsText}>{pointsNeeded} pts · -{item.discount_percentage}%</Text>
+                                <View style={styles.discountBadge}>
+                                    <Text style={styles.discountText}>-{item.discount_percentage}%</Text>
                                 </View>
                                 <Text style={styles.finalPriceText}>{formattedFinal}</Text>
                             </View>
@@ -146,33 +143,15 @@ const styles = StyleSheet.create({
         fontWeight: '800',
         letterSpacing: -0.5,
     },
-    pointsPill: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: '#FFFBEB', // Amber 50
+    discountBadge: {
+        backgroundColor: '#EF4444', // Red
         paddingHorizontal: 6,
         paddingVertical: 2,
         borderRadius: 6,
-        gap: 2,
-    },
-    pointsText: {
-        color: '#B45309', // Amber 700
-        fontSize: 11,
-        fontWeight: '700',
-    },
-    discountBadge: {
-        position: 'absolute',
-        top: 8,
-        right: 8,
-        backgroundColor: '#EF4444', // Red
-        paddingHorizontal: 8,
-        paddingVertical: 4,
-        borderRadius: 12,
-        zIndex: 10,
     },
     discountText: {
         color: '#FFFFFF',
-        fontSize: 12,
+        fontSize: 11,
         fontWeight: '700',
     },
 });
