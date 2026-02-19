@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, TouchableOpacity, Dimensions, ActivityIndicator, Share, Alert, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Dimensions, ActivityIndicator, Share, Alert } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
@@ -72,7 +72,6 @@ export default function ItemDetailScreen() {
     scrollY.value = event.contentOffset.y;
   });
 
-  // Flat, simple parallax (scale only, no translate overlap)
   const headerStyle = useAnimatedStyle(() => {
     const scale = interpolate(
       scrollY.value,
@@ -135,25 +134,25 @@ export default function ItemDetailScreen() {
 
   return (
     <View style={styles.container}>
-      <StatusBar style="dark" />
+      <StatusBar style="light" />
       <Stack.Screen options={{ headerShown: false }} />
 
-      {/* Flat Header (Back & Share) - No Blur/Shadow */}
+      {/* Floating Header (Back & Share) */}
       <View style={[styles.floatingHeader, { paddingTop: insets.top + 10 }]}>
          <TouchableOpacity
-            style={styles.iconButtonFlat}
+            style={styles.iconButtonBlur}
             onPress={() => router.back()}
-            activeOpacity={0.7}
+            activeOpacity={0.8}
          >
-            <Ionicons name="arrow-back" size={24} color="#111827" />
+            <Ionicons name="arrow-back" size={24} color="#FFF" />
          </TouchableOpacity>
 
          <TouchableOpacity
-            style={styles.iconButtonFlat}
+            style={styles.iconButtonBlur}
             onPress={handleShare}
-            activeOpacity={0.7}
+            activeOpacity={0.8}
          >
-            <Ionicons name="share-outline" size={24} color="#111827" />
+            <Ionicons name="share-outline" size={22} color="#FFF" />
          </TouchableOpacity>
       </View>
 
@@ -163,32 +162,39 @@ export default function ItemDetailScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 140 }}
       >
-        {/* Clean Image Header */}
+        {/* Parallax Image */}
         <View style={styles.heroImageContainer}>
             <Animated.View style={[styles.imageWrapper, headerStyle]}>
                  <Image source={{ uri: item.image_url }} style={styles.heroImage} contentFit="cover" transition={400} />
             </Animated.View>
         </View>
 
-        {/* Content Body - Flat & Clean */}
+        {/* Content Body - Sheet Design like Home */}
         <View style={styles.contentContainer}>
 
             <Animated.View entering={FadeInDown.delay(100).springify()} style={styles.headerSection}>
-                <View style={[styles.categoryBadge]}>
-                    <Text style={[styles.categoryText]}>NUEVO</Text>
+                <View style={styles.categoryBadge}>
+                    <Text style={styles.categoryText}>ITEM</Text>
                 </View>
                 <Text style={styles.title}>{item.name}</Text>
 
-                {/* Price Display - Large & Bold */}
+                {/* Price Display */}
                 <View style={styles.priceContainer}>
+                    <View style={styles.priceRow}>
+                        <Text style={styles.finalPrice}>
+                            {finalPrice.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}€
+                        </Text>
+                        {hasDiscount && (
+                            <View style={styles.discountBadge}>
+                                <Text style={styles.discountText}>-{item.discount_percentage}%</Text>
+                            </View>
+                        )}
+                    </View>
                     {hasDiscount && (
                         <Text style={styles.originalPrice}>
                             {originalPrice.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}€
                         </Text>
                     )}
-                    <Text style={styles.finalPrice}>
-                        {finalPrice.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}€
-                    </Text>
                 </View>
             </Animated.View>
 
@@ -196,7 +202,7 @@ export default function ItemDetailScreen() {
 
             {/* Description */}
             <Animated.View entering={FadeInDown.delay(200).springify()} style={styles.section}>
-                <Text style={styles.sectionTitle}>Detalles</Text>
+                <Text style={styles.sectionTitle}>Detalles del producto</Text>
                 <Text style={styles.descriptionText}>{item.description}</Text>
             </Animated.View>
 
@@ -212,7 +218,7 @@ export default function ItemDetailScreen() {
                         activeOpacity={0.8}
                     >
                         <View style={styles.localeIcon}>
-                            <Ionicons name="storefront-outline" size={24} color="#111827" />
+                            <Ionicons name="storefront" size={24} color="#121212" />
                         </View>
                         <View style={{flex: 1}}>
                             <Text style={styles.localeName}>{item.locales.name}</Text>
@@ -226,22 +232,20 @@ export default function ItemDetailScreen() {
         </View>
       </Animated.ScrollView>
 
-      {/* Flat Bottom Action Bar */}
+      {/* Bottom Action Bar */}
       <View style={[styles.bottomBar, { paddingBottom: insets.bottom + 16 }]}>
-          <View style={styles.redeemButtonWrapper}>
-            <TouchableOpacity
-                style={styles.redeemButton}
-                onPress={handleRedeem}
-                activeOpacity={0.85}
-            >
-                <Text style={styles.redeemButtonText}>Añadir al carrito</Text>
-                <View style={styles.pricePill}>
-                    <Text style={styles.pricePillText}>
-                        {finalPrice.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}€
-                    </Text>
-                </View>
-            </TouchableOpacity>
-          </View>
+          <TouchableOpacity
+            style={styles.redeemButton}
+            onPress={handleRedeem}
+            activeOpacity={0.9}
+          >
+              <Text style={styles.redeemButtonText}>Añadir al carrito</Text>
+              <View style={styles.pricePill}>
+                <Text style={styles.pricePillText}>
+                    {finalPrice.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}€
+                </Text>
+              </View>
+          </TouchableOpacity>
       </View>
 
     </View>
@@ -251,13 +255,13 @@ export default function ItemDetailScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#121212', // Match Home Background
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#121212',
   },
   floatingHeader: {
     position: 'absolute',
@@ -269,16 +273,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     zIndex: 100,
   },
-  iconButtonFlat: {
+  iconButtonBlur: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'center',
     alignItems: 'center',
-    // No shadow, simple border
     borderWidth: 1,
-    borderColor: 'rgba(0,0,0,0.08)',
+    borderColor: 'rgba(255,255,255,0.2)',
   },
 
   // Hero
@@ -286,7 +289,7 @@ const styles = StyleSheet.create({
     height: PARALLAX_HEADER_HEIGHT,
     width: '100%',
     overflow: 'hidden',
-    backgroundColor: 'transparent',
+    backgroundColor: '#121212',
   },
   imageWrapper: {
       width: '100%',
@@ -297,10 +300,15 @@ const styles = StyleSheet.create({
     height: '100%',
   },
 
-  // Content
+  // Content - Sheet Design
   contentContainer: {
+    marginTop: -40, // Overlap
     paddingHorizontal: 24,
     paddingTop: 32,
+    backgroundColor: '#F9FAFB', // Light Content Background
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
+    minHeight: 600,
   },
   headerSection: {
     marginBottom: 24,
@@ -308,37 +316,39 @@ const styles = StyleSheet.create({
   categoryBadge: {
       alignSelf: 'flex-start',
       paddingHorizontal: 12,
-      paddingVertical: 4,
-      borderRadius: 100,
+      paddingVertical: 6,
+      borderRadius: 8,
       marginBottom: 16,
-      borderWidth: 1,
-      borderColor: '#111827', // Black border default
-      backgroundColor: 'transparent',
+      backgroundColor: '#E5E7EB',
   },
   categoryText: {
-      fontSize: 11,
+      fontSize: 12,
       fontWeight: '800',
       letterSpacing: 1,
       textTransform: 'uppercase',
-      color: '#111827',
+      color: '#374151',
   },
   title: {
-    fontSize: 34,
-    fontWeight: '900', // Extra bold
+    fontSize: 28,
+    fontWeight: '800',
     color: '#111827',
-    marginBottom: 12,
-    letterSpacing: -0.8,
-    lineHeight: 40,
+    marginBottom: 16,
+    letterSpacing: -0.5,
+    lineHeight: 34,
   },
   priceContainer: {
+      alignItems: 'flex-start',
+  },
+  priceRow: {
       flexDirection: 'row',
-      alignItems: 'baseline',
+      alignItems: 'center',
       gap: 12,
+      marginBottom: 4,
   },
   originalPrice: {
       color: '#9CA3AF',
       textDecorationLine: 'line-through',
-      fontSize: 18,
+      fontSize: 16,
       fontWeight: '500',
   },
   finalPrice: {
@@ -347,10 +357,21 @@ const styles = StyleSheet.create({
       letterSpacing: -1,
       color: '#111827',
   },
+  discountBadge: {
+      backgroundColor: '#EF4444',
+      paddingHorizontal: 8,
+      paddingVertical: 4,
+      borderRadius: 6,
+  },
+  discountText: {
+      color: '#FFFFFF',
+      fontSize: 14,
+      fontWeight: '700',
+  },
 
   spacer: {
       height: 1,
-      backgroundColor: 'rgba(0,0,0,0.06)',
+      backgroundColor: '#E5E7EB',
       marginVertical: 24,
   },
 
@@ -358,37 +379,39 @@ const styles = StyleSheet.create({
       marginBottom: 8,
   },
   sectionTitle: {
-      fontSize: 16,
+      fontSize: 18,
       fontWeight: '700',
       color: '#111827',
       marginBottom: 12,
-      textTransform: 'uppercase',
-      letterSpacing: 0.5,
   },
   descriptionText: {
-      fontSize: 17,
+      fontSize: 16,
       color: '#4B5563',
-      lineHeight: 28,
+      lineHeight: 26,
       fontWeight: '400',
   },
 
-  // Locale Card - Flat
+  // Locale Card
   localeCard: {
       flexDirection: 'row',
       alignItems: 'center',
       backgroundColor: '#FFFFFF',
-      padding: 20,
-      borderRadius: 20,
+      padding: 16,
+      borderRadius: 16,
       gap: 16,
-      // Flat Border
       borderWidth: 1,
-      borderColor: 'rgba(0,0,0,0.08)',
+      borderColor: '#E5E7EB',
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.05,
+      shadowRadius: 4,
+      elevation: 2,
   },
   localeIcon: {
       width: 48,
       height: 48,
       borderRadius: 24,
-      backgroundColor: 'rgba(0,0,0,0.04)',
+      backgroundColor: '#F3F4F6',
       justifyContent: 'center',
       alignItems: 'center',
   },
@@ -396,54 +419,53 @@ const styles = StyleSheet.create({
       color: '#111827',
       fontSize: 16,
       fontWeight: '700',
-      marginBottom: 4,
+      marginBottom: 2,
   },
   localeAddress: {
       color: '#6B7280',
-      fontSize: 14,
+      fontSize: 13,
   },
 
-  // Bottom Bar - Flat
+  // Bottom Bar
   bottomBar: {
       position: 'absolute',
       bottom: 0,
       left: 0,
       right: 0,
-      backgroundColor: 'transparent',
+      backgroundColor: '#F9FAFB', // Matches content bg
       paddingHorizontal: 20,
-      paddingTop: 0,
-  },
-  redeemButtonWrapper: {
-      height: 64,
-      borderRadius: 32,
-      overflow: 'hidden',
-      backgroundColor: '#111827', // Static black
+      paddingTop: 16,
+      borderTopWidth: 1,
+      borderTopColor: '#E5E7EB',
   },
   redeemButton: {
-      flex: 1,
+      backgroundColor: '#121212', // Primary Dark
+      height: 60,
+      borderRadius: 30,
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
-      paddingHorizontal: 8, // Inner padding for pill
-      paddingLeft: 24,
+      paddingHorizontal: 24,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.2,
+      shadowRadius: 8,
+      elevation: 4,
   },
   redeemButtonText: {
       color: '#FFFFFF',
-      fontSize: 17,
+      fontSize: 16,
       fontWeight: '700',
-      letterSpacing: -0.3,
   },
   pricePill: {
-      backgroundColor: '#FFFFFF',
-      paddingHorizontal: 16,
-      paddingVertical: 10,
-      borderRadius: 24,
-      minWidth: 80,
-      alignItems: 'center',
+      backgroundColor: 'rgba(255,255,255,0.2)',
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+      borderRadius: 20,
   },
   pricePillText: {
-      fontSize: 16,
-      fontWeight: '800',
-      color: '#111827',
+      color: '#FFFFFF',
+      fontSize: 15,
+      fontWeight: '700',
   },
 });
