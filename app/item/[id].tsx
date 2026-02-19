@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, TouchableOpacity, Dimensions, ActivityIndicator, Share, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Dimensions, ActivityIndicator, Share, Alert, Platform } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
@@ -12,10 +12,14 @@ import Animated, {
   interpolate,
   Extrapolation,
   useAnimatedScrollHandler,
-  FadeInDown
+  FadeInDown,
+  withTiming,
+  withDelay
 } from 'react-native-reanimated';
 import { StatusBar } from 'expo-status-bar';
 import * as Haptics from 'expo-haptics';
+import { getColors } from 'react-native-image-colors';
+import { hexToRgba } from '@/lib/colorGenerator';
 
 const { width } = Dimensions.get('window');
 const PARALLAX_HEADER_HEIGHT = 350;
@@ -42,6 +46,9 @@ export default function ItemDetailScreen() {
   const [item, setItem] = useState<ItemDetail | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Background Color Animation
+  const backgroundColor = useSharedValue('rgba(255,255,255,1)');
+
   const scrollY = useSharedValue(0);
 
   useEffect(() => {
@@ -57,6 +64,37 @@ export default function ItemDetailScreen() {
 
         if (error) throw error;
         setItem(data);
+
+        // Extract Colors
+        if (data.image_url) {
+            getColors(data.image_url, {
+                fallback: '#FFFFFF',
+                cache: true,
+                key: data.image_url,
+            }).then((colors) => {
+                let primary = '#FFFFFF';
+                if (Platform.OS === 'android') {
+                    // @ts-ignore
+                    primary = colors.dominant;
+                } else if (Platform.OS === 'ios') {
+                    // @ts-ignore
+                    primary = colors.primary;
+                } else {
+                    // Web fallback (react-native-image-colors support varies on web)
+                    // @ts-ignore
+                    primary = colors.dominant || '#FFFFFF';
+                }
+
+                // Set to a very light, subtle version of the color (e.g., 5-8% opacity)
+                // If the detected color is very light or white, fallback to white to avoid muddy colors
+                if (primary !== '#FFFFFF') {
+                     // Using hexToRgba helper
+                     const subtleColor = hexToRgba(primary, 0.08); // 8% opacity
+                     backgroundColor.value = withTiming(subtleColor, { duration: 1000 });
+                }
+            }).catch(err => console.log('Color extraction error:', err));
+        }
+
       } catch (error) {
         console.error("Error fetching item:", error);
         Alert.alert("Error", "No se pudo cargar el item.");
@@ -71,6 +109,12 @@ export default function ItemDetailScreen() {
 
   const scrollHandler = useAnimatedScrollHandler((event) => {
     scrollY.value = event.contentOffset.y;
+  });
+
+  const animatedBackgroundStyle = useAnimatedStyle(() => {
+      return {
+          backgroundColor: backgroundColor.value,
+      };
   });
 
   const headerStyle = useAnimatedStyle(() => {
@@ -140,7 +184,7 @@ export default function ItemDetailScreen() {
   if (!item) return null;
 
   return (
-    <View style={styles.container}>
+    <Animated.View style={[styles.container, animatedBackgroundStyle]}>
       <StatusBar style="dark" />
       <Stack.Screen options={{ headerShown: false }} />
 
@@ -173,14 +217,15 @@ export default function ItemDetailScreen() {
         <Animated.View style={[styles.heroImageContainer, headerStyle]}>
             <Image source={{ uri: item.image_url }} style={styles.heroImage} contentFit="cover" transition={300} />
             <LinearGradient
-                colors={['rgba(255,255,255,0.1)', 'transparent', 'transparent', '#FFFFFF']}
+                colors={['rgba(255,255,255,0.1)', 'transparent', 'transparent', backgroundColor.value]}
                 style={styles.heroGradient}
                 locations={[0, 0.2, 0.8, 1]}
             />
         </Animated.View>
 
         {/* Content Body */}
-        <View style={styles.contentContainer}>
+        {/* We use an animated style here too to blend the sheet with the background nicely */}
+        <Animated.View style={[styles.contentContainer, animatedBackgroundStyle]}>
 
             <Animated.View entering={FadeInDown.delay(100).springify()} style={styles.headerSection}>
                 <View style={styles.categoryBadge}>
@@ -231,7 +276,7 @@ export default function ItemDetailScreen() {
                 </Animated.View>
             )}
 
-        </View>
+        </Animated.View>
       </Animated.ScrollView>
 
       {/* Sticky Bottom Action */}
@@ -253,14 +298,14 @@ export default function ItemDetailScreen() {
           </TouchableOpacity>
       </Animated.View>
 
-    </View>
+    </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#FFFFFF', // Fallback
   },
   loadingContainer: {
     flex: 1,
@@ -333,12 +378,14 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   categoryBadge: {
-      backgroundColor: '#F3F4F6',
+      backgroundColor: 'rgba(255,255,255,0.5)', // More translucent on colored bg
       alignSelf: 'flex-start',
       paddingHorizontal: 12,
       paddingVertical: 6,
       borderRadius: 8,
       marginBottom: 12,
+      borderWidth: 1,
+      borderColor: 'rgba(0,0,0,0.05)',
   },
   categoryText: {
       color: '#4B5563',
@@ -359,20 +406,6 @@ const styles = StyleSheet.create({
       alignItems: 'center',
       justifyContent: 'space-between',
   },
-  pointsBadge: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      backgroundColor: '#FEF3C7',
-      paddingHorizontal: 12,
-      paddingVertical: 8,
-      borderRadius: 12,
-      gap: 6,
-  },
-  pointsText: {
-      color: '#B45309',
-      fontSize: 18,
-      fontWeight: '800',
-  },
   euroPriceContainer: {
       flexDirection: 'column',
       alignItems: 'flex-start',
@@ -391,7 +424,7 @@ const styles = StyleSheet.create({
 
   divider: {
       height: 1,
-      backgroundColor: '#F3F4F6',
+      backgroundColor: 'rgba(0,0,0,0.05)', // Use alpha for better blending
       marginBottom: 24,
   },
 
@@ -414,12 +447,12 @@ const styles = StyleSheet.create({
   localeCard: {
       flexDirection: 'row',
       alignItems: 'center',
-      backgroundColor: '#F9FAFB',
+      backgroundColor: 'rgba(255,255,255,0.6)', // Semi-transparent
       padding: 16,
       borderRadius: 16,
       gap: 16,
       borderWidth: 1,
-      borderColor: '#E5E7EB',
+      borderColor: 'rgba(0,0,0,0.05)',
   },
   localeIcon: {
       width: 48,
@@ -451,11 +484,12 @@ const styles = StyleSheet.create({
       bottom: 0,
       left: 0,
       right: 0,
+      // We don't apply background color here to keep it "floating" visually or just white
       backgroundColor: 'rgba(255,255,255,0.95)',
       paddingHorizontal: 20,
       paddingTop: 16,
       borderTopWidth: 1,
-      borderTopColor: '#F3F4F6',
+      borderTopColor: 'rgba(0,0,0,0.05)',
   },
   redeemButton: {
       backgroundColor: '#111827',
