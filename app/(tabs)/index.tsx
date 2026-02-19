@@ -1,11 +1,9 @@
-import { CategoryFilterItem } from '@/components/CategoryFilterItem';
 import { HomeScreenSkeleton } from '@/components/HomeScreenSkeleton';
-import { Banner, MarketingSlider } from '@/components/MarketingSlider';
+import { HomeBanners, HomeCategories, HomeSection, HomeSortChips, Category, SortOption, MenuItemResult } from '@/components/home/HomeSections';
+import { Banner } from '@/components/MarketingSlider';
 import { ModernBusinessCard } from '@/components/ModernBusinessCard';
-import { ModernRewardCard } from '@/components/ModernRewardCard';
 import { ModernHeader } from '@/components/ui/ModernHeader';
 import { supabase } from '@/lib/supabase';
-import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Session } from '@supabase/supabase-js';
 import * as Haptics from 'expo-haptics';
@@ -13,8 +11,7 @@ import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, FlatList, ListRenderItem, Platform, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, UIManager, View } from 'react-native';
-import Animated, { FadeInDown } from 'react-native-reanimated';
+import { ActivityIndicator, FlatList, ListRenderItem, Platform, RefreshControl, StyleSheet, Text, UIManager, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 // Enable LayoutAnimation on Android
@@ -34,29 +31,6 @@ interface Restaurant {
   category_id?: number;
   opening_time?: string;
   closing_time?: string;
-}
-
-type SortOption = 'default' | 'distance' | 'rating';
-
-interface Category {
-  id: number;
-  name: string;
-  emoji: string;
-  color?: string;
-}
-
-interface MenuItemResult {
-    id: number;
-    name: string;
-    description: string;
-    price_euros?: number;
-    discount_percentage?: number;
-    image_url: string;
-    restaurant_id: number;
-    locales: {
-        name: string;
-    } | null;
-    category_id?: number;
 }
 
 const PAGE_SIZE = 10;
@@ -169,11 +143,7 @@ export default function HomeScreen() {
 
         // Apply Sorting
         if (sortBy === 'distance' && userLocation) {
-            // For distance, we currently fetch a larger set (client-side sort limitation)
-            // Ideally we'd use a PostGIS RPC, but for now we fetch top 50 to sort
-            // Note: Pagination with client-side sort is tricky. We'll fetch a fixed limit.
              if (pageNumber === 0) {
-                 // Fetch more for distance to be somewhat accurate
                  const { data, count } = await query.limit(50);
                  if (data) {
                      const sorted = [...data].sort((a, b) => {
@@ -182,10 +152,9 @@ export default function HomeScreen() {
                         return distA - distB;
                      });
                      setRestaurants(sorted);
-                     setHasMore(false); // Disable "load more" for distance sort to avoid complexity
+                     setHasMore(false);
                  }
              }
-             // If page > 0, do nothing for distance sort (single page mode)
         } else {
             // Server-side Sort & Pagination
             if (sortBy === 'rating') {
@@ -239,7 +208,7 @@ export default function HomeScreen() {
       }
 
       let location = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.Balanced, // Reduced from Highest for performance/battery
+        accuracy: Location.Accuracy.Balanced,
       });
       const newLat = location.coords.latitude;
       const newLong = location.coords.longitude;
@@ -318,12 +287,11 @@ export default function HomeScreen() {
 
   async function fetchFeaturedItems() {
     try {
-      // Reduced limit to 20 for horizontal lists (optimization)
       const { data: menuData } = await supabase.from('items').select('*, locales(name)').limit(20);
       if (menuData) {
           const typedMenuData = menuData as unknown as MenuItemResult[];
           setAllRewards(typedMenuData);
-          setRewardItems(typedMenuData); // Initial set (can be filtered later client-side if needed for small datasets)
+          setRewardItems(typedMenuData);
 
           const shuffled = [...typedMenuData].sort(() => 0.5 - Math.random());
           setTrendingItems(shuffled.slice(0, 5));
@@ -331,7 +299,6 @@ export default function HomeScreen() {
     } catch (error) { console.error("Error fetching featured items:", error); }
   }
 
-  // Filter rewards/trending locally when category changes (small dataset)
   useEffect(() => {
       if (activeCategory === null) {
           setRewardItems(allRewards);
@@ -340,10 +307,6 @@ export default function HomeScreen() {
           setRewardItems(filteredRewards);
       }
   }, [activeCategory, allRewards]);
-
-  const renderRewardItem: ListRenderItem<MenuItemResult> = useCallback(({ item }) => (
-      <ModernRewardCard item={item} />
-  ), []);
 
   const renderFooter = useCallback(() => {
       if (!loadingMore) return null;
@@ -365,125 +328,37 @@ export default function HomeScreen() {
         />
 
         <View style={styles.headerContentWrapper}>
-            {/* Marketing Banners */}
-            <View style={{ marginTop: 12 }}>
-                <MarketingSlider banners={banners} />
-            </View>
+            <HomeBanners banners={banners} />
 
-            {/* Categories List */}
-            <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.filterContent}
-                style={{ flexGrow: 0, marginBottom: 24, marginTop: 16 }}
-            >
-                {categories.map((cat) => (
-                    <CategoryFilterItem
-                        key={cat.id}
-                        item={cat}
-                        isActive={activeCategory === cat.id}
-                        onPress={() => setActiveCategory(activeCategory === cat.id ? null : cat.id)}
-                    />
-                ))}
-            </ScrollView>
+            <HomeCategories
+                categories={categories}
+                activeCategory={activeCategory}
+                setActiveCategory={setActiveCategory}
+            />
 
-            {/* Trending Section */}
             {trendingItems.length > 0 && (
-                <Animated.View entering={FadeInDown.delay(100).springify()} style={styles.sectionContainer}>
-                    <View style={styles.sectionHeader}>
-                        <Text style={styles.sectionTitle}>🔥 Últimas unidades (Vuelan)</Text>
-                        <TouchableOpacity style={styles.viewAllButton} onPress={() => router.push('/(tabs)/explore')}>
-                            <Text style={styles.viewAllText}>Ver todo</Text>
-                            <Ionicons name="arrow-forward" size={16} color="#111827" />
-                        </TouchableOpacity>
-                    </View>
-                    <FlatList
-                        data={trendingItems}
-                        renderItem={renderRewardItem}
-                        keyExtractor={(item) => item.id.toString()}
-                        horizontal
-                        showsHorizontalScrollIndicator={false}
-                        contentContainerStyle={styles.carouselContent}
-                        initialNumToRender={3}
-                        maxToRenderPerBatch={3}
-                        windowSize={3}
-                    />
-                </Animated.View>
+                <HomeSection
+                    title="🔥 Últimas unidades (Vuelan)"
+                    items={trendingItems}
+                    delay={100}
+                />
             )}
 
-            {/* Rewards Section */}
             {rewardItems.length > 0 && (
-                <Animated.View entering={FadeInDown.delay(100).springify()} style={styles.sectionContainer}>
-                    <View style={styles.sectionHeader}>
-                        <Text style={styles.sectionTitle}>Liquidación Total</Text>
-                        <TouchableOpacity style={styles.viewAllButton} onPress={() => router.push('/(tabs)/explore')}>
-                            <Text style={styles.viewAllText}>Ver todo</Text>
-                            <Ionicons name="arrow-forward" size={16} color="#111827" />
-                        </TouchableOpacity>
-                    </View>
-                    <FlatList
-                        data={rewardItems}
-                        renderItem={renderRewardItem}
-                        keyExtractor={(item) => item.id.toString()}
-                        horizontal
-                        showsHorizontalScrollIndicator={false}
-                        contentContainerStyle={styles.carouselContent}
-                        initialNumToRender={3}
-                        maxToRenderPerBatch={3}
-                        windowSize={3}
-                    />
-                </Animated.View>
+                <HomeSection
+                    title="Liquidación Total"
+                    items={rewardItems}
+                    delay={100}
+                />
             )}
 
-            {/* Restaurants List Header */}
-            <Animated.View entering={FadeInDown.delay(200).springify()}>
-                <View style={[styles.sectionHeader, { marginBottom: 12 }]}>
-                    <Text style={styles.sectionTitle}>Tiendas en Liquidación</Text>
-                </View>
-
-                {/* Sort Chips */}
-                <ScrollView
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                    contentContainerStyle={styles.chipsContent}
-                    style={{ marginBottom: 20 }}
-                >
-                    <TouchableOpacity
-                        style={[styles.chip, sortBy === 'default' && styles.activeChip]}
-                        onPress={() => {
-                            Haptics.selectionAsync();
-                            setSortBy('default');
-                        }}
-                    >
-                        <Text style={[styles.chipText, sortBy === 'default' && styles.activeChipText]}>Recomendados</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                        style={[styles.chip, sortBy === 'distance' && styles.activeChip]}
-                        onPress={() => {
-                            Haptics.selectionAsync();
-                            setSortBy('distance');
-                        }}
-                    >
-                        <Ionicons name="location-sharp" size={14} color={sortBy === 'distance' ? '#FFF' : '#374151'} />
-                        <Text style={[styles.chipText, sortBy === 'distance' && styles.activeChipText]}>Cerca de mí</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                        style={[styles.chip, sortBy === 'rating' && styles.activeChip]}
-                        onPress={() => {
-                            Haptics.selectionAsync();
-                            setSortBy('rating');
-                        }}
-                    >
-                        <Ionicons name="star" size={14} color={sortBy === 'rating' ? '#FFF' : '#374151'} />
-                        <Text style={[styles.chipText, sortBy === 'rating' && styles.activeChipText]}>Mejor valorados</Text>
-                    </TouchableOpacity>
-                </ScrollView>
-            </Animated.View>
+            <HomeSortChips
+                sortBy={sortBy}
+                setSortBy={setSortBy}
+            />
         </View>
       </View>
-  ), [banners, categories, activeCategory, trendingItems, rewardItems, sortBy, address, loadingMore]);
+  ), [banners, categories, activeCategory, trendingItems, rewardItems, sortBy, address]);
 
   const renderRestaurantItem: ListRenderItem<Restaurant> = useCallback(({ item, index }) => {
       const distance = (userLocation && item.latitude && item.longitude)
@@ -504,11 +379,6 @@ export default function HomeScreen() {
 
   const handleLoadMore = () => {
       if (!loadingMore && hasMore && sortBy !== 'distance') {
-          // Only load more if not sorting by distance (which uses fetch-all currently)
-          // and if we have more pages
-           // Use the current page state, incremented
-           const nextPage = Math.ceil(restaurants.length / PAGE_SIZE);
-           // Actually, simpler: Use the 'page' state variable we manage
            fetchRestaurants(page, false);
       }
   };
@@ -532,9 +402,9 @@ export default function HomeScreen() {
         scrollEnabled={true}
         numColumns={2}
         key={2}
-        initialNumToRender={4} // Optimized: Only render visible items (approx 2 rows)
-        maxToRenderPerBatch={4} // Optimized
-        windowSize={3} // Optimized: Reduce memory footprint
+        initialNumToRender={4}
+        maxToRenderPerBatch={4}
+        windowSize={3}
         removeClippedSubviews={true}
         onEndReached={handleLoadMore}
         onEndReachedThreshold={0.5}
@@ -574,69 +444,5 @@ const styles = StyleSheet.create({
       flex: 1,
       margin: 6,
       maxWidth: '50%',
-  },
-  filterContent: {
-      paddingHorizontal: 20,
-      paddingVertical: 4,
-      alignItems: 'center',
-  },
-  sectionContainer: {
-      marginBottom: 32,
-  },
-  sectionHeader: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      paddingHorizontal: 20,
-      marginBottom: 16,
-  },
-  sectionTitle: {
-      fontSize: 20,
-      fontWeight: '800',
-      color: '#111827',
-      letterSpacing: -0.5,
-  },
-  viewAllButton: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 4,
-      padding: 4,
-      opacity: 0.7,
-  },
-  viewAllText: {
-      color: '#111827',
-      fontSize: 14,
-      fontWeight: '700',
-  },
-  carouselContent: {
-      paddingHorizontal: 20,
-      paddingRight: 4,
-  },
-  chipsContent: {
-      paddingHorizontal: 20,
-      gap: 10,
-  },
-  chip: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      paddingHorizontal: 16,
-      paddingVertical: 8,
-      borderRadius: 20,
-      backgroundColor: '#FFFFFF',
-      borderWidth: 1,
-      borderColor: '#E5E7EB',
-      gap: 6,
-  },
-  activeChip: {
-      backgroundColor: '#111827',
-      borderColor: '#111827',
-  },
-  chipText: {
-      fontSize: 14,
-      fontWeight: '600',
-      color: '#374151',
-  },
-  activeChipText: {
-      color: '#FFFFFF',
   },
 });
