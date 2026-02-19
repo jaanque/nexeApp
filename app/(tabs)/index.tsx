@@ -282,7 +282,7 @@ export default function HomeScreen() {
           setAllRestaurants(restData);
           setPopularRestaurants(restData);
       }
-      const { data: menuData } = await supabase.from('menu_items').select('*, restaurants(name)').limit(50);
+      const { data: menuData } = await supabase.from('items').select('*, restaurants(name)').limit(50);
       if (menuData) {
           // Explicitly cast the Supabase response to our defined type
           const typedMenuData = menuData as unknown as MenuItemResult[];
