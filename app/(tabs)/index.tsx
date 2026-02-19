@@ -441,7 +441,6 @@ export default function HomeScreen() {
 
       <ModernHeader
         address={address}
-        points={points}
         onAddressPress={() => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
             // Future: Open address selector modal

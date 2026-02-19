@@ -7,7 +7,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface ModernHeaderProps {
     address: string;
-    points: number;
     onAddressPress: () => void;
     onWalletPress: () => void;
     onProfilePress: () => void;
@@ -16,7 +15,6 @@ interface ModernHeaderProps {
 
 export function ModernHeader({
     address,
-    points,
     onAddressPress,
     onWalletPress,
     onProfilePress,
@@ -72,8 +70,6 @@ export function ModernHeader({
         };
     });
 
-    const formattedPoints = points.toLocaleString('es-ES');
-
     return (
         <Animated.View style={[styles.container, animatedContainerStyle]}>
             <View style={styles.headerRow}>
@@ -102,16 +98,6 @@ export function ModernHeader({
 
                 {/* Right Actions Group */}
                 <View style={styles.rightActions}>
-                    {/* Points Pill */}
-                    <TouchableOpacity
-                        onPress={() => handlePress(onWalletPress)}
-                        style={styles.pointsPill}
-                        activeOpacity={0.7}
-                    >
-                         <Ionicons name="star" size={14} color="#FFD700" style={{marginRight: 6}} />
-                         <Text style={styles.pointsText}>{formattedPoints}</Text>
-                    </TouchableOpacity>
-
                     {/* Profile Button - Circular */}
                     <TouchableOpacity
                         onPress={() => handlePress(onProfilePress)}
@@ -195,22 +181,6 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         gap: 8,
-    },
-    pointsPill: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: 'rgba(255, 255, 255, 0.08)',
-        height: 40,
-        paddingHorizontal: 14,
-        borderRadius: 100,
-        borderWidth: 1,
-        borderColor: 'rgba(255, 255, 255, 0.05)',
-    },
-    pointsText: {
-        color: '#FFFFFF',
-        fontSize: 13,
-        fontWeight: '700',
-        letterSpacing: 0.5,
     },
     profileButton: {
         width: 44,
