@@ -190,11 +190,6 @@ export default function ItemDetailScreen() {
 
                 {/* Price Row */}
                 <View style={styles.priceRow}>
-                    <View style={styles.pointsBadge}>
-                        <Ionicons name="flash" size={16} color="#B45309" />
-                        <Text style={styles.pointsText}>{pointsNeeded} pts</Text>
-                    </View>
-
                     <View style={styles.euroPriceContainer}>
                         {hasDiscount && (
                             <Text style={styles.originalPrice}>
@@ -212,7 +207,7 @@ export default function ItemDetailScreen() {
 
             {/* Description */}
             <Animated.View entering={FadeInDown.delay(300).springify()} style={styles.section}>
-                <Text style={styles.sectionTitle}>Descripción</Text>
+                <Text style={styles.sectionTitle}>Detalles del producto</Text>
                 <Text style={styles.descriptionText}>{item.description}</Text>
             </Animated.View>
 
@@ -246,8 +241,15 @@ export default function ItemDetailScreen() {
             onPress={handleRedeem}
             activeOpacity={0.9}
           >
-              <Text style={styles.redeemButtonText}>Canjear por {pointsNeeded} pts</Text>
-              <Ionicons name="arrow-forward" size={20} color="#FFF" />
+              <View style={{flexDirection: 'column', alignItems: 'flex-start'}}>
+                <Text style={styles.redeemButtonText}>Añadir al carrito</Text>
+                <Text style={styles.redeemButtonSubtext}>
+                    {finalPrice.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}€
+                </Text>
+              </View>
+              <View style={styles.cartIconContainer}>
+                <Ionicons name="cart" size={20} color="#000" />
+              </View>
           </TouchableOpacity>
       </Animated.View>
 
@@ -373,7 +375,7 @@ const styles = StyleSheet.create({
   },
   euroPriceContainer: {
       flexDirection: 'column',
-      alignItems: 'flex-end',
+      alignItems: 'flex-start',
   },
   originalPrice: {
       color: '#9CA3AF',
@@ -457,21 +459,35 @@ const styles = StyleSheet.create({
   },
   redeemButton: {
       backgroundColor: '#111827',
-      height: 56,
-      borderRadius: 28,
+      height: 64,
+      borderRadius: 32,
       flexDirection: 'row',
       alignItems: 'center',
-      justifyContent: 'center',
-      gap: 8,
+      justifyContent: 'space-between',
+      paddingHorizontal: 24,
       shadowColor: '#000',
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.2,
-      shadowRadius: 8,
-      elevation: 4,
+      shadowOffset: { width: 0, height: 8 },
+      shadowOpacity: 0.25,
+      shadowRadius: 16,
+      elevation: 8,
   },
   redeemButtonText: {
       color: '#FFFFFF',
       fontSize: 16,
       fontWeight: 'bold',
+      marginBottom: 2,
+  },
+  redeemButtonSubtext: {
+      color: '#9CA3AF',
+      fontSize: 13,
+      fontWeight: '500',
+  },
+  cartIconContainer: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      backgroundColor: '#FFFFFF',
+      justifyContent: 'center',
+      alignItems: 'center',
   },
 });
