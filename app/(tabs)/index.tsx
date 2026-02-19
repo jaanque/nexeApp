@@ -361,7 +361,6 @@ export default function HomeScreen() {
             onAddressPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
             }}
-            onWalletPress={() => router.push('/(tabs)/wallet')}
             onProfilePress={() => router.push('/(tabs)/profile')}
         />
 
@@ -378,12 +377,18 @@ export default function HomeScreen() {
                 contentContainerStyle={styles.filterContent}
                 style={{ flexGrow: 0, marginBottom: 24, marginTop: 16 }}
             >
+                <CategoryFilterItem
+                    key="all"
+                    item={{ id: -1, name: 'Todo', emoji: '🔍' }}
+                    isActive={activeCategory === null}
+                    onPress={() => setActiveCategory(null)}
+                />
                 {categories.map((cat) => (
                     <CategoryFilterItem
                         key={cat.id}
                         item={cat}
                         isActive={activeCategory === cat.id}
-                        onPress={() => setActiveCategory(activeCategory === cat.id ? null : cat.id)}
+                        onPress={() => setActiveCategory(cat.id)}
                     />
                 ))}
             </ScrollView>
@@ -413,10 +418,6 @@ export default function HomeScreen() {
                 <Animated.View entering={FadeInDown.delay(100).springify()} style={styles.sectionContainer}>
                     <View style={styles.sectionHeader}>
                         <Text style={styles.sectionTitle}>Liquidación Total</Text>
-                        <TouchableOpacity style={styles.viewAllButton}>
-                            <Text style={styles.viewAllText}>Ver todo</Text>
-                            <Ionicons name="chevron-forward" size={16} color="#111827" />
-                        </TouchableOpacity>
                     </View>
                     <FlatList
                         data={rewardItems}
@@ -535,6 +536,15 @@ export default function HomeScreen() {
         removeClippedSubviews={true}
         onEndReached={handleLoadMore}
         onEndReachedThreshold={0.5}
+        ListEmptyComponent={
+            !loading ? (
+                <View style={{ padding: 40, alignItems: 'center' }}>
+                    <Text style={{ fontSize: 16, color: '#6B7280', textAlign: 'center' }}>
+                        No se encontraron tiendas en esta categoría.
+                    </Text>
+                </View>
+            ) : null
+        }
         refreshControl={
             <RefreshControl
                 refreshing={refreshing}
