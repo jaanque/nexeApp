@@ -18,8 +18,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { StatusBar } from 'expo-status-bar';
 import * as Haptics from 'expo-haptics';
-import { getColors } from 'react-native-image-colors';
-import { hexToRgba } from '@/lib/colorGenerator';
+import { hexToRgba, getCategoryColor } from '@/lib/colorGenerator';
 
 const { width } = Dimensions.get('window');
 const PARALLAX_HEADER_HEIGHT = 350;
@@ -65,34 +64,12 @@ export default function ItemDetailScreen() {
         if (error) throw error;
         setItem(data);
 
-        // Extract Colors
-        if (data.image_url) {
-            getColors(data.image_url, {
-                fallback: '#FFFFFF',
-                cache: true,
-                key: data.image_url,
-            }).then((colors) => {
-                let primary = '#FFFFFF';
-                if (Platform.OS === 'android') {
-                    // @ts-ignore
-                    primary = colors.dominant;
-                } else if (Platform.OS === 'ios') {
-                    // @ts-ignore
-                    primary = colors.primary;
-                } else {
-                    // Web fallback (react-native-image-colors support varies on web)
-                    // @ts-ignore
-                    primary = colors.dominant || '#FFFFFF';
-                }
-
-                // Set to a very light, subtle version of the color (e.g., 5-8% opacity)
-                // If the detected color is very light or white, fallback to white to avoid muddy colors
-                if (primary !== '#FFFFFF') {
-                     // Using hexToRgba helper
-                     const subtleColor = hexToRgba(primary, 0.08); // 8% opacity
-                     backgroundColor.value = withTiming(subtleColor, { duration: 1000 });
-                }
-            }).catch(err => console.log('Color extraction error:', err));
+        // Use Item Name to generate a consistent subtle tint
+        if (data.name) {
+             const primary = getCategoryColor(data.name);
+             // Very light, subtle opacity (8%) for a premium, non-muddy look
+             const subtleColor = hexToRgba(primary, 0.08);
+             backgroundColor.value = withTiming(subtleColor, { duration: 1000 });
         }
 
       } catch (error) {
