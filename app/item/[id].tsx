@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
   useSharedValue,
@@ -14,14 +13,16 @@ import Animated, {
   useAnimatedScrollHandler,
   FadeInDown,
   withTiming,
-  withDelay
+  withDelay,
+  Easing
 } from 'react-native-reanimated';
 import { StatusBar } from 'expo-status-bar';
 import * as Haptics from 'expo-haptics';
-import { hexToRgba, getCategoryColor } from '@/lib/colorGenerator';
+import { getColors } from 'react-native-image-colors';
+import { hexToRgba } from '@/lib/colorGenerator';
 
 const { width } = Dimensions.get('window');
-const PARALLAX_HEADER_HEIGHT = 350;
+const PARALLAX_HEADER_HEIGHT = 420;
 
 interface ItemDetail {
   id: number;
@@ -45,8 +46,10 @@ export default function ItemDetailScreen() {
   const [item, setItem] = useState<ItemDetail | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Background Color Animation
-  const backgroundColor = useSharedValue('rgba(255,255,255,1)');
+  // Dynamic Colors
+  const dominantColor = useSharedValue<string>('#FFFFFF');
+  const tintColor = useSharedValue<string>('rgba(255,255,255,1)');
+  const [accentColor, setAccentColor] = useState<string>('#111827'); // Default black for buttons
 
   const scrollY = useSharedValue(0);
 
@@ -64,12 +67,36 @@ export default function ItemDetailScreen() {
         if (error) throw error;
         setItem(data);
 
-        // Use Item Name to generate a consistent subtle tint
-        if (data.name) {
-             const primary = getCategoryColor(data.name);
-             // Very light, subtle opacity (8%) for a premium, non-muddy look
-             const subtleColor = hexToRgba(primary, 0.08);
-             backgroundColor.value = withTiming(subtleColor, { duration: 1000 });
+        // Extract Colors
+        if (data.image_url) {
+            getColors(data.image_url, {
+                fallback: '#FFFFFF',
+                cache: true,
+                key: data.image_url,
+            }).then((colors) => {
+                let primary = '#FFFFFF';
+                if (Platform.OS === 'android') {
+                    // @ts-ignore
+                    primary = colors.dominant;
+                } else if (Platform.OS === 'ios') {
+                    // @ts-ignore
+                    primary = colors.primary;
+                } else {
+                    // Web fallback (react-native-image-colors support varies on web)
+                    // @ts-ignore
+                    primary = colors.dominant || '#FFFFFF';
+                }
+
+                if (primary && primary !== '#FFFFFF') {
+                     // Main accent color for buttons/highlights
+                     setAccentColor(primary);
+                     dominantColor.value = withTiming(primary, { duration: 800 });
+
+                     // Background tint (very subtle, almost white but tinted)
+                     const subtle = hexToRgba(primary, 0.12);
+                     tintColor.value = withTiming(subtle, { duration: 1000, easing: Easing.out(Easing.exp) });
+                }
+            }).catch(err => console.log('Color extraction error:', err));
         }
 
       } catch (error) {
@@ -90,26 +117,28 @@ export default function ItemDetailScreen() {
 
   const animatedBackgroundStyle = useAnimatedStyle(() => {
       return {
-          backgroundColor: backgroundColor.value,
+          backgroundColor: tintColor.value,
       };
   });
 
+  // Flat, simple parallax (scale only, no translate overlap)
   const headerStyle = useAnimatedStyle(() => {
     const scale = interpolate(
       scrollY.value,
       [-PARALLAX_HEADER_HEIGHT, 0],
-      [2, 1],
-      Extrapolation.CLAMP
-    );
-    const translateY = interpolate(
-      scrollY.value,
-      [-PARALLAX_HEADER_HEIGHT, 0, PARALLAX_HEADER_HEIGHT],
-      [-PARALLAX_HEADER_HEIGHT / 2, 0, PARALLAX_HEADER_HEIGHT * 0.75],
+      [1.5, 1],
       Extrapolation.CLAMP
     );
     return {
-      transform: [{ scale }, { translateY }],
+      transform: [{ scale }],
     };
+  });
+
+  // Button Color Animation
+  const animatedButtonStyle = useAnimatedStyle(() => {
+      return {
+          backgroundColor: dominantColor.value === '#FFFFFF' ? '#111827' : dominantColor.value,
+      };
   });
 
   const handleShare = async () => {
@@ -165,22 +194,22 @@ export default function ItemDetailScreen() {
       <StatusBar style="dark" />
       <Stack.Screen options={{ headerShown: false }} />
 
-      {/* Floating Header (Back & Share) */}
+      {/* Flat Header (Back & Share) - No Blur/Shadow */}
       <View style={[styles.floatingHeader, { paddingTop: insets.top + 10 }]}>
          <TouchableOpacity
-            style={styles.iconButtonBlur}
+            style={styles.iconButtonFlat}
             onPress={() => router.back()}
-            activeOpacity={0.8}
+            activeOpacity={0.7}
          >
-            <Ionicons name="arrow-back" size={24} color="#121212" />
+            <Ionicons name="arrow-back" size={24} color="#111827" />
          </TouchableOpacity>
 
          <TouchableOpacity
-            style={styles.iconButtonBlur}
+            style={styles.iconButtonFlat}
             onPress={handleShare}
-            activeOpacity={0.8}
+            activeOpacity={0.7}
          >
-            <Ionicons name="share-outline" size={22} color="#121212" />
+            <Ionicons name="share-outline" size={24} color="#111827" />
          </TouchableOpacity>
       </View>
 
@@ -188,61 +217,58 @@ export default function ItemDetailScreen() {
         onScroll={scrollHandler}
         scrollEventThrottle={16}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 120 }}
+        contentContainerStyle={{ paddingBottom: 140 }}
       >
-        {/* Parallax Image */}
-        <Animated.View style={[styles.heroImageContainer, headerStyle]}>
-            <Image source={{ uri: item.image_url }} style={styles.heroImage} contentFit="cover" transition={300} />
-            <LinearGradient
-                colors={['rgba(255,255,255,0.1)', 'transparent', 'transparent', backgroundColor.value]}
-                style={styles.heroGradient}
-                locations={[0, 0.2, 0.8, 1]}
-            />
-        </Animated.View>
+        {/* Clean Image Header */}
+        <View style={styles.heroImageContainer}>
+            <Animated.View style={[styles.imageWrapper, headerStyle]}>
+                 <Image source={{ uri: item.image_url }} style={styles.heroImage} contentFit="cover" transition={400} />
+            </Animated.View>
+        </View>
 
-        {/* Content Body */}
-        {/* We use an animated style here too to blend the sheet with the background nicely */}
-        <Animated.View style={[styles.contentContainer, animatedBackgroundStyle]}>
+        {/* Content Body - Flat & Clean */}
+        <View style={styles.contentContainer}>
 
             <Animated.View entering={FadeInDown.delay(100).springify()} style={styles.headerSection}>
-                <View style={styles.categoryBadge}>
-                    <Text style={styles.categoryText}>ITEM</Text>
+                <View style={[styles.categoryBadge, { borderColor: accentColor }]}>
+                    <Text style={[styles.categoryText, { color: accentColor }]}>NUEVO</Text>
                 </View>
                 <Text style={styles.title}>{item.name}</Text>
 
-                {/* Price Row */}
-                <View style={styles.priceRow}>
-                    <View style={styles.euroPriceContainer}>
-                        {hasDiscount && (
-                            <Text style={styles.originalPrice}>
-                                {originalPrice.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}€
-                            </Text>
-                        )}
-                        <Text style={styles.finalPrice}>
-                            {finalPrice.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}€
+                {/* Price Display - Large & Bold */}
+                <View style={styles.priceContainer}>
+                    {hasDiscount && (
+                        <Text style={styles.originalPrice}>
+                            {originalPrice.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}€
                         </Text>
-                    </View>
+                    )}
+                    <Text style={[styles.finalPrice, { color: accentColor }]}>
+                        {finalPrice.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}€
+                    </Text>
                 </View>
             </Animated.View>
 
-            <Animated.View entering={FadeInDown.delay(200).springify()} style={styles.divider} />
+            <View style={styles.spacer} />
 
             {/* Description */}
-            <Animated.View entering={FadeInDown.delay(300).springify()} style={styles.section}>
-                <Text style={styles.sectionTitle}>Detalles del producto</Text>
+            <Animated.View entering={FadeInDown.delay(200).springify()} style={styles.section}>
+                <Text style={styles.sectionTitle}>Detalles</Text>
                 <Text style={styles.descriptionText}>{item.description}</Text>
             </Animated.View>
 
+            <View style={styles.spacer} />
+
             {/* Availability / Locale */}
             {item.locales && (
-                <Animated.View entering={FadeInDown.delay(400).springify()} style={styles.section}>
+                <Animated.View entering={FadeInDown.delay(300).springify()} style={styles.section}>
                     <Text style={styles.sectionTitle}>Disponible en</Text>
                     <TouchableOpacity
                         style={styles.localeCard}
                         onPress={() => router.push(`/restaurant/${item.locales?.id}`)}
+                        activeOpacity={0.8}
                     >
                         <View style={styles.localeIcon}>
-                            <Ionicons name="storefront" size={24} color="#121212" />
+                            <Ionicons name="storefront-outline" size={24} color={accentColor} />
                         </View>
                         <View style={{flex: 1}}>
                             <Text style={styles.localeName}>{item.locales.name}</Text>
@@ -253,27 +279,26 @@ export default function ItemDetailScreen() {
                 </Animated.View>
             )}
 
-        </Animated.View>
+        </View>
       </Animated.ScrollView>
 
-      {/* Sticky Bottom Action */}
-      <Animated.View entering={FadeInDown.delay(500)} style={[styles.bottomBar, { paddingBottom: insets.bottom + 16 }]}>
-          <TouchableOpacity
-            style={styles.redeemButton}
-            onPress={handleRedeem}
-            activeOpacity={0.9}
-          >
-              <View style={{flexDirection: 'column', alignItems: 'flex-start'}}>
+      {/* Flat Bottom Action Bar */}
+      <View style={[styles.bottomBar, { paddingBottom: insets.bottom + 16 }]}>
+          <Animated.View style={[styles.redeemButtonWrapper, animatedButtonStyle]}>
+            <TouchableOpacity
+                style={styles.redeemButton}
+                onPress={handleRedeem}
+                activeOpacity={0.85}
+            >
                 <Text style={styles.redeemButtonText}>Añadir al carrito</Text>
-                <Text style={styles.redeemButtonSubtext}>
-                    {finalPrice.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}€
-                </Text>
-              </View>
-              <View style={styles.cartIconContainer}>
-                <Ionicons name="cart" size={20} color="#000" />
-              </View>
-          </TouchableOpacity>
-      </Animated.View>
+                <View style={styles.pricePill}>
+                    <Text style={[styles.pricePillText, { color: accentColor }]}>
+                        {finalPrice.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}€
+                    </Text>
+                </View>
+            </TouchableOpacity>
+          </Animated.View>
+      </View>
 
     </Animated.View>
   );
@@ -282,7 +307,7 @@ export default function ItemDetailScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF', // Fallback
+    backgroundColor: '#FFFFFF',
   },
   loadingContainer: {
     flex: 1,
@@ -300,205 +325,176 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     zIndex: 100,
   },
-  iconButtonBlur: {
+  iconButtonFlat: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: 'rgba(255,255,255,0.8)',
+    backgroundColor: '#FFFFFF',
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    // No shadow, simple border
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.08)',
   },
 
   // Hero
   heroImageContainer: {
     height: PARALLAX_HEADER_HEIGHT,
     width: '100%',
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    zIndex: -1,
+    overflow: 'hidden',
+    backgroundColor: 'transparent',
+  },
+  imageWrapper: {
+      width: '100%',
+      height: '100%',
   },
   heroImage: {
     width: '100%',
     height: '100%',
   },
-  heroGradient: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-  },
 
   // Content
   contentContainer: {
-    marginTop: PARALLAX_HEADER_HEIGHT - 60,
     paddingHorizontal: 24,
-    backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: 32,
-    borderTopRightRadius: 32,
     paddingTop: 32,
-    minHeight: 800,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 5,
   },
   headerSection: {
     marginBottom: 24,
   },
   categoryBadge: {
-      backgroundColor: 'rgba(255,255,255,0.5)', // More translucent on colored bg
       alignSelf: 'flex-start',
       paddingHorizontal: 12,
-      paddingVertical: 6,
-      borderRadius: 8,
-      marginBottom: 12,
+      paddingVertical: 4,
+      borderRadius: 100,
+      marginBottom: 16,
       borderWidth: 1,
-      borderColor: 'rgba(0,0,0,0.05)',
+      backgroundColor: 'rgba(255,255,255,0.8)',
   },
   categoryText: {
-      color: '#4B5563',
-      fontSize: 12,
-      fontWeight: '700',
+      fontSize: 11,
+      fontWeight: '800',
       letterSpacing: 1,
+      textTransform: 'uppercase',
   },
   title: {
-    fontSize: 32,
-    fontWeight: '800',
+    fontSize: 34,
+    fontWeight: '900', // Extra bold
     color: '#111827',
-    marginBottom: 16,
-    letterSpacing: -0.5,
-    lineHeight: 38,
+    marginBottom: 12,
+    letterSpacing: -0.8,
+    lineHeight: 40,
   },
-  priceRow: {
+  priceContainer: {
       flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-  },
-  euroPriceContainer: {
-      flexDirection: 'column',
-      alignItems: 'flex-start',
+      alignItems: 'baseline',
+      gap: 12,
   },
   originalPrice: {
       color: '#9CA3AF',
       textDecorationLine: 'line-through',
-      fontSize: 14,
+      fontSize: 18,
       fontWeight: '500',
   },
   finalPrice: {
-      color: '#111827',
-      fontSize: 20,
-      fontWeight: '700',
+      fontSize: 32,
+      fontWeight: '800',
+      letterSpacing: -1,
   },
 
-  divider: {
+  spacer: {
       height: 1,
-      backgroundColor: 'rgba(0,0,0,0.05)', // Use alpha for better blending
-      marginBottom: 24,
+      backgroundColor: 'rgba(0,0,0,0.06)',
+      marginVertical: 24,
   },
 
   section: {
-      marginBottom: 32,
+      marginBottom: 8,
   },
   sectionTitle: {
-      fontSize: 18,
+      fontSize: 16,
       fontWeight: '700',
       color: '#111827',
       marginBottom: 12,
+      textTransform: 'uppercase',
+      letterSpacing: 0.5,
   },
   descriptionText: {
-      fontSize: 16,
+      fontSize: 17,
       color: '#4B5563',
-      lineHeight: 26,
+      lineHeight: 28,
+      fontWeight: '400',
   },
 
-  // Locale Card
+  // Locale Card - Flat
   localeCard: {
       flexDirection: 'row',
       alignItems: 'center',
-      backgroundColor: 'rgba(255,255,255,0.6)', // Semi-transparent
-      padding: 16,
-      borderRadius: 16,
+      backgroundColor: '#FFFFFF',
+      padding: 20,
+      borderRadius: 20,
       gap: 16,
+      // Flat Border
       borderWidth: 1,
-      borderColor: 'rgba(0,0,0,0.05)',
+      borderColor: 'rgba(0,0,0,0.08)',
   },
   localeIcon: {
       width: 48,
       height: 48,
       borderRadius: 24,
-      backgroundColor: '#FFFFFF',
+      backgroundColor: 'rgba(0,0,0,0.04)',
       justifyContent: 'center',
       alignItems: 'center',
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.05,
-      shadowRadius: 2,
-      elevation: 2,
   },
   localeName: {
       color: '#111827',
       fontSize: 16,
       fontWeight: '700',
-      marginBottom: 2,
+      marginBottom: 4,
   },
   localeAddress: {
       color: '#6B7280',
-      fontSize: 13,
+      fontSize: 14,
   },
 
-  // Bottom Bar
+  // Bottom Bar - Flat
   bottomBar: {
       position: 'absolute',
       bottom: 0,
       left: 0,
       right: 0,
-      // We don't apply background color here to keep it "floating" visually or just white
-      backgroundColor: 'rgba(255,255,255,0.95)',
+      backgroundColor: 'transparent',
       paddingHorizontal: 20,
-      paddingTop: 16,
-      borderTopWidth: 1,
-      borderTopColor: 'rgba(0,0,0,0.05)',
+      paddingTop: 0,
   },
-  redeemButton: {
-      backgroundColor: '#111827',
+  redeemButtonWrapper: {
       height: 64,
       borderRadius: 32,
+      overflow: 'hidden',
+  },
+  redeemButton: {
+      flex: 1,
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
-      paddingHorizontal: 24,
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 8 },
-      shadowOpacity: 0.25,
-      shadowRadius: 16,
-      elevation: 8,
+      paddingHorizontal: 8, // Inner padding for pill
+      paddingLeft: 24,
   },
   redeemButtonText: {
       color: '#FFFFFF',
-      fontSize: 16,
-      fontWeight: 'bold',
-      marginBottom: 2,
+      fontSize: 17,
+      fontWeight: '700',
+      letterSpacing: -0.3,
   },
-  redeemButtonSubtext: {
-      color: '#9CA3AF',
-      fontSize: 13,
-      fontWeight: '500',
-  },
-  cartIconContainer: {
-      width: 40,
-      height: 40,
-      borderRadius: 20,
+  pricePill: {
       backgroundColor: '#FFFFFF',
-      justifyContent: 'center',
+      paddingHorizontal: 16,
+      paddingVertical: 10,
+      borderRadius: 24,
+      minWidth: 80,
       alignItems: 'center',
+  },
+  pricePillText: {
+      fontSize: 16,
+      fontWeight: '800',
   },
 });
