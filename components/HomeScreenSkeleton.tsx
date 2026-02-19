@@ -36,7 +36,7 @@ const Skeleton = ({ width, height, borderRadius, style }: { width: number | stri
                     width,
                     height,
                     borderRadius,
-                    backgroundColor: '#E5E7EB',
+                    backgroundColor: '#F3F4F6', // Light Gray for skeleton pulse
                     opacity,
                 },
                 style,
@@ -47,21 +47,23 @@ const Skeleton = ({ width, height, borderRadius, style }: { width: number | stri
 
 export function HomeScreenSkeleton() {
   const insets = useSafeAreaInsets();
-  const HEADER_HEIGHT = insets.top + 60;
 
   return (
     <View style={styles.container}>
-      {/* 1. Header Area - ModernHeader Match */}
-      <View style={[styles.headerContainer, { paddingTop: insets.top + 12 }]}>
+      {/* 1. Header Area - Matches ModernHeader (Flat, White) */}
+      <View style={[styles.headerContainer, { paddingTop: insets.top + 10 }]}>
          <View style={styles.headerTopRow}>
-            {/* Address Placeholder */}
-             <View style={{ gap: 4 }}>
-                 <Skeleton width={80} height={14} borderRadius={4} style={{ backgroundColor: '#333' }} />
-                 <Skeleton width={180} height={20} borderRadius={6} style={{ backgroundColor: '#333' }} />
+            {/* Address Placeholder (Left) */}
+             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                 <Skeleton width={36} height={36} borderRadius={18} style={{ marginRight: 12 }} />
+                 <View style={{ gap: 4 }}>
+                     <Skeleton width={80} height={10} borderRadius={4} />
+                     <Skeleton width={140} height={14} borderRadius={4} />
+                 </View>
              </View>
 
-            {/* Points Pill Placeholder */}
-            <Skeleton width={90} height={36} borderRadius={20} style={{ backgroundColor: '#333' }} />
+            {/* Profile Placeholder (Right) */}
+            <Skeleton width={40} height={40} borderRadius={20} />
          </View>
       </View>
 
@@ -80,51 +82,35 @@ export function HomeScreenSkeleton() {
             <View style={styles.categoriesContainer}>
                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20 }}>
                  {[1, 2, 3, 4, 5, 6].map((i) => (
-                    <View key={i} style={{ alignItems: 'center', marginRight: 16 }}>
-                        <Skeleton width={72} height={72} borderRadius={24} style={{ marginBottom: 8 }} />
-                        <Skeleton width={50} height={10} borderRadius={4} />
+                    <View key={i} style={{ alignItems: 'center', marginRight: 10 }}>
+                        <Skeleton width={100} height={40} borderRadius={16} />
                     </View>
                  ))}
                </ScrollView>
             </View>
 
-            {/* 4. Trending Section Skeleton */}
+            {/* 4. Trending/Rewards Horizontal List Skeleton */}
             <View style={styles.sectionContainer}>
-                 <View style={{ paddingHorizontal: 20, marginBottom: 16 }}>
-                    <Skeleton width={200} height={24} borderRadius={6} />
+                 <View style={{ paddingHorizontal: 20, marginBottom: 16, flexDirection: 'row', justifyContent: 'space-between' }}>
+                    <Skeleton width={180} height={20} borderRadius={6} />
                  </View>
                  <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20 }}>
                      {[1, 2, 3].map((i) => (
                          <View key={i} style={{ marginRight: 16 }}>
+                             {/* Card Image */}
                              <Skeleton width={SCREEN_WIDTH * 0.7} height={(SCREEN_WIDTH * 0.7) * 0.6} borderRadius={20} style={{ marginBottom: 12 }} />
-                             <Skeleton width={120} height={16} borderRadius={4} style={{ marginBottom: 6 }} />
-                             <Skeleton width={180} height={14} borderRadius={4} />
+                             {/* Text Lines */}
+                             <Skeleton width={120} height={14} borderRadius={4} style={{ marginBottom: 6 }} />
+                             <Skeleton width={80} height={14} borderRadius={4} />
                          </View>
                      ))}
                  </ScrollView>
             </View>
 
-             {/* 5. Rewards Section Skeleton */}
-             <View style={styles.sectionContainer}>
-                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 20, marginBottom: 16 }}>
-                    <Skeleton width={150} height={24} borderRadius={6} />
-                    <Skeleton width={60} height={16} borderRadius={4} />
-                 </View>
-                 <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20 }}>
-                     {[1, 2].map((i) => (
-                         <View key={i} style={{ marginRight: 16 }}>
-                             <Skeleton width={SCREEN_WIDTH * 0.7} height={(SCREEN_WIDTH * 0.7) * 0.6} borderRadius={20} style={{ marginBottom: 12 }} />
-                             <Skeleton width={100} height={16} borderRadius={4} style={{ marginBottom: 6 }} />
-                             <Skeleton width={160} height={14} borderRadius={4} />
-                         </View>
-                     ))}
-                 </ScrollView>
-            </View>
-
-            {/* 6. Restaurant List Skeleton */}
+            {/* 5. Restaurant List Skeleton (Grid) */}
             <View style={styles.listContainer}>
-                 <View style={{ paddingHorizontal: 20, marginBottom: 20 }}>
-                    <Skeleton width={180} height={24} borderRadius={6} style={{ marginBottom: 12 }} />
+                 <View style={{ paddingHorizontal: 20, marginBottom: 16 }}>
+                    <Skeleton width={150} height={20} borderRadius={6} style={{ marginBottom: 12 }} />
 
                     {/* Filter Chips */}
                     <View style={{ flexDirection: 'row', gap: 10 }}>
@@ -134,16 +120,17 @@ export function HomeScreenSkeleton() {
                     </View>
                  </View>
 
-                 {[1, 2].map((i) => (
-                     <View key={i} style={styles.cardContainer}>
-                         <Skeleton width="100%" height={240} borderRadius={24} style={{ marginBottom: 0 }} />
-                         {/* We simulate the overlay text with positioned absolute skeletons if we wanted precise matching,
-                             but for a general loading state, a simple card block is often cleaner.
-                             Let's add a small 'content' block below to simulate the text area if it wasn't overlay.
-                             Actually, ModernBusinessCard has overlay text. So a big block is fine.
-                         */}
-                     </View>
-                 ))}
+                 <View style={styles.gridContainer}>
+                     {[1, 2, 3, 4].map((i) => (
+                         <View key={i} style={styles.gridItem}>
+                             {/* Image Top */}
+                             <Skeleton width="100%" height={140} borderRadius={16} style={{ marginBottom: 8 }} />
+                             {/* Content Bottom */}
+                             <Skeleton width="80%" height={14} borderRadius={4} style={{ marginBottom: 6 }} />
+                             <Skeleton width="50%" height={12} borderRadius={4} />
+                         </View>
+                     ))}
+                 </View>
             </View>
         </View>
       </ScrollView>
@@ -154,13 +141,12 @@ export function HomeScreenSkeleton() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#121212', // Match Main Background
+    backgroundColor: '#FFFFFF', // Light Background
   },
   headerContainer: {
       paddingHorizontal: 20,
-      paddingBottom: 24,
-      backgroundColor: '#121212',
-      zIndex: 10,
+      paddingBottom: 16,
+      backgroundColor: '#FFFFFF',
   },
   headerTopRow: {
       flexDirection: 'row',
@@ -168,41 +154,34 @@ const styles = StyleSheet.create({
       alignItems: 'center',
   },
   scrollView: {
-      backgroundColor: '#121212',
+      backgroundColor: '#FFFFFF',
   },
   contentWrapper: {
-      backgroundColor: '#F9FAFB', // Light Sheet
-      borderTopLeftRadius: 32,
-      borderTopRightRadius: 32,
-      paddingTop: 24,
+      paddingTop: 12, // Reduced top padding
       paddingBottom: 40,
-      minHeight: 800, // Ensure it fills screen
-      marginTop: -12,
   },
   sliderContainer: {
       alignItems: 'center',
-      marginBottom: 32,
+      marginBottom: 24,
       paddingHorizontal: 20,
   },
   categoriesContainer: {
-      marginBottom: 40,
+      marginBottom: 32,
   },
   sectionContainer: {
-      marginBottom: 40,
+      marginBottom: 32,
   },
   listContainer: {
       width: '100%',
   },
-  cardContainer: {
-      marginBottom: 24,
-      marginHorizontal: 20,
-      borderRadius: 24,
-      overflow: 'hidden',
-      backgroundColor: '#fff', // Or skeleton color
-      shadowColor: "#000",
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.1,
-      shadowRadius: 12,
-      elevation: 4,
+  gridContainer: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      paddingHorizontal: 14, // Matches FlatList padding
+  },
+  gridItem: {
+      width: '50%', // 2 columns
+      padding: 6,
+      marginBottom: 16,
   }
 });
