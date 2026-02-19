@@ -1,3 +1,4 @@
+import { getOptimizedImageSource } from '@/lib/imageOptimization';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { Image } from 'expo-image';
@@ -53,7 +54,7 @@ export const ModernRewardCard = React.memo(({ item }: ModernRewardCardProps) => 
         >
             <View style={styles.imageContainer}>
                 <Image
-                    source={{ uri: item.image_url }}
+                    source={getOptimizedImageSource(item.image_url, 300)}
                     style={styles.image}
                     contentFit="cover"
                     transition={200}
