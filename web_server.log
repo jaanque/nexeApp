@@ -42,3 +42,15 @@ Web Bundled 67ms node_modules/expo-router/entry.js (1 module)
 "shadow*" style props are deprecated. Use "boxShadow".
 "textShadow*" style props are deprecated. Use "textShadow".
 Web Bundled 481ms node_modules/expo-router/entry.js (1 module)
+Web node_modules/expo-router/entry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+λ Bundled 456ms node_modules/expo-router/node/render.js (1 module)
+"shadow*" style props are deprecated. Use "boxShadow".
+"textShadow*" style props are deprecated. Use "textShadow".
+Web Bundled 2021ms node_modules/expo-router/entry.js (1 module)
+Web Bundled 254ms node_modules/expo-router/entry.js (1 module)
+ LOG  [web] Logs will appear in the browser console
+λ Bundled 133ms node_modules/expo-router/node/render.js (1 module)
+"shadow*" style props are deprecated. Use "boxShadow".
+"textShadow*" style props are deprecated. Use "textShadow".
+Web Bundled 1107ms node_modules/expo-router/entry.js (1 module)
+Killed

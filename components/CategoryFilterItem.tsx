@@ -2,6 +2,7 @@ import * as Haptics from 'expo-haptics';
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
+import { getCategoryColor } from '@/lib/colorGenerator';
 
 interface CategoryFilterItemProps {
   item: { id: number; name: string; emoji: string; color?: string };
@@ -11,6 +12,7 @@ interface CategoryFilterItemProps {
 
 export function CategoryFilterItem({ item, isActive, onPress }: CategoryFilterItemProps) {
   const scale = useSharedValue(1);
+  const categoryColor = item.color || getCategoryColor(item.name);
 
   const handlePressIn = () => {
     scale.value = withSpring(0.95);
@@ -36,7 +38,9 @@ export function CategoryFilterItem({ item, isActive, onPress }: CategoryFilterIt
         <TouchableOpacity
             style={[
                 styles.container,
-                isActive ? styles.activeContainer : styles.inactiveContainer,
+                isActive
+                  ? { backgroundColor: categoryColor, borderColor: categoryColor }
+                  : styles.inactiveContainer,
             ]}
             onPress={handlePress}
             onPressIn={handlePressIn}
@@ -69,10 +73,6 @@ const styles = StyleSheet.create({
   inactiveContainer: {
       backgroundColor: '#F3F4F6', // Light gray
       borderColor: '#F3F4F6', // Match background
-  },
-  activeContainer: {
-      backgroundColor: '#111827', // Black
-      borderColor: '#111827', // Black border
   },
   emojiContainer: {
       marginRight: 8,
