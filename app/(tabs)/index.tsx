@@ -13,7 +13,7 @@ import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect, useState } from 'react';
-import { FlatList, ListRenderItem, Platform, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, UIManager, View } from 'react-native';
+import { ActivityIndicator, FlatList, ListRenderItem, Platform, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, UIManager, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -59,19 +59,29 @@ interface MenuItemResult {
     category_id?: number;
 }
 
+const PAGE_SIZE = 10;
+
 export default function HomeScreen() {
   const [session, setSession] = useState<Session | null>(null);
   const [points, setPoints] = useState<number>(0);
-  const [popularRestaurants, setPopularRestaurants] = useState<Restaurant[]>([]);
-  const [sortedRestaurants, setSortedRestaurants] = useState<Restaurant[]>([]);
+
+  // Restaurant Data State
+  const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
+  const [page, setPage] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+
+  // Other Data State
   const [rewardItems, setRewardItems] = useState<MenuItemResult[]>([]);
   const [trendingItems, setTrendingItems] = useState<MenuItemResult[]>([]);
-  const [allRestaurants, setAllRestaurants] = useState<Restaurant[]>([]);
   const [allRewards, setAllRewards] = useState<MenuItemResult[]>([]);
+
   const [loading, setLoading] = useState(true);
   const [categories, setCategories] = useState<Category[]>([]);
   const [banners, setBanners] = useState<Banner[]>([]);
   const [userLocation, setUserLocation] = useState<{ latitude: number, longitude: number } | null>(null);
+
+  // Filter & Sort State
   const [activeCategory, setActiveCategory] = useState<number | null>(null);
   const [sortBy, setSortBy] = useState<SortOption>('default');
   const [refreshing, setRefreshing] = useState(false);
@@ -103,66 +113,113 @@ export default function HomeScreen() {
 
   const fetchAllData = async () => {
       setLoading(true);
-      await Promise.all([
-          fetchCategories(),
-          fetchRestaurantsAndRewards(),
-          fetchBanners()
-      ]);
+
+      // Critical Path: Banners, Categories, and First Page of Restaurants
+      // Featured items (Trending/Rewards) are non-critical and can load lazily
+      const p1 = fetchCategories();
+      const p2 = fetchBanners();
+      const p3 = fetchRestaurants(0, true);
+      const p4 = fetchFeaturedItems();
+
+      await Promise.all([p1, p2, p3]);
       setLoading(false);
   };
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    await Promise.all([
-        fetchCategories(),
-        fetchRestaurantsAndRewards(),
-        fetchBanners(),
-        session?.user ? fetchPoints(session.user.id) : Promise.resolve(),
-        getUserLocation()
-    ]);
+
+    // Reset state
+    setPage(0);
+    setHasMore(true);
+
+    const p1 = fetchCategories();
+    const p2 = fetchBanners();
+    const p3 = fetchRestaurants(0, true);
+    const p4 = fetchFeaturedItems();
+    const p5 = session?.user ? fetchPoints(session.user.id) : Promise.resolve();
+    const p6 = getUserLocation();
+
+    await Promise.all([p1, p2, p3, p5, p6]);
     setRefreshing(false);
   }, [session]);
 
-  // Filtering Logic
+  // Sorting Effect - Refetch when sort changes
   useEffect(() => {
-      if (activeCategory === null) {
-          setPopularRestaurants(allRestaurants);
-          setRewardItems(allRewards);
-      } else {
-          const filteredRest = allRestaurants.filter(r => r.category_id === activeCategory);
-          setPopularRestaurants(filteredRest);
-
-          const filteredRewards = allRewards.filter(i => i.category_id === activeCategory);
-          setRewardItems(filteredRewards);
+      if (!loading) {
+        setPage(0);
+        setHasMore(true);
+        setRestaurants([]); // Clear current list to avoid mixing sort orders
+        fetchRestaurants(0, true);
       }
-  }, [activeCategory, allRestaurants, allRewards]);
+  }, [sortBy, activeCategory]); // Also refetch when category changes
 
-  // Sorting Logic
-  useEffect(() => {
-      if (popularRestaurants.length > 0) {
-          let sorted = [...popularRestaurants];
+  async function fetchRestaurants(pageNumber: number, reset = false) {
+    if (pageNumber > 0 && !hasMore) return;
 
-          if (sortBy === 'distance' && userLocation) {
-               sorted.sort((a, b) => {
-                  const distA = (a.latitude && a.longitude) ? getDistanceInMeters(userLocation.latitude, userLocation.longitude, a.latitude, a.longitude) : Infinity;
-                  const distB = (b.latitude && b.longitude) ? getDistanceInMeters(userLocation.latitude, userLocation.longitude, b.latitude, b.longitude) : Infinity;
-                  return distA - distB;
-              });
-          } else if (sortBy === 'rating') {
-              sorted.sort((a, b) => (b.rating || 0) - (a.rating || 0));
-          } else {
-               if (userLocation) {
-                    sorted.sort((a, b) => {
+    try {
+        if (!reset) setLoadingMore(true);
+
+        let query = supabase.from('locales').select('*', { count: 'exact' });
+
+        // Apply Category Filter
+        if (activeCategory !== null) {
+            query = query.eq('category_id', activeCategory);
+        }
+
+        // Apply Sorting
+        if (sortBy === 'distance' && userLocation) {
+            // For distance, we currently fetch a larger set (client-side sort limitation)
+            // Ideally we'd use a PostGIS RPC, but for now we fetch top 50 to sort
+            // Note: Pagination with client-side sort is tricky. We'll fetch a fixed limit.
+             if (pageNumber === 0) {
+                 // Fetch more for distance to be somewhat accurate
+                 const { data, count } = await query.limit(50);
+                 if (data) {
+                     const sorted = [...data].sort((a, b) => {
                         const distA = (a.latitude && a.longitude) ? getDistanceInMeters(userLocation.latitude, userLocation.longitude, a.latitude, a.longitude) : Infinity;
                         const distB = (b.latitude && b.longitude) ? getDistanceInMeters(userLocation.latitude, userLocation.longitude, b.latitude, b.longitude) : Infinity;
                         return distA - distB;
-                    });
-               }
-          }
-          setSortedRestaurants(sorted);
-      }
-  }, [popularRestaurants, userLocation, sortBy]);
+                     });
+                     setRestaurants(sorted);
+                     setHasMore(false); // Disable "load more" for distance sort to avoid complexity
+                 }
+             }
+             // If page > 0, do nothing for distance sort (single page mode)
+        } else {
+            // Server-side Sort & Pagination
+            if (sortBy === 'rating') {
+                query = query.order('rating', { ascending: false });
+            } else {
+                query = query.order('id', { ascending: true }); // Default
+            }
+
+            const from = pageNumber * PAGE_SIZE;
+            const to = from + PAGE_SIZE - 1;
+
+            const { data, count } = await query.range(from, to);
+
+            if (data) {
+                if (reset) {
+                    setRestaurants(data);
+                } else {
+                    setRestaurants(prev => [...prev, ...data]);
+                }
+
+                // Check if we reached the end
+                if (data.length < PAGE_SIZE || (count && (from + data.length) >= count)) {
+                    setHasMore(false);
+                } else {
+                    setPage(pageNumber + 1);
+                }
+            }
+        }
+    } catch (error) {
+        console.error("Error fetching restaurants:", error);
+    } finally {
+        setLoadingMore(false);
+    }
+  }
 
   async function getUserLocation() {
     try {
@@ -182,7 +239,7 @@ export default function HomeScreen() {
       }
 
       let location = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.Highest,
+        accuracy: Location.Accuracy.Balanced, // Reduced from Highest for performance/battery
       });
       const newLat = location.coords.latitude;
       const newLong = location.coords.longitude;
@@ -259,28 +316,43 @@ export default function HomeScreen() {
       } catch (e) { console.error("Error banners:", e); }
   }
 
-  async function fetchRestaurantsAndRewards() {
+  async function fetchFeaturedItems() {
     try {
-      const { data: restData } = await supabase.from('locales').select('*').limit(100);
-      if (restData) {
-          setAllRestaurants(restData);
-          setPopularRestaurants(restData);
-      }
-      const { data: menuData } = await supabase.from('items').select('*, locales(name)').limit(50);
+      // Reduced limit to 20 for horizontal lists (optimization)
+      const { data: menuData } = await supabase.from('items').select('*, locales(name)').limit(20);
       if (menuData) {
           const typedMenuData = menuData as unknown as MenuItemResult[];
           setAllRewards(typedMenuData);
-          setRewardItems(typedMenuData);
+          setRewardItems(typedMenuData); // Initial set (can be filtered later client-side if needed for small datasets)
 
           const shuffled = [...typedMenuData].sort(() => 0.5 - Math.random());
           setTrendingItems(shuffled.slice(0, 5));
       }
-    } catch (error) { console.error("Error data:", error); }
+    } catch (error) { console.error("Error fetching featured items:", error); }
   }
+
+  // Filter rewards/trending locally when category changes (small dataset)
+  useEffect(() => {
+      if (activeCategory === null) {
+          setRewardItems(allRewards);
+      } else {
+          const filteredRewards = allRewards.filter(i => i.category_id === activeCategory);
+          setRewardItems(filteredRewards);
+      }
+  }, [activeCategory, allRewards]);
 
   const renderRewardItem: ListRenderItem<MenuItemResult> = useCallback(({ item }) => (
       <ModernRewardCard item={item} />
   ), []);
+
+  const renderFooter = useCallback(() => {
+      if (!loadingMore) return null;
+      return (
+          <View style={{ paddingVertical: 20 }}>
+              <ActivityIndicator size="small" color="#111827" />
+          </View>
+      );
+  }, [loadingMore]);
 
   const renderHeader = useCallback(() => (
       <View>
@@ -329,6 +401,9 @@ export default function HomeScreen() {
                         horizontal
                         showsHorizontalScrollIndicator={false}
                         contentContainerStyle={styles.carouselContent}
+                        initialNumToRender={3}
+                        maxToRenderPerBatch={3}
+                        windowSize={3}
                     />
                 </Animated.View>
             )}
@@ -350,6 +425,9 @@ export default function HomeScreen() {
                         horizontal
                         showsHorizontalScrollIndicator={false}
                         contentContainerStyle={styles.carouselContent}
+                        initialNumToRender={3}
+                        maxToRenderPerBatch={3}
+                        windowSize={3}
                     />
                 </Animated.View>
             )}
@@ -402,7 +480,7 @@ export default function HomeScreen() {
             </Animated.View>
         </View>
       </View>
-  ), [banners, categories, activeCategory, trendingItems, rewardItems, sortBy, address]);
+  ), [banners, categories, activeCategory, trendingItems, rewardItems, sortBy, address, loadingMore]);
 
   const renderRestaurantItem: ListRenderItem<Restaurant> = useCallback(({ item, index }) => {
       const distance = (userLocation && item.latitude && item.longitude)
@@ -421,6 +499,17 @@ export default function HomeScreen() {
       );
   }, [userLocation]);
 
+  const handleLoadMore = () => {
+      if (!loadingMore && hasMore && sortBy !== 'distance') {
+          // Only load more if not sorting by distance (which uses fetch-all currently)
+          // and if we have more pages
+           // Use the current page state, incremented
+           const nextPage = Math.ceil(restaurants.length / PAGE_SIZE);
+           // Actually, simpler: Use the 'page' state variable we manage
+           fetchRestaurants(page, false);
+      }
+  };
+
   if (loading) return <HomeScreenSkeleton />;
 
   return (
@@ -428,10 +517,11 @@ export default function HomeScreen() {
       <StatusBar style="dark" />
 
       <FlatList
-        data={sortedRestaurants}
+        data={restaurants}
         renderItem={renderRestaurantItem}
         keyExtractor={(item) => item.id.toString()}
         ListHeaderComponent={renderHeader}
+        ListFooterComponent={renderFooter}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 100 }}
         columnWrapperStyle={{ paddingHorizontal: 14 }}
@@ -439,10 +529,12 @@ export default function HomeScreen() {
         scrollEnabled={true}
         numColumns={2}
         key={2}
-        initialNumToRender={6}
-        maxToRenderPerBatch={6}
-        windowSize={5}
+        initialNumToRender={4} // Optimized: Only render visible items (approx 2 rows)
+        maxToRenderPerBatch={4} // Optimized
+        windowSize={3} // Optimized: Reduce memory footprint
         removeClippedSubviews={true}
+        onEndReached={handleLoadMore}
+        onEndReachedThreshold={0.5}
         refreshControl={
             <RefreshControl
                 refreshing={refreshing}
