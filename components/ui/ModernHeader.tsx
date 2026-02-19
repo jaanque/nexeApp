@@ -2,7 +2,6 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import Animated, { Extrapolation, interpolate, runOnJS, SharedValue, useAnimatedReaction, useAnimatedStyle } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface ModernHeaderProps {
@@ -10,7 +9,6 @@ interface ModernHeaderProps {
     onAddressPress: () => void;
     onWalletPress: () => void;
     onProfilePress: () => void;
-    scrollY: SharedValue<number>;
 }
 
 export function ModernHeader({
@@ -18,169 +16,119 @@ export function ModernHeader({
     onAddressPress,
     onWalletPress,
     onProfilePress,
-    scrollY
 }: ModernHeaderProps) {
     const insets = useSafeAreaInsets();
-    // Calculate the full height of the header including safe area
-    // Increased height slightly to accommodate potentially 2 lines of address
-    const HEADER_HEIGHT = insets.top + 80;
-    const COLLAPSE_THRESHOLD = 80; // Scroll distance to trigger full collapse
 
     const handlePress = (action: () => void) => {
         if (process.env.EXPO_OS === 'ios') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         action();
     };
 
-    const triggerHaptic = () => {
-        if (process.env.EXPO_OS === 'ios') {
-             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-        }
-    };
-
-    useAnimatedReaction(
-        () => scrollY.value > COLLAPSE_THRESHOLD,
-        (isCollapsed, prevIsCollapsed) => {
-            if (isCollapsed !== prevIsCollapsed) {
-                runOnJS(triggerHaptic)();
-            }
-        },
-        [scrollY]
-    );
-
-    const animatedContainerStyle = useAnimatedStyle(() => {
-        const translateY = interpolate(
-            scrollY.value,
-            [0, COLLAPSE_THRESHOLD],
-            [0, -HEADER_HEIGHT],
-            Extrapolation.CLAMP
-        );
-
-        const opacity = interpolate(
-            scrollY.value,
-            [0, COLLAPSE_THRESHOLD * 0.8], // Fade out slightly before full collapse
-            [1, 0],
-            Extrapolation.CLAMP
-        );
-
-        return {
-            transform: [{ translateY }],
-            opacity,
-            paddingTop: insets.top + 10,
-            paddingBottom: 16,
-        };
-    });
-
     return (
-        <Animated.View style={[styles.container, animatedContainerStyle]}>
+        <View style={[styles.container, { paddingTop: insets.top + 10 }]}>
             <View style={styles.headerRow}>
-                {/* Location Pill (Left) - Minimalist & Rounded */}
+                {/* Location (Left) */}
                 <TouchableOpacity
                     onPress={() => handlePress(onAddressPress)}
-                    style={styles.locationPill}
+                    style={styles.locationContainer}
                     activeOpacity={0.7}
                 >
                     <View style={styles.iconCircle}>
-                        <Ionicons name="location" size={18} color="#000" />
+                        <Ionicons name="location" size={18} color="#000000" />
                     </View>
 
-                    <View style={styles.addressContainer}>
-                        <Text
-                            style={styles.addressText}
-                            numberOfLines={2}
-                            ellipsizeMode="tail"
-                        >
-                            {address}
-                        </Text>
+                    <View style={styles.addressWrapper}>
+                        <Text style={styles.label}>Ubicación actual</Text>
+                        <View style={styles.addressRow}>
+                             <Text
+                                style={styles.addressText}
+                                numberOfLines={1}
+                                ellipsizeMode="tail"
+                            >
+                                {address}
+                            </Text>
+                            <Ionicons name="chevron-down" size={12} color="#000000" />
+                        </View>
                     </View>
-
-                    <Ionicons name="chevron-down" size={12} color="rgba(255,255,255,0.6)" style={{ marginRight: 4 }} />
                 </TouchableOpacity>
 
                 {/* Right Actions Group */}
                 <View style={styles.rightActions}>
-                    {/* Profile Button - Circular */}
+                    {/* Profile Button */}
                     <TouchableOpacity
                         onPress={() => handlePress(onProfilePress)}
                         activeOpacity={0.7}
                         style={styles.profileButton}
                     >
-                         <Ionicons name="person" size={20} color="#FFFFFF" />
+                         <Ionicons name="person" size={20} color="#000000" />
                     </TouchableOpacity>
                 </View>
             </View>
-        </Animated.View>
+        </View>
     );
 }
 
 const styles = StyleSheet.create({
     container: {
-        backgroundColor: '#121212',
+        backgroundColor: '#FFFFFF', // Clean white background
         paddingHorizontal: 20,
-        borderBottomLeftRadius: 32,
-        borderBottomRightRadius: 32,
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        zIndex: 100,
-        boxShadow: "0px 10px 20px rgba(0, 0, 0, 0.3)",
-        elevation: 10,
+        paddingBottom: 16,
+        // No absolute positioning, no shadows
     },
     headerRow: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        height: 50,
     },
-    // Location Pill Styles
-    locationPill: {
+    locationContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: 'rgba(255, 255, 255, 0.08)',
-        borderRadius: 100,
-        padding: 4,
-        paddingRight: 12,
         flex: 1,
-        marginRight: 12,
-        borderWidth: 1,
-        borderColor: 'rgba(255, 255, 255, 0.05)',
+        marginRight: 16,
     },
     iconCircle: {
         width: 36,
         height: 36,
         borderRadius: 18,
-        backgroundColor: '#FFFFFF',
+        backgroundColor: '#F3F4F6', // Light gray circle
         justifyContent: 'center',
         alignItems: 'center',
-        boxShadow: "0px 2px 4px rgba(0, 0, 0, 0.1)",
+        marginRight: 12,
     },
-    addressContainer: {
+    addressWrapper: {
         flex: 1,
-        marginLeft: 10,
         justifyContent: 'center',
     },
-    addressText: {
-        fontSize: 13, // Slightly smaller for better fit with 2 lines
+    label: {
+        fontSize: 11,
+        color: '#6B7280', // Gray 500
         fontWeight: '600',
-        color: '#FFFFFF',
-        letterSpacing: -0.2,
-        lineHeight: 16,
+        textTransform: 'uppercase',
+        letterSpacing: 0.5,
+        marginBottom: 2,
     },
-
-    // Right Actions Styles
+    addressRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
+    },
+    addressText: {
+        fontSize: 14,
+        fontWeight: '700',
+        color: '#111827', // Gray 900 (almost black)
+        letterSpacing: -0.3,
+        maxWidth: '90%',
+    },
     rightActions: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 8,
     },
     profileButton: {
-        width: 44,
-        height: 44,
-        borderRadius: 22,
-        backgroundColor: 'rgba(255, 255, 255, 0.08)',
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        backgroundColor: '#F3F4F6', // Light gray
         justifyContent: 'center',
         alignItems: 'center',
-        borderWidth: 1,
-        borderColor: 'rgba(255, 255, 255, 0.05)',
     },
 });

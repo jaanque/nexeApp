@@ -1,10 +1,9 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
-import { Image } from 'expo-image';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
+import { Image } from 'expo-image';
+import { useRouter } from 'expo-router';
+import React from 'react';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 interface Restaurant {
     id: number;
@@ -69,41 +68,31 @@ export const ModernBusinessCard = React.memo(({ restaurant, distance, isLast, is
                     transition={300}
                 />
 
-                {/* Open/Closed Badge */}
+                {/* Rating Badge - Top Right */}
+                <View style={styles.ratingBadge}>
+                    <Ionicons name="star" size={10} color="#F59E0B" />
+                    <Text style={styles.ratingText}>{(restaurant.rating || 0).toFixed(1)}</Text>
+                </View>
+
+                {/* Open/Closed Badge - Top Left */}
                 {!isOpen && (
                     <View style={[styles.closedBadge, isGrid && styles.gridClosedBadge]}>
                         <Text style={[styles.closedText, isGrid && styles.gridClosedText]}>Cerrado</Text>
                     </View>
                 )}
+            </View>
 
-                {/* Gradient Overlay for Text Readability */}
-                <LinearGradient
-                    colors={['transparent', 'rgba(0,0,0,0.6)', 'rgba(0,0,0,0.9)']}
-                    locations={[0.4, 0.7, 1]}
-                    style={styles.gradient}
-                >
-                     <View style={styles.textContent}>
-                        <View style={styles.topMeta}>
-                             {/* Rating Badge */}
-                            <View style={styles.ratingBadge}>
-                                <Ionicons name="star" size={10} color="#F59E0B" />
-                                <Text style={styles.ratingText}>{(restaurant.rating || 0).toFixed(1)}</Text>
-                            </View>
-                        </View>
-
-                        <View>
-                            <Text style={[styles.name, isGrid && styles.gridName]} numberOfLines={1}>{restaurant.name}</Text>
-                            <View style={styles.metaRow}>
-                                {!isGrid && <Text style={styles.cuisine}>{restaurant.cuisine_type}</Text>}
-                                {!isGrid && <View style={styles.dot} />}
-                                <Ionicons name="location-outline" size={12} color="#D1D5DB" />
-                                <Text style={styles.distance} numberOfLines={1}>
-                                    {distance || '...'}
-                                </Text>
-                            </View>
-                        </View>
-                     </View>
-                </LinearGradient>
+            {/* Content Section (Below Image) */}
+            <View style={styles.content}>
+                <Text style={[styles.name, isGrid && styles.gridName]} numberOfLines={1}>{restaurant.name}</Text>
+                <View style={styles.metaRow}>
+                    {!isGrid && <Text style={styles.cuisine}>{restaurant.cuisine_type}</Text>}
+                    {!isGrid && <View style={styles.dot} />}
+                    <Ionicons name="location-outline" size={12} color="#6B7280" />
+                    <Text style={styles.distance} numberOfLines={1}>
+                        {distance || '...'}
+                    </Text>
+                </View>
             </View>
         </TouchableOpacity>
     );
@@ -112,62 +101,54 @@ export const ModernBusinessCard = React.memo(({ restaurant, distance, isLast, is
 const styles = StyleSheet.create({
     container: {
         marginBottom: 24,
-        borderRadius: 24,
-        backgroundColor: '#1F2937', // Darker background
-        boxShadow: "0px 8px 16px rgba(0, 0, 0, 0.2)",
-        elevation: 8,
+        borderRadius: 16,
+        backgroundColor: '#FFFFFF', // White background
+        borderWidth: 1,
+        borderColor: '#E5E7EB', // Light border
         overflow: 'hidden',
+        // No shadows
     },
     imageWrapper: {
-        height: 240, // Taller Hero Image
+        height: 180, // Standard height
         width: '100%',
-        backgroundColor: '#374151',
+        backgroundColor: '#F3F4F6',
+        position: 'relative',
     },
     image: {
         width: '100%',
         height: '100%',
     },
-    gradient: {
-        position: 'absolute',
-        left: 0,
-        right: 0,
-        bottom: 0,
-        height: '100%',
-        justifyContent: 'flex-end',
-        padding: 20,
-    },
-    textContent: {
-        flex: 1,
-        justifyContent: 'space-between',
-    },
-    topMeta: {
-        flexDirection: 'row',
-        justifyContent: 'flex-end',
-        marginTop: 16,
+    content: {
+        padding: 12,
     },
     ratingBadge: {
+        position: 'absolute',
+        top: 12,
+        right: 12,
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: 'rgba(255,255,255,0.9)',
+        backgroundColor: '#FFFFFF',
         paddingHorizontal: 8,
         paddingVertical: 4,
         borderRadius: 12,
         gap: 4,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.1,
+        shadowRadius: 2,
+        elevation: 2,
     },
     ratingText: {
         fontSize: 12,
         fontWeight: '700',
-        color: '#121212',
+        color: '#111827',
     },
     name: {
-        fontSize: 24,
-        fontWeight: '800', // Heavy bold
-        color: '#FFFFFF',
+        fontSize: 18,
+        fontWeight: '700', // Bold but not heavy
+        color: '#111827', // Dark text
         letterSpacing: -0.5,
-        marginBottom: 6,
-        textShadowColor: 'rgba(0,0,0,0.5)',
-        textShadowOffset: { width: 0, height: 2 },
-        textShadowRadius: 4,
+        marginBottom: 4,
     },
     metaRow: {
         flexDirection: 'row',
@@ -176,52 +157,52 @@ const styles = StyleSheet.create({
     },
     cuisine: {
         fontSize: 14,
-        color: '#E5E7EB', // Gray 200
-        fontWeight: '600',
+        color: '#6B7280', // Gray 500
+        fontWeight: '500',
     },
     dot: {
         width: 3,
         height: 3,
         borderRadius: 1.5,
-        backgroundColor: '#9CA3AF', // Gray 400
+        backgroundColor: '#D1D5DB', // Gray 300
     },
     distance: {
         fontSize: 13,
-        color: '#D1D5DB', // Gray 300
+        color: '#6B7280', // Gray 500
         fontWeight: '500',
     },
     closedBadge: {
         position: 'absolute',
-        top: 20,
-        left: 20,
-        backgroundColor: 'rgba(239, 68, 68, 0.9)', // Red 500
-        paddingHorizontal: 12,
-        paddingVertical: 6,
+        top: 12,
+        left: 12,
+        backgroundColor: '#EF4444', // Red 500
+        paddingHorizontal: 10,
+        paddingVertical: 4,
         borderRadius: 8,
         zIndex: 10,
     },
     closedText: {
         color: '#FFFFFF',
         fontWeight: '700',
-        fontSize: 12,
+        fontSize: 11,
         textTransform: 'uppercase',
         letterSpacing: 0.5,
     },
     // Grid Modifications
     gridContainer: {
         marginBottom: 0,
-        borderRadius: 20,
+        borderRadius: 16,
     },
     gridImageWrapper: {
-        height: 180, // Shorter for grid
+        height: 140, // Shorter for grid
     },
     gridName: {
-        fontSize: 16,
-        marginBottom: 4,
+        fontSize: 15,
+        marginBottom: 2,
     },
     gridClosedBadge: {
-        top: 10,
-        left: 10,
+        top: 8,
+        left: 8,
         paddingHorizontal: 8,
         paddingVertical: 4,
     },

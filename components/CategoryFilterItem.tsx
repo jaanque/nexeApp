@@ -36,13 +36,12 @@ export function CategoryFilterItem({ item, isActive, onPress }: CategoryFilterIt
         <TouchableOpacity
             style={[
                 styles.container,
-                isActive && styles.activeContainer,
-                isActive && item.color ? { backgroundColor: item.color } : null
+                isActive ? styles.activeContainer : styles.inactiveContainer,
             ]}
             onPress={handlePress}
             onPressIn={handlePressIn}
             onPressOut={handlePressOut}
-            activeOpacity={0.9} // Slight feedback
+            activeOpacity={0.9}
         >
             <View style={[styles.emojiContainer]}>
                 <Text style={styles.emoji}>{item.emoji}</Text>
@@ -57,18 +56,23 @@ export function CategoryFilterItem({ item, isActive, onPress }: CategoryFilterIt
 
 const styles = StyleSheet.create({
   wrapper: {
-      marginRight: 10, // Compact spacing
+      marginRight: 10,
   },
   container: {
       flexDirection: 'row',
       alignItems: 'center',
       paddingVertical: 10,
       paddingHorizontal: 16,
-      borderRadius: 16, // Consistent border radius with other UI elements
-      backgroundColor: '#F3F4F6', // Light gray background for inactive state instead of white+border
+      borderRadius: 16,
+      borderWidth: 1.5,
+  },
+  inactiveContainer: {
+      backgroundColor: '#F3F4F6', // Light gray
+      borderColor: '#F3F4F6', // Match background
   },
   activeContainer: {
-      backgroundColor: '#121212',
+      backgroundColor: '#FFFFFF', // White
+      borderColor: '#111827', // Black border
   },
   emojiContainer: {
       marginRight: 8,
@@ -78,11 +82,12 @@ const styles = StyleSheet.create({
   },
   label: {
       fontSize: 14,
-      fontWeight: '600', // Semibold
+      fontWeight: '600',
       color: '#4B5563', // Gray 600
       letterSpacing: -0.2,
   },
   activeLabel: {
-      color: '#121212',
+      color: '#111827', // Black text
+      fontWeight: '700',
   },
 });

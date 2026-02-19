@@ -14,7 +14,7 @@ import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect, useState } from 'react';
 import { FlatList, ListRenderItem, Platform, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, UIManager, View } from 'react-native';
-import Animated, { FadeInDown, useAnimatedScrollHandler, useSharedValue } from 'react-native-reanimated';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 // Enable LayoutAnimation on Android
@@ -70,24 +70,16 @@ export default function HomeScreen() {
   const [allRewards, setAllRewards] = useState<MenuItemResult[]>([]);
   const [loading, setLoading] = useState(true);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [banners, setBanners] = useState<Banner[]>([]); // Banners State
+  const [banners, setBanners] = useState<Banner[]>([]);
   const [userLocation, setUserLocation] = useState<{ latitude: number, longitude: number } | null>(null);
   const [activeCategory, setActiveCategory] = useState<number | null>(null);
   const [sortBy, setSortBy] = useState<SortOption>('default');
-  const [refreshing, setRefreshing] = useState(false); // Pull to refresh
+  const [refreshing, setRefreshing] = useState(false);
   const [address, setAddress] = useState<string>("Seleccionando ubicación...");
 
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
-  const scrollY = useSharedValue(0);
-  const scrollHandler = useAnimatedScrollHandler({
-      onScroll: (event) => {
-          scrollY.value = event.contentOffset.y;
-      },
-  });
-
-  // Load initial session
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
@@ -160,7 +152,6 @@ export default function HomeScreen() {
           } else if (sortBy === 'rating') {
               sorted.sort((a, b) => (b.rating || 0) - (a.rating || 0));
           } else {
-               // Default: Sort by distance if available, otherwise ID (or "Smart Sort" in future)
                if (userLocation) {
                     sorted.sort((a, b) => {
                         const distA = (a.latitude && a.longitude) ? getDistanceInMeters(userLocation.latitude, userLocation.longitude, a.latitude, a.longitude) : Infinity;
@@ -175,7 +166,6 @@ export default function HomeScreen() {
 
   async function getUserLocation() {
     try {
-      // 1. Try to load from cache first for instant feedback
       const cachedLocation = await AsyncStorage.getItem('user_location');
       const cachedAddress = await AsyncStorage.getItem('user_address');
 
@@ -200,7 +190,6 @@ export default function HomeScreen() {
       setUserLocation({ latitude: newLat, longitude: newLong });
       await AsyncStorage.setItem('user_location', JSON.stringify({ latitude: newLat, longitude: newLong }));
 
-      // Reverse Geocode
       try {
           const reverseGeocode = await Location.reverseGeocodeAsync({
               latitude: newLat,
@@ -209,7 +198,6 @@ export default function HomeScreen() {
 
           if (reverseGeocode && reverseGeocode.length > 0) {
               const addr = reverseGeocode[0];
-              // Format: Street + Number (or Name)
               const street = addr.street || addr.name || "Ubicación actual";
               const number = addr.streetNumber ? ` ${addr.streetNumber}` : "";
               const formattedAddress = `${street}${number}`;
@@ -217,8 +205,6 @@ export default function HomeScreen() {
               setAddress(formattedAddress);
               await AsyncStorage.setItem('user_address', formattedAddress);
           } else {
-               // Only override if we don't have a cached address or if we want to show "Current Location"
-               // Keeping "Ubicación actual" is fine as fallback
               if (!cachedAddress) setAddress("Ubicación actual");
           }
       } catch (geoError) {
@@ -228,7 +214,6 @@ export default function HomeScreen() {
 
     } catch (error) {
       console.error("Error getting location:", error);
-      // Only show error if we have nothing
       if (address === "Seleccionando ubicación...") {
           setAddress("Error al obtener ubicación");
       }
@@ -283,13 +268,10 @@ export default function HomeScreen() {
       }
       const { data: menuData } = await supabase.from('items').select('*, locales(name)').limit(50);
       if (menuData) {
-          // Explicitly cast the Supabase response to our defined type
           const typedMenuData = menuData as unknown as MenuItemResult[];
           setAllRewards(typedMenuData);
           setRewardItems(typedMenuData);
 
-          // For trending, we'll shuffle and pick 5 distinct items or just use a slice for demo
-          // In a real app, this would be based on order count
           const shuffled = [...typedMenuData].sort(() => 0.5 - Math.random());
           setTrendingItems(shuffled.slice(0, 5));
       }
@@ -301,115 +283,126 @@ export default function HomeScreen() {
   ), []);
 
   const renderHeader = useCallback(() => (
-      <View style={styles.headerContentWrapper}>
-        {/* Marketing Banners - Visual Priority #1 */}
-        <View style={{ marginTop: 24 }}>
-            <MarketingSlider banners={banners} />
-        </View>
+      <View>
+        <ModernHeader
+            address={address}
+            onAddressPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+            }}
+            onWalletPress={() => router.push('/(tabs)/wallet')}
+            onProfilePress={() => router.push('/(tabs)/profile')}
+        />
 
-        {/* Categories List */}
-        <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.filterContent}
-            style={{ flexGrow: 0, marginBottom: 24 }}
-        >
-            {categories.map((cat) => (
-                <CategoryFilterItem
-                    key={cat.id}
-                    item={cat}
-                    isActive={activeCategory === cat.id}
-                    onPress={() => setActiveCategory(activeCategory === cat.id ? null : cat.id)}
-                />
-            ))}
-        </ScrollView>
-
-        {/* Trending Section - Visual Priority #2 */}
-        {trendingItems.length > 0 && (
-            <Animated.View entering={FadeInDown.delay(100).springify()} style={styles.sectionContainer}>
-                <View style={styles.sectionHeader}>
-                    <Text style={styles.sectionTitle}>🔥 Últimas unidades (Vuelan)</Text>
-                </View>
-                <FlatList
-                    data={trendingItems}
-                    renderItem={renderRewardItem}
-                    keyExtractor={(item) => item.id.toString()}
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                    contentContainerStyle={styles.carouselContent}
-                />
-            </Animated.View>
-        )}
-
-        {/* Rewards Section - Points Priority #3 */}
-        {rewardItems.length > 0 && (
-            <Animated.View entering={FadeInDown.delay(100).springify()} style={styles.sectionContainer}>
-                <View style={styles.sectionHeader}>
-                    <Text style={styles.sectionTitle}>Liquidación Total</Text>
-                    <TouchableOpacity style={styles.viewAllButton}>
-                        <Text style={styles.viewAllText}>Ver todo</Text>
-                        <Ionicons name="chevron-forward" size={16} color="#121212" />
-                    </TouchableOpacity>
-                </View>
-                <FlatList
-                    data={rewardItems}
-                    renderItem={renderRewardItem}
-                    keyExtractor={(item) => item.id.toString()}
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                    contentContainerStyle={styles.carouselContent}
-                />
-            </Animated.View>
-        )}
-
-        {/* Restaurants List Header */}
-        <Animated.View entering={FadeInDown.delay(200).springify()}>
-            <View style={[styles.sectionHeader, { marginBottom: 12 }]}>
-                <Text style={styles.sectionTitle}>Tiendas en Liquidación</Text>
+        <View style={styles.headerContentWrapper}>
+            {/* Marketing Banners */}
+            <View style={{ marginTop: 12 }}>
+                <MarketingSlider banners={banners} />
             </View>
 
-            {/* Sort Chips */}
+            {/* Categories List */}
             <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.chipsContent}
-                style={{ marginBottom: 20 }}
+                contentContainerStyle={styles.filterContent}
+                style={{ flexGrow: 0, marginBottom: 24, marginTop: 16 }}
             >
-                <TouchableOpacity
-                    style={[styles.chip, sortBy === 'default' && styles.activeChip]}
-                    onPress={() => {
-                        Haptics.selectionAsync();
-                        setSortBy('default');
-                    }}
-                >
-                    <Text style={[styles.chipText, sortBy === 'default' && styles.activeChipText]}>Recomendados</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                    style={[styles.chip, sortBy === 'distance' && styles.activeChip]}
-                    onPress={() => {
-                        Haptics.selectionAsync();
-                        setSortBy('distance');
-                    }}
-                >
-                    <Ionicons name="location-sharp" size={14} color={sortBy === 'distance' ? '#FFF' : '#374151'} />
-                    <Text style={[styles.chipText, sortBy === 'distance' && styles.activeChipText]}>Cerca de mí</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                    style={[styles.chip, sortBy === 'rating' && styles.activeChip]}
-                    onPress={() => {
-                        Haptics.selectionAsync();
-                        setSortBy('rating');
-                    }}
-                >
-                    <Ionicons name="star" size={14} color={sortBy === 'rating' ? '#FFF' : '#374151'} />
-                    <Text style={[styles.chipText, sortBy === 'rating' && styles.activeChipText]}>Mejor valorados</Text>
-                </TouchableOpacity>
+                {categories.map((cat) => (
+                    <CategoryFilterItem
+                        key={cat.id}
+                        item={cat}
+                        isActive={activeCategory === cat.id}
+                        onPress={() => setActiveCategory(activeCategory === cat.id ? null : cat.id)}
+                    />
+                ))}
             </ScrollView>
-        </Animated.View>
+
+            {/* Trending Section */}
+            {trendingItems.length > 0 && (
+                <Animated.View entering={FadeInDown.delay(100).springify()} style={styles.sectionContainer}>
+                    <View style={styles.sectionHeader}>
+                        <Text style={styles.sectionTitle}>🔥 Últimas unidades (Vuelan)</Text>
+                    </View>
+                    <FlatList
+                        data={trendingItems}
+                        renderItem={renderRewardItem}
+                        keyExtractor={(item) => item.id.toString()}
+                        horizontal
+                        showsHorizontalScrollIndicator={false}
+                        contentContainerStyle={styles.carouselContent}
+                    />
+                </Animated.View>
+            )}
+
+            {/* Rewards Section */}
+            {rewardItems.length > 0 && (
+                <Animated.View entering={FadeInDown.delay(100).springify()} style={styles.sectionContainer}>
+                    <View style={styles.sectionHeader}>
+                        <Text style={styles.sectionTitle}>Liquidación Total</Text>
+                        <TouchableOpacity style={styles.viewAllButton}>
+                            <Text style={styles.viewAllText}>Ver todo</Text>
+                            <Ionicons name="chevron-forward" size={16} color="#111827" />
+                        </TouchableOpacity>
+                    </View>
+                    <FlatList
+                        data={rewardItems}
+                        renderItem={renderRewardItem}
+                        keyExtractor={(item) => item.id.toString()}
+                        horizontal
+                        showsHorizontalScrollIndicator={false}
+                        contentContainerStyle={styles.carouselContent}
+                    />
+                </Animated.View>
+            )}
+
+            {/* Restaurants List Header */}
+            <Animated.View entering={FadeInDown.delay(200).springify()}>
+                <View style={[styles.sectionHeader, { marginBottom: 12 }]}>
+                    <Text style={styles.sectionTitle}>Tiendas en Liquidación</Text>
+                </View>
+
+                {/* Sort Chips */}
+                <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={styles.chipsContent}
+                    style={{ marginBottom: 20 }}
+                >
+                    <TouchableOpacity
+                        style={[styles.chip, sortBy === 'default' && styles.activeChip]}
+                        onPress={() => {
+                            Haptics.selectionAsync();
+                            setSortBy('default');
+                        }}
+                    >
+                        <Text style={[styles.chipText, sortBy === 'default' && styles.activeChipText]}>Recomendados</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                        style={[styles.chip, sortBy === 'distance' && styles.activeChip]}
+                        onPress={() => {
+                            Haptics.selectionAsync();
+                            setSortBy('distance');
+                        }}
+                    >
+                        <Ionicons name="location-sharp" size={14} color={sortBy === 'distance' ? '#FFF' : '#374151'} />
+                        <Text style={[styles.chipText, sortBy === 'distance' && styles.activeChipText]}>Cerca de mí</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                        style={[styles.chip, sortBy === 'rating' && styles.activeChip]}
+                        onPress={() => {
+                            Haptics.selectionAsync();
+                            setSortBy('rating');
+                        }}
+                    >
+                        <Ionicons name="star" size={14} color={sortBy === 'rating' ? '#FFF' : '#374151'} />
+                        <Text style={[styles.chipText, sortBy === 'rating' && styles.activeChipText]}>Mejor valorados</Text>
+                    </TouchableOpacity>
+                </ScrollView>
+            </Animated.View>
+        </View>
       </View>
-  ), [banners, categories, activeCategory, trendingItems, rewardItems, sortBy]);
+  ), [banners, categories, activeCategory, trendingItems, rewardItems, sortBy, address]);
 
   const renderRestaurantItem: ListRenderItem<Restaurant> = useCallback(({ item, index }) => {
       const distance = (userLocation && item.latitude && item.longitude)
@@ -420,7 +413,7 @@ export default function HomeScreen() {
           <View style={styles.gridItemContainer}>
               <ModernBusinessCard
                   restaurant={item}
-                  isLast={false} // Handled by grid layout spacing
+                  isLast={false}
                   distance={distance}
                   isGrid={true}
               />
@@ -428,50 +421,24 @@ export default function HomeScreen() {
       );
   }, [userLocation]);
 
-  // Calculate approximate header height for padding
-  const HEADER_MAX_HEIGHT = insets.top + 100;
-
-  const renderHeaderContainer = useCallback(() => (
-      <View>
-          {/* Spacer for Header (Black Background) */}
-          <View style={{ height: HEADER_MAX_HEIGHT, backgroundColor: '#121212' }} />
-
-          {/* Main Sheet Content */}
-          {renderHeader()}
-      </View>
-  ), [renderHeader, HEADER_MAX_HEIGHT]);
-
   if (loading) return <HomeScreenSkeleton />;
 
   return (
     <View style={styles.container}>
-      <StatusBar style="light" />
+      <StatusBar style="dark" />
 
-      <ModernHeader
-        address={address}
-        onAddressPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-            // Future: Open address selector modal
-        }}
-        onWalletPress={() => router.push('/(tabs)/wallet')}
-        onProfilePress={() => router.push('/(tabs)/profile')}
-        scrollY={scrollY}
-      />
-
-      <Animated.FlatList
+      <FlatList
         data={sortedRestaurants}
         renderItem={renderRestaurantItem}
         keyExtractor={(item) => item.id.toString()}
-        ListHeaderComponent={renderHeaderContainer}
+        ListHeaderComponent={renderHeader}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 100 }} // Removed horizontal padding and top padding
-        columnWrapperStyle={{ paddingHorizontal: 14 }} // Apply padding to grid rows instead
+        contentContainerStyle={{ paddingBottom: 100 }}
+        columnWrapperStyle={{ paddingHorizontal: 14 }}
         keyboardDismissMode="on-drag"
         scrollEnabled={true}
-        onScroll={scrollHandler}
-        scrollEventThrottle={16}
         numColumns={2}
-        key={2} // Force re-render if switching numColumns
+        key={2}
         initialNumToRender={6}
         maxToRenderPerBatch={6}
         windowSize={5}
@@ -480,15 +447,13 @@ export default function HomeScreen() {
             <RefreshControl
                 refreshing={refreshing}
                 onRefresh={onRefresh}
-                tintColor="#121212" // Dark tint for light background
-                colors={['#121212']}
+                tintColor="#111827"
+                colors={['#111827']}
                 progressBackgroundColor="#FFFFFF"
-                progressViewOffset={HEADER_MAX_HEIGHT}
             />
         }
-        style={{ backgroundColor: '#F9FAFB' }} // Light background for the list/grid
+        style={{ backgroundColor: '#FFFFFF' }}
       />
-
     </View>
   );
 }
@@ -496,40 +461,35 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#121212', // Dark background for top overscroll/header area
+    backgroundColor: '#FFFFFF',
   },
   headerContentWrapper: {
-      backgroundColor: '#F9FAFB',
-      borderTopLeftRadius: 32,
-      borderTopRightRadius: 32,
-      marginTop: -24, // Overlap deeply into the black spacer
-      paddingTop: 24,
-      overflow: 'hidden',
+      paddingBottom: 0,
   },
   gridItemContainer: {
       flex: 1,
-      margin: 6, // Spacing between grid items
+      margin: 6,
       maxWidth: '50%',
   },
   filterContent: {
       paddingHorizontal: 20,
-      paddingVertical: 12,
+      paddingVertical: 4,
       alignItems: 'center',
   },
   sectionContainer: {
-      marginBottom: 40, // Increased spacing
+      marginBottom: 32,
   },
   sectionHeader: {
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
       paddingHorizontal: 20,
-      marginBottom: 20,
+      marginBottom: 16,
   },
   sectionTitle: {
-      fontSize: 22, // Larger
+      fontSize: 20,
       fontWeight: '800',
-      color: '#111827', // Gray 900
+      color: '#111827',
       letterSpacing: -0.5,
   },
   viewAllButton: {
@@ -540,16 +500,13 @@ const styles = StyleSheet.create({
       opacity: 0.7,
   },
   viewAllText: {
-      color: '#121212', // Primary Green
+      color: '#111827',
       fontSize: 14,
       fontWeight: '700',
   },
   carouselContent: {
       paddingHorizontal: 20,
       paddingRight: 4,
-  },
-  listContainer: {
-      paddingHorizontal: 20,
   },
   chipsContent: {
       paddingHorizontal: 20,
@@ -567,8 +524,8 @@ const styles = StyleSheet.create({
       gap: 6,
   },
   activeChip: {
-      backgroundColor: '#121212',
-      borderColor: '#121212',
+      backgroundColor: '#111827',
+      borderColor: '#111827',
   },
   chipText: {
       fontSize: 14,
