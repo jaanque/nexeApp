@@ -43,7 +43,7 @@ export function ModernRewardCard({ item }: ModernRewardCardProps) {
     const formattedFinal = finalPrice.toLocaleString('es-ES', { minimumFractionDigits: 2 }) + ' €';
     const handlePress = () => {
         if (process.env.EXPO_OS === 'ios') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-        router.push(`/restaurant/${item.restaurant_id}`);
+        router.push(`/item/${item.id}`);
     };
 
     return (
