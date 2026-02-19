@@ -71,17 +71,17 @@ export function ModernHeader({
                         {/* Address Display */}
                         <TouchableOpacity
                             style={styles.addressRow}
-                            onPress={() => handlePress(onAddressPress)}
-                            activeOpacity={0.7}
+                            onPress={() => !isPickup && handlePress(onAddressPress)}
+                            activeOpacity={!isPickup ? 0.7 : 1}
                         >
                              <Text
                                 style={styles.addressText}
                                 numberOfLines={1}
                                 ellipsizeMode="tail"
                             >
-                                {address}
+                                {isPickup ? "Recogida en tienda" : address}
                             </Text>
-                            <Ionicons name="chevron-down" size={12} color="#000000" />
+                            {!isPickup && <Ionicons name="chevron-down" size={12} color="#000000" />}
                         </TouchableOpacity>
                     </View>
                 </View>
