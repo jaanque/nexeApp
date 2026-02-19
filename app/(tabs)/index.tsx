@@ -1,5 +1,5 @@
+import { Category, HomeBanners, HomeCategories, HomeSection, HomeSortChips, MenuItemResult, SortOption } from '@/components/home/HomeSections';
 import { HomeScreenSkeleton } from '@/components/HomeScreenSkeleton';
-import { HomeBanners, HomeCategories, HomeSection, HomeSortChips, Category, SortOption, MenuItemResult } from '@/components/home/HomeSections';
 import { Banner } from '@/components/MarketingSlider';
 import { ModernBusinessCard } from '@/components/ModernBusinessCard';
 import { ModernHeader } from '@/components/ui/ModernHeader';
@@ -431,8 +431,11 @@ export default function HomeScreen() {
                 refreshing={refreshing}
                 onRefresh={onRefresh}
                 tintColor="#111827"
+                title="Actualizando catálogo..."
+                titleColor="#111827"
                 colors={['#111827']}
                 progressBackgroundColor="#FFFFFF"
+                progressViewOffset={Platform.OS === 'android' ? insets.top + 20 : 0}
             />
         }
         style={{ backgroundColor: '#FFFFFF' }}
