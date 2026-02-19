@@ -12,14 +12,9 @@ import Animated, {
   Extrapolation,
   useAnimatedScrollHandler,
   FadeInDown,
-  withTiming,
-  withDelay,
-  Easing
 } from 'react-native-reanimated';
 import { StatusBar } from 'expo-status-bar';
 import * as Haptics from 'expo-haptics';
-import { getColors } from 'react-native-image-colors';
-import { hexToRgba } from '@/lib/colorGenerator';
 
 const { width } = Dimensions.get('window');
 const PARALLAX_HEADER_HEIGHT = 420;
@@ -46,11 +41,6 @@ export default function ItemDetailScreen() {
   const [item, setItem] = useState<ItemDetail | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Dynamic Colors
-  const dominantColor = useSharedValue<string>('#FFFFFF');
-  const tintColor = useSharedValue<string>('rgba(255,255,255,1)');
-  const [accentColor, setAccentColor] = useState<string>('#111827'); // Default black for buttons
-
   const scrollY = useSharedValue(0);
 
   useEffect(() => {
@@ -66,39 +56,6 @@ export default function ItemDetailScreen() {
 
         if (error) throw error;
         setItem(data);
-
-        // Extract Colors
-        if (data.image_url) {
-            getColors(data.image_url, {
-                fallback: '#FFFFFF',
-                cache: true,
-                key: data.image_url,
-            }).then((colors) => {
-                let primary = '#FFFFFF';
-                if (Platform.OS === 'android') {
-                    // @ts-ignore
-                    primary = colors.dominant;
-                } else if (Platform.OS === 'ios') {
-                    // @ts-ignore
-                    primary = colors.primary;
-                } else {
-                    // Web fallback (react-native-image-colors support varies on web)
-                    // @ts-ignore
-                    primary = colors.dominant || '#FFFFFF';
-                }
-
-                if (primary && primary !== '#FFFFFF') {
-                     // Main accent color for buttons/highlights
-                     setAccentColor(primary);
-                     dominantColor.value = withTiming(primary, { duration: 800 });
-
-                     // Background tint (very subtle, almost white but tinted)
-                     const subtle = hexToRgba(primary, 0.12);
-                     tintColor.value = withTiming(subtle, { duration: 1000, easing: Easing.out(Easing.exp) });
-                }
-            }).catch(err => console.log('Color extraction error:', err));
-        }
-
       } catch (error) {
         console.error("Error fetching item:", error);
         Alert.alert("Error", "No se pudo cargar el item.");
@@ -115,12 +72,6 @@ export default function ItemDetailScreen() {
     scrollY.value = event.contentOffset.y;
   });
 
-  const animatedBackgroundStyle = useAnimatedStyle(() => {
-      return {
-          backgroundColor: tintColor.value,
-      };
-  });
-
   // Flat, simple parallax (scale only, no translate overlap)
   const headerStyle = useAnimatedStyle(() => {
     const scale = interpolate(
@@ -132,13 +83,6 @@ export default function ItemDetailScreen() {
     return {
       transform: [{ scale }],
     };
-  });
-
-  // Button Color Animation
-  const animatedButtonStyle = useAnimatedStyle(() => {
-      return {
-          backgroundColor: dominantColor.value === '#FFFFFF' ? '#111827' : dominantColor.value,
-      };
   });
 
   const handleShare = async () => {
@@ -190,7 +134,7 @@ export default function ItemDetailScreen() {
   if (!item) return null;
 
   return (
-    <Animated.View style={[styles.container, animatedBackgroundStyle]}>
+    <View style={styles.container}>
       <StatusBar style="dark" />
       <Stack.Screen options={{ headerShown: false }} />
 
@@ -230,8 +174,8 @@ export default function ItemDetailScreen() {
         <View style={styles.contentContainer}>
 
             <Animated.View entering={FadeInDown.delay(100).springify()} style={styles.headerSection}>
-                <View style={[styles.categoryBadge, { borderColor: accentColor }]}>
-                    <Text style={[styles.categoryText, { color: accentColor }]}>NUEVO</Text>
+                <View style={[styles.categoryBadge]}>
+                    <Text style={[styles.categoryText]}>NUEVO</Text>
                 </View>
                 <Text style={styles.title}>{item.name}</Text>
 
@@ -242,7 +186,7 @@ export default function ItemDetailScreen() {
                             {originalPrice.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}€
                         </Text>
                     )}
-                    <Text style={[styles.finalPrice, { color: accentColor }]}>
+                    <Text style={styles.finalPrice}>
                         {finalPrice.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}€
                     </Text>
                 </View>
@@ -268,7 +212,7 @@ export default function ItemDetailScreen() {
                         activeOpacity={0.8}
                     >
                         <View style={styles.localeIcon}>
-                            <Ionicons name="storefront-outline" size={24} color={accentColor} />
+                            <Ionicons name="storefront-outline" size={24} color="#111827" />
                         </View>
                         <View style={{flex: 1}}>
                             <Text style={styles.localeName}>{item.locales.name}</Text>
@@ -284,7 +228,7 @@ export default function ItemDetailScreen() {
 
       {/* Flat Bottom Action Bar */}
       <View style={[styles.bottomBar, { paddingBottom: insets.bottom + 16 }]}>
-          <Animated.View style={[styles.redeemButtonWrapper, animatedButtonStyle]}>
+          <View style={styles.redeemButtonWrapper}>
             <TouchableOpacity
                 style={styles.redeemButton}
                 onPress={handleRedeem}
@@ -292,15 +236,15 @@ export default function ItemDetailScreen() {
             >
                 <Text style={styles.redeemButtonText}>Añadir al carrito</Text>
                 <View style={styles.pricePill}>
-                    <Text style={[styles.pricePillText, { color: accentColor }]}>
+                    <Text style={styles.pricePillText}>
                         {finalPrice.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}€
                     </Text>
                 </View>
             </TouchableOpacity>
-          </Animated.View>
+          </View>
       </View>
 
-    </Animated.View>
+    </View>
   );
 }
 
@@ -368,13 +312,15 @@ const styles = StyleSheet.create({
       borderRadius: 100,
       marginBottom: 16,
       borderWidth: 1,
-      backgroundColor: 'rgba(255,255,255,0.8)',
+      borderColor: '#111827', // Black border default
+      backgroundColor: 'transparent',
   },
   categoryText: {
       fontSize: 11,
       fontWeight: '800',
       letterSpacing: 1,
       textTransform: 'uppercase',
+      color: '#111827',
   },
   title: {
     fontSize: 34,
@@ -399,6 +345,7 @@ const styles = StyleSheet.create({
       fontSize: 32,
       fontWeight: '800',
       letterSpacing: -1,
+      color: '#111827',
   },
 
   spacer: {
@@ -470,6 +417,7 @@ const styles = StyleSheet.create({
       height: 64,
       borderRadius: 32,
       overflow: 'hidden',
+      backgroundColor: '#111827', // Static black
   },
   redeemButton: {
       flex: 1,
@@ -496,5 +444,6 @@ const styles = StyleSheet.create({
   pricePillText: {
       fontSize: 16,
       fontWeight: '800',
+      color: '#111827',
   },
 });
