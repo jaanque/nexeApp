@@ -113,13 +113,7 @@ const styles = StyleSheet.create({
         marginBottom: 24,
         borderRadius: 24,
         backgroundColor: '#1F2937', // Darker background
-        shadowColor: "#000",
-        shadowOffset: {
-            width: 0,
-            height: 8,
-        },
-        shadowOpacity: 0.2,
-        shadowRadius: 16,
+        boxShadow: "0px 8px 16px rgba(0, 0, 0, 0.2)",
         elevation: 8,
         overflow: 'hidden',
     },

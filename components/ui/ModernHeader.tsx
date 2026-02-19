@@ -123,13 +123,7 @@ const styles = StyleSheet.create({
         left: 0,
         right: 0,
         zIndex: 100,
-        shadowColor: "#000",
-        shadowOffset: {
-            width: 0,
-            height: 10,
-        },
-        shadowOpacity: 0.3,
-        shadowRadius: 20,
+        boxShadow: "0px 10px 20px rgba(0, 0, 0, 0.3)",
         elevation: 10,
     },
     headerRow: {
@@ -158,10 +152,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#FFFFFF',
         justifyContent: 'center',
         alignItems: 'center',
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
+        boxShadow: "0px 2px 4px rgba(0, 0, 0, 0.1)",
     },
     addressContainer: {
         flex: 1,
