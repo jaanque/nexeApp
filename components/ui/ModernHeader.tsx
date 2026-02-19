@@ -7,14 +7,12 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 interface ModernHeaderProps {
     address: string;
     onAddressPress: () => void;
-    onWalletPress: () => void;
     onProfilePress: () => void;
 }
 
 export function ModernHeader({
     address,
     onAddressPress,
-    onWalletPress,
     onProfilePress,
 }: ModernHeaderProps) {
     const insets = useSafeAreaInsets();

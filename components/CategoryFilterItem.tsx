@@ -71,7 +71,7 @@ const styles = StyleSheet.create({
       borderColor: '#F3F4F6', // Match background
   },
   activeContainer: {
-      backgroundColor: '#FFFFFF', // White
+      backgroundColor: '#111827', // Black
       borderColor: '#111827', // Black border
   },
   emojiContainer: {
@@ -87,7 +87,7 @@ const styles = StyleSheet.create({
       letterSpacing: -0.2,
   },
   activeLabel: {
-      color: '#111827', // Black text
+      color: '#FFFFFF', // White text
       fontWeight: '700',
   },
 });
