@@ -8,12 +8,16 @@ interface ModernHeaderProps {
     address: string;
     onAddressPress: () => void;
     onProfilePress: () => void;
+    isPickup?: boolean;
+    onTogglePickup?: (value: boolean) => void;
 }
 
 export function ModernHeader({
     address,
     onAddressPress,
     onProfilePress,
+    isPickup = false,
+    onTogglePickup,
 }: ModernHeaderProps) {
     const insets = useSafeAreaInsets();
 
@@ -22,22 +26,54 @@ export function ModernHeader({
         action();
     };
 
+    const handleToggle = (value: boolean) => {
+        if (onTogglePickup && isPickup !== value) {
+            if (process.env.EXPO_OS === 'ios') Haptics.selectionAsync();
+            onTogglePickup(value);
+        }
+    };
+
     return (
         <View style={[styles.container, { paddingTop: insets.top + 10 }]}>
             <View style={styles.headerRow}>
                 {/* Location (Left) */}
-                <TouchableOpacity
-                    onPress={() => handlePress(onAddressPress)}
-                    style={styles.locationContainer}
-                    activeOpacity={0.7}
-                >
-                    <View style={styles.iconCircle}>
-                        <Ionicons name="location" size={18} color="#000000" />
-                    </View>
+                <View style={styles.locationContainer}>
+                    <TouchableOpacity onPress={() => handlePress(onAddressPress)}>
+                        <View style={styles.iconCircle}>
+                            <Ionicons name={isPickup ? "basket" : "location"} size={18} color="#000000" />
+                        </View>
+                    </TouchableOpacity>
 
                     <View style={styles.addressWrapper}>
-                        <Text style={styles.label}>Ubicación actual</Text>
-                        <View style={styles.addressRow}>
+                        {/* Mode Toggle */}
+                        <View style={styles.modeSwitch}>
+                            <TouchableOpacity
+                                onPress={() => handleToggle(false)}
+                                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                            >
+                                <Text style={[styles.modeText, !isPickup && styles.activeModeText]}>
+                                    Entrega
+                                </Text>
+                            </TouchableOpacity>
+
+                            <View style={styles.divider} />
+
+                            <TouchableOpacity
+                                onPress={() => handleToggle(true)}
+                                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                            >
+                                <Text style={[styles.modeText, isPickup && styles.activeModeText]}>
+                                    Recogida
+                                </Text>
+                            </TouchableOpacity>
+                        </View>
+
+                        {/* Address Display */}
+                        <TouchableOpacity
+                            style={styles.addressRow}
+                            onPress={() => handlePress(onAddressPress)}
+                            activeOpacity={0.7}
+                        >
                              <Text
                                 style={styles.addressText}
                                 numberOfLines={1}
@@ -46,9 +82,9 @@ export function ModernHeader({
                                 {address}
                             </Text>
                             <Ionicons name="chevron-down" size={12} color="#000000" />
-                        </View>
+                        </TouchableOpacity>
                     </View>
-                </TouchableOpacity>
+                </View>
 
                 {/* Right Actions Group */}
                 <View style={styles.rightActions}>
@@ -71,7 +107,6 @@ const styles = StyleSheet.create({
         backgroundColor: '#FFFFFF', // Clean white background
         paddingHorizontal: 20,
         paddingBottom: 16,
-        // No absolute positioning, no shadows
     },
     headerRow: {
         flexDirection: 'row',
@@ -97,13 +132,27 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
     },
-    label: {
-        fontSize: 11,
-        color: '#6B7280', // Gray 500
+    modeSwitch: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 2,
+        gap: 8,
+    },
+    modeText: {
+        fontSize: 12,
+        color: '#9CA3AF', // Gray 400
         fontWeight: '600',
         textTransform: 'uppercase',
         letterSpacing: 0.5,
-        marginBottom: 2,
+    },
+    activeModeText: {
+        color: '#111827', // Dark/Black
+        fontWeight: '800',
+    },
+    divider: {
+        width: 1,
+        height: 10,
+        backgroundColor: '#E5E7EB', // Gray 200
     },
     addressRow: {
         flexDirection: 'row',

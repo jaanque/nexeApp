@@ -58,6 +58,7 @@ export default function HomeScreen() {
   // Filter & Sort State
   const [activeCategory, setActiveCategory] = useState<number | null>(null);
   const [sortBy, setSortBy] = useState<SortOption>('default');
+  const [isPickup, setIsPickup] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [address, setAddress] = useState<string>("Seleccionando ubicación...");
 
@@ -325,6 +326,8 @@ export default function HomeScreen() {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
             }}
             onProfilePress={() => router.push('/(tabs)/profile')}
+            isPickup={isPickup}
+            onTogglePickup={setIsPickup}
         />
 
         <View style={styles.headerContentWrapper}>
@@ -358,7 +361,7 @@ export default function HomeScreen() {
             />
         </View>
       </View>
-  ), [banners, categories, activeCategory, trendingItems, rewardItems, sortBy, address]);
+  ), [banners, categories, activeCategory, trendingItems, rewardItems, sortBy, address, isPickup]);
 
   const renderRestaurantItem: ListRenderItem<Restaurant> = useCallback(({ item, index }) => {
       const distance = (userLocation && item.latitude && item.longitude)
