@@ -401,10 +401,7 @@ const styles = StyleSheet.create({
       gap: 16,
       borderWidth: 1,
       borderColor: '#E5E7EB',
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.05,
-      shadowRadius: 4,
+      boxShadow: "0px 2px 4px rgba(0, 0, 0, 0.05)",
       elevation: 2,
   },
   localeIcon: {
@@ -446,10 +443,7 @@ const styles = StyleSheet.create({
       alignItems: 'center',
       justifyContent: 'space-between',
       paddingHorizontal: 24,
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.2,
-      shadowRadius: 8,
+      boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.2)",
       elevation: 4,
   },
   redeemButtonText: {

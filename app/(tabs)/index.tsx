@@ -328,7 +328,7 @@ export default function HomeScreen() {
         {trendingItems.length > 0 && (
             <Animated.View entering={FadeInDown.delay(100).springify()} style={styles.sectionContainer}>
                 <View style={styles.sectionHeader}>
-                    <Text style={styles.sectionTitle}>🔥 Tendencias en tu zona</Text>
+                    <Text style={styles.sectionTitle}>🔥 Últimas unidades (Vuelan)</Text>
                 </View>
                 <FlatList
                     data={trendingItems}
@@ -345,7 +345,7 @@ export default function HomeScreen() {
         {rewardItems.length > 0 && (
             <Animated.View entering={FadeInDown.delay(100).springify()} style={styles.sectionContainer}>
                 <View style={styles.sectionHeader}>
-                    <Text style={styles.sectionTitle}>Canjea y Ahorra</Text>
+                    <Text style={styles.sectionTitle}>Liquidación Total: 100% Nuevos</Text>
                     <TouchableOpacity style={styles.viewAllButton}>
                         <Text style={styles.viewAllText}>Ver todo</Text>
                         <Ionicons name="chevron-forward" size={16} color="#121212" />
@@ -365,7 +365,7 @@ export default function HomeScreen() {
         {/* Restaurants List Header */}
         <Animated.View entering={FadeInDown.delay(200).springify()}>
             <View style={[styles.sectionHeader, { marginBottom: 12 }]}>
-                <Text style={styles.sectionTitle}>Recomendado para ti</Text>
+                <Text style={styles.sectionTitle}>Tiendas en Liquidación</Text>
             </View>
 
             {/* Sort Chips */}
