@@ -28,7 +28,7 @@ interface MenuItem {
   id: number;
   name: string;
   description: string;
-  price: number;
+  price_euros: number;
   image_url: string;
   category: string;
   categories?: {
@@ -267,7 +267,7 @@ export default function RestaurantDetailScreen() {
   const totalPoints = useMemo(() => {
       let total = 0;
       menuItems.forEach((item) => {
-        if (cart[item.id]) total += Math.round(item.price * 10) * cart[item.id];
+        if (cart[item.id]) total += Math.round(item.price_euros * 10) * cart[item.id];
       });
       return total;
   }, [cart, menuItems]);
@@ -276,7 +276,7 @@ export default function RestaurantDetailScreen() {
     const cartItems = menuItems.filter(item => cart[item.id]).map(item => ({
         ...item,
         quantity: cart[item.id],
-        pointsPrice: Math.round(item.price * 10)
+        pointsPrice: Math.round(item.price_euros * 10)
     }));
     router.push({
         pathname: "/checkout",
@@ -397,7 +397,7 @@ export default function RestaurantDetailScreen() {
                     <Text style={styles.sectionTitle}>{section.title}</Text>
                     {section.data.map((item) => {
                         const quantity = cart[item.id] || 0;
-                        const pointsPrice = Math.round(item.price * 10);
+                        const pointsPrice = Math.round(item.price_euros * 10);
                         return (
                             <View key={item.id} style={styles.menuItem}>
                                 <TouchableOpacity style={styles.menuItemContent} activeOpacity={0.7} onPress={() => {}}>
