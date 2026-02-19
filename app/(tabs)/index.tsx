@@ -377,18 +377,12 @@ export default function HomeScreen() {
                 contentContainerStyle={styles.filterContent}
                 style={{ flexGrow: 0, marginBottom: 24, marginTop: 16 }}
             >
-                <CategoryFilterItem
-                    key="all"
-                    item={{ id: -1, name: 'Todo', emoji: '🔍' }}
-                    isActive={activeCategory === null}
-                    onPress={() => setActiveCategory(null)}
-                />
                 {categories.map((cat) => (
                     <CategoryFilterItem
                         key={cat.id}
                         item={cat}
                         isActive={activeCategory === cat.id}
-                        onPress={() => setActiveCategory(cat.id)}
+                        onPress={() => setActiveCategory(activeCategory === cat.id ? null : cat.id)}
                     />
                 ))}
             </ScrollView>
@@ -398,6 +392,10 @@ export default function HomeScreen() {
                 <Animated.View entering={FadeInDown.delay(100).springify()} style={styles.sectionContainer}>
                     <View style={styles.sectionHeader}>
                         <Text style={styles.sectionTitle}>🔥 Últimas unidades (Vuelan)</Text>
+                        <TouchableOpacity style={styles.viewAllButton} onPress={() => router.push('/(tabs)/explore')}>
+                            <Text style={styles.viewAllText}>Ver todo</Text>
+                            <Ionicons name="arrow-forward" size={16} color="#111827" />
+                        </TouchableOpacity>
                     </View>
                     <FlatList
                         data={trendingItems}
@@ -418,6 +416,10 @@ export default function HomeScreen() {
                 <Animated.View entering={FadeInDown.delay(100).springify()} style={styles.sectionContainer}>
                     <View style={styles.sectionHeader}>
                         <Text style={styles.sectionTitle}>Liquidación Total</Text>
+                        <TouchableOpacity style={styles.viewAllButton} onPress={() => router.push('/(tabs)/explore')}>
+                            <Text style={styles.viewAllText}>Ver todo</Text>
+                            <Ionicons name="arrow-forward" size={16} color="#111827" />
+                        </TouchableOpacity>
                     </View>
                     <FlatList
                         data={rewardItems}
