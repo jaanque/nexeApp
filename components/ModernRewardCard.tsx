@@ -26,7 +26,7 @@ interface ModernRewardCardProps {
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = width * 0.7; // Wider
 
-export function ModernRewardCard({ item }: ModernRewardCardProps) {
+export const ModernRewardCard = React.memo(({ item }: ModernRewardCardProps) => {
     const router = useRouter();
 
     // Price Calculations
@@ -83,7 +83,7 @@ export function ModernRewardCard({ item }: ModernRewardCardProps) {
             </View>
         </TouchableOpacity>
     );
-}
+});
 
 const styles = StyleSheet.create({
     card: {

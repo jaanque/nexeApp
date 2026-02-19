@@ -23,7 +23,7 @@ interface ModernBusinessCardProps {
     isLast?: boolean;
 }
 
-export function ModernBusinessCard({ restaurant, distance, isLast }: ModernBusinessCardProps) {
+export const ModernBusinessCard = React.memo(({ restaurant, distance, isLast }: ModernBusinessCardProps) => {
     const router = useRouter();
 
     const handlePress = () => {
@@ -106,7 +106,7 @@ export function ModernBusinessCard({ restaurant, distance, isLast }: ModernBusin
             </View>
         </TouchableOpacity>
     );
-}
+});
 
 const styles = StyleSheet.create({
     container: {
