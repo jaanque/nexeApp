@@ -74,3 +74,33 @@ Web Bundled 813ms node_modules/expo-router/entry.js (1 module)
 "shadow*" style props are deprecated. Use "boxShadow".
 "textShadow*" style props are deprecated. Use "textShadow".
 Web Bundled 1118ms node_modules/expo-router/entry.js (1 module)
+Web node_modules/expo-router/entry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+λ Bundled 494ms node_modules/expo-router/node/render.js (1 module)
+"shadow*" style props are deprecated. Use "boxShadow".
+"textShadow*" style props are deprecated. Use "textShadow".
+Web node_modules/expo-router/entry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+Web Bundled 3649ms node_modules/expo-router/entry.js (1 module)
+Web Bundled 629ms node_modules/expo-router/entry.js (1 module)
+ LOG  [web] Logs will appear in the browser console
+λ Bundled 106ms node_modules/expo-router/node/render.js (1 module)
+"shadow*" style props are deprecated. Use "boxShadow".
+"textShadow*" style props are deprecated. Use "textShadow".
+Web Bundled 1282ms node_modules/expo-router/entry.js (1 module)
+Web node_modules/expo-router/entry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+λ Bundled 49ms node_modules/expo-router/node/render.js (1 module)
+"shadow*" style props are deprecated. Use "boxShadow".
+"textShadow*" style props are deprecated. Use "textShadow".
+Web Bundled 598ms node_modules/expo-router/entry.js (1 module)
+Web Bundled 95ms node_modules/expo-router/entry.js (1 module)
+ LOG  [web] Logs will appear in the browser console
+λ Bundled 41ms node_modules/expo-router/node/render.js (1 module)
+"shadow*" style props are deprecated. Use "boxShadow".
+"textShadow*" style props are deprecated. Use "textShadow".
+Web Bundled 517ms node_modules/expo-router/entry.js (1 module)
+λ Bundled 46ms node_modules/expo-router/node/render.js (1 module)
+"shadow*" style props are deprecated. Use "boxShadow".
+"textShadow*" style props are deprecated. Use "textShadow".
+Web Bundled 483ms node_modules/expo-router/entry.js (1 module)
+Error: Premature close
+    at onclose (node:internal/streams/end-of-stream:171:30)
+    at processTicksAndRejections (node:internal/process/task_queues:85:11)
