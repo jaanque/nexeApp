@@ -1,11 +1,9 @@
 import MapMarker from '@/components/ui/MapMarker';
 import { Ionicons } from '@expo/vector-icons';
-import Mapbox, { Camera } from '@/lib/mapbox';
 import React, { useEffect, useRef } from 'react';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
+import MapView, { Marker } from 'react-native-maps';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-
-Mapbox.setAccessToken('pk.eyJ1IjoiamFucXVlcmFsdCIsImEiOiJjbWx1cTcyeTgwMDJkM2RzMXg0amsxZHRsIn0.Xwrer82K4qOVBa6OhjwMtw');
 
 interface Restaurant {
   id: number;
@@ -33,7 +31,7 @@ export default function RestaurantMap({
     userLocation,
     topOffset = 60 // Default fallback
 }: RestaurantMapProps) {
-  const cameraRef = useRef<Camera>(null);
+  const mapRef = useRef<MapView>(null);
   const insets = useSafeAreaInsets();
   const hasCenteredOnUser = useRef(false);
 
@@ -43,19 +41,20 @@ export default function RestaurantMap({
   useEffect(() => {
     if (selectedRestaurant && selectedRestaurant.latitude && selectedRestaurant.longitude) {
        // Animate to selected restaurant with offset for the card
-       cameraRef.current?.setCamera({
-            centerCoordinate: [selectedRestaurant.longitude, selectedRestaurant.latitude],
-            zoomLevel: 15,
-            padding: { paddingTop: effectiveTop, paddingBottom: 20, paddingLeft: 0, paddingRight: 0 },
-            animationDuration: 1000,
-        });
+       mapRef.current?.animateToRegion({
+            latitude: selectedRestaurant.latitude,
+            longitude: selectedRestaurant.longitude,
+            latitudeDelta: 0.01,
+            longitudeDelta: 0.01,
+       }, 1000);
     } else if (userLocation && !selectedRestaurant && !hasCenteredOnUser.current) {
         // Initial user location
-        cameraRef.current?.setCamera({
-            centerCoordinate: [userLocation.longitude, userLocation.latitude],
-            zoomLevel: 14,
-            animationDuration: 1000,
-        });
+        mapRef.current?.animateToRegion({
+            latitude: userLocation.latitude,
+            longitude: userLocation.longitude,
+            latitudeDelta: 0.05,
+            longitudeDelta: 0.05,
+        }, 1000);
         hasCenteredOnUser.current = true;
     }
   }, [userLocation, selectedRestaurant, effectiveTop]);
@@ -63,51 +62,56 @@ export default function RestaurantMap({
   const handleRecenter = () => {
       if (userLocation) {
           onSelectRestaurant(null);
-          cameraRef.current?.setCamera({
-            centerCoordinate: [userLocation.longitude, userLocation.latitude],
-            zoomLevel: 15,
-            animationDuration: 800,
-        });
+          mapRef.current?.animateToRegion({
+            latitude: userLocation.latitude,
+            longitude: userLocation.longitude,
+            latitudeDelta: 0.01,
+            longitudeDelta: 0.01,
+        }, 800);
       }
   };
 
   return (
     <View style={styles.container}>
-        <Mapbox.MapView
+        <MapView
+            ref={mapRef}
             style={styles.map}
-            styleURL={Mapbox.StyleURL.Street}
+            // provider={PROVIDER_GOOGLE} // Removed to fallback to Apple Maps on iOS if key is missing
             onPress={() => onSelectRestaurant(null)}
-            scaleBarEnabled={false}
-            logoEnabled={false}
-            attributionEnabled={false}
+            showsUserLocation={true}
+            showsMyLocationButton={false}
+            showsCompass={false}
+            showsScale={false}
+            mapPadding={{ top: effectiveTop, right: 0, bottom: 20, left: 0 }}
+            initialRegion={{
+                latitude: userLocation?.latitude || 40.416775,
+                longitude: userLocation?.longitude || -3.703790,
+                latitudeDelta: 0.0922,
+                longitudeDelta: 0.0421,
+            }}
         >
-            <Mapbox.Camera
-                ref={cameraRef}
-                defaultSettings={{
-                    centerCoordinate: userLocation ? [userLocation.longitude, userLocation.latitude] : [-3.703790, 40.416775],
-                    zoomLevel: 12
-                }}
-            />
-
-            <Mapbox.UserLocation visible={true} />
-
             {restaurants.map((restaurant) => {
                 if (!restaurant.latitude || !restaurant.longitude) return null;
                 return (
-                    <Mapbox.PointAnnotation
+                    <Marker
                         key={restaurant.id}
-                        id={restaurant.id.toString()}
-                        coordinate={[restaurant.longitude, restaurant.latitude]}
-                        onSelected={() => onSelectRestaurant(restaurant)}
+                        coordinate={{
+                            latitude: restaurant.latitude,
+                            longitude: restaurant.longitude
+                        }}
+                        onPress={(e) => {
+                            e.stopPropagation();
+                            onSelectRestaurant(restaurant);
+                        }}
                     >
                          <MapMarker
                             isSelected={selectedRestaurant?.id === restaurant.id}
                             category={restaurant.cuisine_type}
                         />
-                    </Mapbox.PointAnnotation>
+                    </Marker>
                 );
             })}
-        </Mapbox.MapView>
+        </MapView>
 
         {/* Recenter Button */}
         <TouchableOpacity
