@@ -58,7 +58,20 @@ export const ModernBusinessCard = React.memo(({ restaurant, distance, isLast, is
     const openingTimeDisplay = React.useMemo(() => {
         if (!restaurant.opening_time) return null;
         const [h, m] = restaurant.opening_time.split(':');
-        return `${h}:${m}`;
+        const openingTime = `${h}:${m}`;
+
+        // Simple heuristic: If closed, and current time > opening time, it probably opens tomorrow.
+        const now = new Date();
+        const currentH = now.getHours();
+        const currentM = now.getMinutes();
+
+        const [openH, openM] = restaurant.opening_time.split(':').map(Number);
+
+        if (currentH > openH || (currentH === openH && currentM >= openM)) {
+            return `Mañana ${openingTime}`;
+        }
+
+        return openingTime;
     }, [restaurant.opening_time]);
 
     return (
