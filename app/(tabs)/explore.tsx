@@ -154,6 +154,7 @@ export default function ExploreScreen() {
           ? formatDistance(userLocation.latitude, userLocation.longitude, item.latitude, item.longitude)
           : undefined;
 
+      // Use a consistent card style for the list
       return (
           <View style={{ marginBottom: 16 }}>
              <ModernBusinessCard
@@ -199,8 +200,8 @@ export default function ExploreScreen() {
     );
   };
 
-  // HEADER OFFSET
-  const HEADER_MAX_HEIGHT = insets.top + 80;
+  // HEADER OFFSET - Adjusted to match Home header height roughly or just enough for search bar
+  const HEADER_MAX_HEIGHT = insets.top + 70;
 
   return (
     <View style={styles.container}>
@@ -219,7 +220,7 @@ export default function ExploreScreen() {
       {isMapMode ? (
          <View style={StyleSheet.absoluteFill}>
             <RestaurantMap
-                restaurants={filteredRestaurants} // Show filtered logic on map too!
+                restaurants={filteredRestaurants}
                 selectedRestaurant={selectedRestaurant}
                 onSelectRestaurant={setSelectedRestaurant}
                 userLocation={userLocation}
@@ -242,7 +243,7 @@ export default function ExploreScreen() {
           ListHeaderComponent={renderListHeader()}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{
-            paddingHorizontal: 20,
+            paddingHorizontal: 16, // Adjusted to match Home padding (usually 16 or 20)
             paddingTop: HEADER_MAX_HEIGHT + 20,
             paddingBottom: 100
           }}
@@ -258,17 +259,18 @@ export default function ExploreScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#FFFFFF', // Flat light background
   },
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'baseline',
     marginBottom: 16,
+    paddingHorizontal: 4, // Slight inner padding
   },
   sectionTitle: {
-    fontSize: 22,
-    fontWeight: '800',
+    fontSize: 20, // Slightly smaller to match Home section titles often around 20-22
+    fontWeight: '700',
     color: '#111827',
     letterSpacing: -0.5,
   },
@@ -282,9 +284,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 12,
+    justifyContent: 'space-between', // Ensure they span efficiently
   },
   gridItemWrapper: {
-    width: COLUMN_WIDTH,
+    width: '48%', // Fluid width instead of fixed calculation
     marginBottom: 12,
   },
   categoryCard: {
@@ -294,13 +297,14 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     borderWidth: 1,
     borderColor: '#E5E7EB',
+    // No shadow for flat design
   },
   categoryEmoji: {
     fontSize: 28,
   },
   categoryName: {
-    fontSize: 16,
-    fontWeight: '700',
+    fontSize: 15,
+    fontWeight: '600',
     color: '#111827',
   },
 });

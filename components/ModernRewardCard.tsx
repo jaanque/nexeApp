@@ -67,7 +67,22 @@ export const ModernRewardCard = React.memo(({ item }: ModernRewardCardProps) => 
     const openingTimeDisplay = React.useMemo(() => {
         if (!item.locales?.opening_time) return null;
         const [h, m] = item.locales.opening_time.split(':');
-        return `${h}:${m}`;
+        const openingTime = `${h}:${m}`;
+
+        // If it's closed and the current time is after the closing time (which is usually true if it's closed late),
+        // we might want to say "Mañana".
+        // Simple heuristic: If closed, and current time > opening time, it probably opens tomorrow.
+        const now = new Date();
+        const currentH = now.getHours();
+        const currentM = now.getMinutes();
+
+        const [openH, openM] = item.locales.opening_time.split(':').map(Number);
+
+        if (currentH > openH || (currentH === openH && currentM >= openM)) {
+            return `Mañana ${openingTime}`;
+        }
+
+        return openingTime;
     }, [item.locales?.opening_time]);
 
     const handlePress = () => {
@@ -91,7 +106,7 @@ export const ModernRewardCard = React.memo(({ item }: ModernRewardCardProps) => 
                 {isClosed && (
                     <View style={styles.closedOverlay}>
                         <Text style={styles.closedText}>Cerrado</Text>
-                        {openingTimeDisplay && <Text style={styles.openingTimeText}>Abre a las {openingTimeDisplay}</Text>}
+                        {openingTimeDisplay && <Text style={styles.openingTimeText}>Abre {openingTimeDisplay}</Text>}
                     </View>
                 )}
             </View>
