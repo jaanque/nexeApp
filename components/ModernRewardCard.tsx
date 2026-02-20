@@ -64,6 +64,12 @@ export const ModernRewardCard = React.memo(({ item }: ModernRewardCardProps) => 
         return !(currentTime >= openTime && currentTime <= closeTime);
     }, [item.locales]);
 
+    const openingTimeDisplay = React.useMemo(() => {
+        if (!item.locales?.opening_time) return null;
+        const [h, m] = item.locales.opening_time.split(':');
+        return `${h}:${m}`;
+    }, [item.locales?.opening_time]);
+
     const handlePress = () => {
         if (process.env.EXPO_OS === 'ios') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         router.push(`/item/${item.id}`);
@@ -85,6 +91,7 @@ export const ModernRewardCard = React.memo(({ item }: ModernRewardCardProps) => 
                 {isClosed && (
                     <View style={styles.closedOverlay}>
                         <Text style={styles.closedText}>Cerrado</Text>
+                        {openingTimeDisplay && <Text style={styles.openingTimeText}>Abre a las {openingTimeDisplay}</Text>}
                     </View>
                 )}
             </View>
@@ -170,6 +177,12 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         fontSize: 14,
         textTransform: 'uppercase',
+        marginBottom: 4,
+    },
+    openingTimeText: {
+        color: 'white',
+        fontSize: 12,
+        fontWeight: '600',
     },
     priceContainer: {
         marginTop: 8,

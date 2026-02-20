@@ -1,11 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
-import Mapbox, { Camera, MapState } from '@/lib/mapbox';
 import * as Location from 'expo-location';
 import React, { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Alert, Animated, Dimensions, Easing, FlatList, KeyboardAvoidingView, Modal, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import MapView, { Region } from 'react-native-maps';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-
-Mapbox.setAccessToken('pk.eyJ1IjoiamFucXVlcmFsdCIsImEiOiJjbWx1cTcyeTgwMDJkM2RzMXg0amsxZHRsIn0.Xwrer82K4qOVBa6OhjwMtw');
 
 const { height } = Dimensions.get('window');
 
@@ -34,22 +32,25 @@ export default function LocationPicker({ visible, onClose, onSelectLocation, ini
     const slideAnim = useRef(new Animated.Value(height)).current;
 
     // Map State
-    const cameraRef = useRef<Camera>(null);
-    const [centerCoordinate, setCenterCoordinate] = useState<[number, number] | undefined>(undefined);
+    const mapRef = useRef<MapView>(null);
+    const [region, setRegion] = useState<Region>({
+        latitude: 40.416775,
+        longitude: -3.703790,
+        latitudeDelta: 0.05,
+        longitudeDelta: 0.05,
+    });
 
     // Initial Location Effect
     useEffect(() => {
         if (initialLocation) {
-            const newCenter: [number, number] = [initialLocation.longitude, initialLocation.latitude];
-            setCenterCoordinate(newCenter);
-            cameraRef.current?.setCamera({
-                centerCoordinate: newCenter,
-                zoomLevel: 14,
-                animationDuration: 1000,
-            });
-        } else {
-             // Default Madrid
-            setCenterCoordinate([-3.703790, 40.416775]);
+            const newRegion = {
+                latitude: initialLocation.latitude,
+                longitude: initialLocation.longitude,
+                latitudeDelta: 0.01,
+                longitudeDelta: 0.01,
+            };
+            setRegion(newRegion);
+            mapRef.current?.animateToRegion(newRegion, 1000);
         }
     }, [initialLocation]);
 
@@ -122,11 +123,9 @@ export default function LocationPicker({ visible, onClose, onSelectLocation, ini
     };
 
     const handleMapConfirm = async () => {
-        if (!centerCoordinate) return;
-
         setLoading(true);
         try {
-             const [longitude, latitude] = centerCoordinate;
+             const { latitude, longitude } = region;
 
              // Reverse geocode center
              let address = "Ubicación seleccionada";
@@ -141,7 +140,7 @@ export default function LocationPicker({ visible, onClose, onSelectLocation, ini
                 }
              } catch (e) { console.log(e); }
 
-             onSelectLocation({ latitude: latitude, longitude: longitude }, address, true);
+             onSelectLocation({ latitude, longitude }, address, true);
              onClose();
         } catch (_) {
              Alert.alert('Error', 'No pudimos confirmar la ubicación.');
@@ -202,12 +201,8 @@ export default function LocationPicker({ visible, onClose, onSelectLocation, ini
         }
     };
 
-    const onRegionChange = (state: MapState) => {
-         // Mapbox state returns center as [lon, lat]
-         const { center } = state.properties;
-         if (center) {
-            setCenterCoordinate(center as [number, number]);
-         }
+    const onRegionChangeComplete = (newRegion: Region) => {
+        setRegion(newRegion);
     };
 
     const handleRecenterMap = async () => {
@@ -216,11 +211,13 @@ export default function LocationPicker({ visible, onClose, onSelectLocation, ini
             if (status !== 'granted') return;
 
             let location = await Location.getCurrentPositionAsync({});
-            cameraRef.current?.setCamera({
-                centerCoordinate: [location.coords.longitude, location.coords.latitude],
-                zoomLevel: 15,
-                animationDuration: 1000,
-            });
+            const newRegion = {
+                latitude: location.coords.latitude,
+                longitude: location.coords.longitude,
+                latitudeDelta: 0.01,
+                longitudeDelta: 0.01,
+            };
+            mapRef.current?.animateToRegion(newRegion, 1000);
         } catch (_) {
             // Ignore
         }
@@ -256,23 +253,16 @@ export default function LocationPicker({ visible, onClose, onSelectLocation, ini
 
     const renderMap = () => (
         <View style={styles.fullScreenContainer}>
-             <Mapbox.MapView
+             <MapView
+                ref={mapRef}
                 style={styles.map}
-                styleURL={Mapbox.StyleURL.Street}
-                onCameraChanged={onRegionChange}
-                scaleBarEnabled={false}
-                logoEnabled={false}
-                attributionEnabled={false}
-             >
-                <Mapbox.Camera
-                    ref={cameraRef}
-                    defaultSettings={{
-                        centerCoordinate: centerCoordinate || [-3.703790, 40.416775],
-                        zoomLevel: 14
-                    }}
-                />
-                <Mapbox.UserLocation visible={true} />
-             </Mapbox.MapView>
+                onRegionChangeComplete={onRegionChangeComplete}
+                showsUserLocation={true}
+                showsMyLocationButton={false}
+                showsCompass={false}
+                showsScale={false}
+                initialRegion={region}
+             />
 
              <View style={styles.centerMarker}>
                 <Ionicons name="location" size={40} color="#EF4444" />
