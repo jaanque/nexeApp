@@ -174,7 +174,7 @@ export default function HomeScreen() {
     try {
         if (!reset) setLoadingMore(true);
 
-        let query = supabase.from('locales').select('*', { count: 'exact' });
+        let query = supabase.from('locales').select('id, name, image_url, rating, cuisine_type, address, latitude, longitude, category_id, opening_time, closing_time', { count: 'exact' });
 
         // Apply Category Filter
         if (activeCategory !== null) {
@@ -353,7 +353,7 @@ export default function HomeScreen() {
       // Optimized query: Select only needed fields, include opening/closing times
       const { data: menuData } = await supabase
         .from('items')
-        .select('*, locales(name, opening_time, closing_time)')
+        .select('id, name, description, price_euros, discount_percentage, image_url, restaurant_id, category_id, locales(name, opening_time, closing_time)')
         .limit(20);
 
       if (menuData) {

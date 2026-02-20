@@ -27,6 +27,7 @@ const MAPPING = {
   'person.fill': 'person',
   'person': 'person', // Filled
   'bell.fill': 'notifications',
+  'heart.fill': 'heart',
   'star.fill': 'star',
   'fast-food': 'fast-food',
   'pizza': 'pizza',
