@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useStripePayment } from '@/hooks/useStripePayment';
 
 interface CartItem {
   id: number;
@@ -17,6 +18,7 @@ export default function CheckoutScreen() {
   const router = useRouter();
   const [items, setItems] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(false);
+  const { initializePaymentSheet, openPaymentSheet } = useStripePayment();
 
   useEffect(() => {
     if (typeof cartData === 'string') {
@@ -36,27 +38,44 @@ export default function CheckoutScreen() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user) {
          Alert.alert("Error", "Debes iniciar sesión para realizar un pedido.");
+         setLoading(false);
          return;
       }
 
-      // Insert movement record (as a record of purchase)
-      const restName = Array.isArray(restaurantName) ? restaurantName[0] : restaurantName;
-      const { error: movementError } = await supabase.from('movements').insert({
-        user_id: session.user.id,
-        amount: -totalCost, // Recording as negative amount to indicate spend
-        description: `Pedido en ${restName || 'Restaurante'}`,
-        type: 'spend'
-      });
-
-      if (movementError) {
-        console.error("Error saving movement:", movementError);
-        // Continue even if logging fails
+      // 1. Initialize Stripe Payment
+      const orderId = await initializePaymentSheet(items);
+      if (!orderId) {
+          setLoading(false);
+          return;
       }
 
-      // Finish
-      Alert.alert("¡Pedido Confirmado!", "Tu pedido ha sido realizado correctamente.", [
-        { text: "OK", onPress: () => router.dismissAll() } // Go back to root/home
-      ]);
+      // 2. Present Payment Sheet
+      const { success, canceled } = await openPaymentSheet();
+
+      if (canceled) {
+          setLoading(false);
+          return;
+      }
+
+      if (success) {
+          // Insert movement record (optional, as webhook handles orders)
+          const restName = Array.isArray(restaurantName) ? restaurantName[0] : restaurantName;
+          const { error: movementError } = await supabase.from('movements').insert({
+            user_id: session.user.id,
+            amount: -totalCost,
+            description: `Pedido #${orderId} en ${restName || 'Restaurante'}`,
+            type: 'spend'
+          });
+
+          if (movementError) {
+            console.error("Error saving movement:", movementError);
+          }
+
+          // Finish
+          Alert.alert("¡Pedido Confirmado!", "Tu pedido ha sido realizado correctamente.", [
+            { text: "OK", onPress: () => router.dismissAll() }
+          ]);
+      }
 
     } catch (error) {
       console.error("Payment error:", error);

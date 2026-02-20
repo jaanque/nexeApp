@@ -1,0 +1,92 @@
+
+import { useState } from 'react';
+import { Alert } from 'react-native';
+import { useStripe } from '@stripe/stripe-react-native';
+import { supabase } from '@/lib/supabase';
+
+interface CartItem {
+    id: number;
+    quantity: number;
+}
+
+export function useStripePayment() {
+    const { initPaymentSheet, presentPaymentSheet } = useStripe();
+    const [loading, setLoading] = useState(false);
+
+    const initializePaymentSheet = async (items: CartItem[]) => {
+        setLoading(true);
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session?.user) {
+                Alert.alert('Error', 'Debes iniciar sesión para pagar.');
+                return null;
+            }
+
+            console.log('Invoking create-payment-intent with items:', items);
+
+            // 1. Fetch PaymentIntent params from Edge Function
+            // Note: user_id is inferred from the Auth header automatically sent by supabase.functions.invoke
+            const { data, error } = await supabase.functions.invoke('create-payment-intent', {
+                body: { items }
+            });
+
+            if (error) {
+                console.error('Supabase function error:', error);
+                throw new Error(error.message || 'Error communicating with server');
+            }
+
+            if (!data) {
+                throw new Error('No data returned from payment function');
+            }
+
+            const { paymentIntent, ephemeralKey, customer, orderId } = data;
+
+            // 2. Initialize the Payment Sheet
+            const { error: initError } = await initPaymentSheet({
+                merchantDisplayName: 'NEXE App',
+                customerId: customer,
+                customerEphemeralKeySecret: ephemeralKey,
+                paymentIntentClientSecret: paymentIntent,
+                allowsDelayedPaymentMethods: true,
+                defaultBillingDetails: {
+                    email: session.user.email
+                },
+                returnURL: 'nexeapp://stripe-redirect',
+            });
+
+            if (initError) {
+                console.error('Stripe init error:', initError);
+                throw new Error(initError.message);
+            }
+
+            return orderId;
+
+        } catch (e: any) {
+            console.error('Payment initialization error:', e);
+            Alert.alert('Error de Pago', e.message || 'No se pudo iniciar el proceso de pago.');
+            return null;
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const openPaymentSheet = async () => {
+        const { error } = await presentPaymentSheet();
+
+        if (error) {
+            if (error.code === 'Canceled') {
+                return { success: false, canceled: true };
+            }
+            Alert.alert(`Error de pago`, error.message);
+            return { success: false, error };
+        } else {
+            return { success: true };
+        }
+    };
+
+    return {
+        initializePaymentSheet,
+        openPaymentSheet,
+        loading,
+    };
+}
