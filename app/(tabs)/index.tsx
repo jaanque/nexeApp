@@ -135,7 +135,7 @@ export default function HomeScreen() {
       }
   }, [sortBy, activeCategory]); // Also refetch when category changes
 
-  async function fetchRestaurants(pageNumber: number, reset = false) {
+  async function fetchRestaurants(pageNumber: number, reset = false, locationOverride?: { latitude: number, longitude: number }) {
     if (pageNumber > 0 && !hasMore) return;
 
     try {
@@ -149,13 +149,14 @@ export default function HomeScreen() {
         }
 
         // Apply Sorting
-        if (sortBy === 'distance' && userLocation) {
+        const loc = locationOverride || userLocation;
+        if (sortBy === 'distance' && loc) {
              if (pageNumber === 0) {
                  const { data, count } = await query.limit(50);
                  if (data) {
                      const sorted = [...data].sort((a, b) => {
-                        const distA = (a.latitude && a.longitude) ? getDistanceInMeters(userLocation.latitude, userLocation.longitude, a.latitude, a.longitude) : Infinity;
-                        const distB = (b.latitude && b.longitude) ? getDistanceInMeters(userLocation.latitude, userLocation.longitude, b.latitude, b.longitude) : Infinity;
+                        const distA = (a.latitude && a.longitude) ? getDistanceInMeters(loc.latitude, loc.longitude, a.latitude, a.longitude) : Infinity;
+                        const distB = (b.latitude && b.longitude) ? getDistanceInMeters(loc.latitude, loc.longitude, b.latitude, b.longitude) : Infinity;
                         return distA - distB;
                      });
                      setRestaurants(sorted);
@@ -288,7 +289,7 @@ export default function HomeScreen() {
       // Trigger refresh
       setPage(0);
       setHasMore(true);
-      fetchRestaurants(0, true);
+      fetchRestaurants(0, true, location);
   };
 
   async function fetchPoints(userId: string) {
