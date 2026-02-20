@@ -58,7 +58,7 @@ export default function LocationPicker({ visible, onClose, onSelectLocation, ini
     // Text Input State
     const [searchText, setSearchText] = useState("");
     const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
-    const searchTimeout = useRef<NodeJS.Timeout | null>(null);
+    const searchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     useEffect(() => {
         if (visible) {
