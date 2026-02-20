@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import Mapbox from '@rnmapbox/maps';
+import Mapbox, { Camera, MapState } from '@/lib/mapbox';
 import * as Location from 'expo-location';
 import React, { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Alert, Animated, Dimensions, Easing, FlatList, KeyboardAvoidingView, Modal, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
@@ -34,7 +34,7 @@ export default function LocationPicker({ visible, onClose, onSelectLocation, ini
     const slideAnim = useRef(new Animated.Value(height)).current;
 
     // Map State
-    const cameraRef = useRef<Mapbox.Camera>(null);
+    const cameraRef = useRef<Camera>(null);
     const [centerCoordinate, setCenterCoordinate] = useState<[number, number] | undefined>(undefined);
 
     // Initial Location Effect
@@ -202,7 +202,7 @@ export default function LocationPicker({ visible, onClose, onSelectLocation, ini
         }
     };
 
-    const onRegionChange = (state: Mapbox.MapState) => {
+    const onRegionChange = (state: MapState) => {
          // Mapbox state returns center as [lon, lat]
          const { center } = state.properties;
          if (center) {

@@ -1,6 +1,6 @@
 import MapMarker from '@/components/ui/MapMarker';
 import { Ionicons } from '@expo/vector-icons';
-import Mapbox from '@rnmapbox/maps';
+import Mapbox, { Camera } from '@/lib/mapbox';
 import React, { useEffect, useRef } from 'react';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -33,7 +33,7 @@ export default function RestaurantMap({
     userLocation,
     topOffset = 60 // Default fallback
 }: RestaurantMapProps) {
-  const cameraRef = useRef<Mapbox.Camera>(null);
+  const cameraRef = useRef<Camera>(null);
   const insets = useSafeAreaInsets();
   const hasCenteredOnUser = useRef(false);
 
