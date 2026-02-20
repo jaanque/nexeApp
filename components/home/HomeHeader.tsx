@@ -2,15 +2,10 @@ import React, { memo } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
-import { ModernHeader } from '@/components/ui/ModernHeader';
 import { HomeBanners, HomeCategories, HomeSection, HomeSortChips, Category, MenuItemResult, SortOption } from '@/components/home/HomeSections';
 import { Banner } from '@/components/MarketingSlider';
 
 interface HomeHeaderProps {
-  address: string;
-  onAddressPress: () => void;
-  isPickup: boolean;
-  setIsPickup: (pickup: boolean) => void;
   banners: Banner[];
   categories: Category[];
   activeCategory: number | null;
@@ -23,10 +18,6 @@ interface HomeHeaderProps {
 }
 
 export const HomeHeader = memo(({
-  address,
-  onAddressPress,
-  isPickup,
-  setIsPickup,
   banners,
   categories,
   activeCategory,
@@ -40,19 +31,7 @@ export const HomeHeader = memo(({
   const router = useRouter();
 
   return (
-    <View>
-      <ModernHeader
-        address={address}
-        onAddressPress={() => {
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-          onAddressPress();
-        }}
-        onProfilePress={() => router.push('/(tabs)/profile')}
-        isPickup={isPickup}
-        onTogglePickup={setIsPickup}
-      />
-
-      <View style={styles.headerContentWrapper}>
+    <View style={styles.headerContentWrapper}>
         <HomeBanners banners={banners} />
 
         <HomeCategories
@@ -83,7 +62,6 @@ export const HomeHeader = memo(({
             setSortBy={setSortBy}
           />
         </View>
-      </View>
     </View>
   );
 });
@@ -91,5 +69,6 @@ export const HomeHeader = memo(({
 const styles = StyleSheet.create({
   headerContentWrapper: {
     paddingBottom: 0,
+    marginTop: 10, // Add a bit of space below the sticky header
   },
 });

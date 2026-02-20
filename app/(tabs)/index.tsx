@@ -4,6 +4,7 @@ import { HomeScreenSkeleton } from '@/components/HomeScreenSkeleton';
 import LocationPicker from '@/components/LocationPicker';
 import { Banner } from '@/components/MarketingSlider';
 import { ModernBusinessCard } from '@/components/ModernBusinessCard';
+import { ModernHeader } from '@/components/ui/ModernHeader';
 import { supabase } from '@/lib/supabase';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Session } from '@supabase/supabase-js';
@@ -12,7 +13,8 @@ import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, FlatList, ListRenderItem, Platform, RefreshControl, StyleSheet, Text, UIManager, View } from 'react-native';
+import { ActivityIndicator, ListRenderItem, Platform, RefreshControl, StyleSheet, Text, UIManager, View } from 'react-native';
+import Animated, { Extrapolation, interpolate, useAnimatedScrollHandler, useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 // Enable LayoutAnimation on Android
@@ -67,6 +69,37 @@ export default function HomeScreen() {
 
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const scrollY = useSharedValue(0);
+
+  const scrollHandler = useAnimatedScrollHandler({
+    onScroll: (event) => {
+      scrollY.value = event.contentOffset.y;
+    },
+  });
+
+  const headerAnimatedStyle = useAnimatedStyle(() => {
+    const borderOpacity = interpolate(
+      scrollY.value,
+      [0, 20],
+      [0, 1],
+      Extrapolation.CLAMP
+    );
+
+    const shadowOpacity = interpolate(
+        scrollY.value,
+        [0, 20],
+        [0, 0.05],
+        Extrapolation.CLAMP
+    );
+
+    return {
+      borderBottomWidth: 1,
+      borderColor: `rgba(229, 231, 235, ${borderOpacity})`,
+      shadowOpacity: shadowOpacity,
+      shadowRadius: 10,
+      elevation: scrollY.value > 10 ? 4 : 0,
+    };
+  });
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -354,10 +387,6 @@ export default function HomeScreen() {
 
   const renderHeader = (
       <HomeHeader
-          address={address}
-          onAddressPress={() => setLocationPickerVisible(true)}
-          isPickup={isPickup}
-          setIsPickup={setIsPickup}
           banners={banners}
           categories={categories}
           activeCategory={activeCategory}
@@ -393,20 +422,39 @@ export default function HomeScreen() {
       }
   };
 
+  const HEADER_HEIGHT = 80; // Approximate height for ModernHeader + safe area
+
   if (loading) return <HomeScreenSkeleton />;
 
   return (
     <View style={styles.container}>
       <StatusBar style="dark" />
 
-      <FlatList
+      {/* Sticky Header */}
+      <Animated.View style={[styles.stickyHeader, headerAnimatedStyle]}>
+          <ModernHeader
+            address={address}
+            onAddressPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              setLocationPickerVisible(true);
+            }}
+            onProfilePress={() => router.push('/(tabs)/profile')}
+            isPickup={isPickup}
+            onTogglePickup={setIsPickup}
+          />
+      </Animated.View>
+
+      <Animated.FlatList
         data={restaurants}
         renderItem={renderRestaurantItem}
         keyExtractor={(item) => item.id.toString()}
         ListHeaderComponent={renderHeader}
         ListFooterComponent={renderFooter}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 100 }}
+        contentContainerStyle={{
+             paddingBottom: 100,
+             paddingTop: insets.top + 70 // Push content down below fixed header
+        }}
         columnWrapperStyle={{ paddingHorizontal: 14 }}
         keyboardDismissMode="on-drag"
         scrollEnabled={true}
@@ -418,6 +466,8 @@ export default function HomeScreen() {
         removeClippedSubviews={true}
         onEndReached={handleLoadMore}
         onEndReachedThreshold={0.5}
+        onScroll={scrollHandler}
+        scrollEventThrottle={16}
         ListEmptyComponent={
             !loading ? (
                 <View style={{ padding: 40, alignItems: 'center' }}>
@@ -436,7 +486,7 @@ export default function HomeScreen() {
                 titleColor="#111827"
                 colors={['#111827']}
                 progressBackgroundColor="#FFFFFF"
-                progressViewOffset={Platform.OS === 'android' ? insets.top + 20 : 0}
+                progressViewOffset={Platform.OS === 'android' ? insets.top + 80 : insets.top + 60}
             />
         }
         style={{ backgroundColor: '#FFFFFF' }}
@@ -456,6 +506,19 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#FFFFFF',
+  },
+  stickyHeader: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 100,
+    backgroundColor: '#FFFFFF',
+    shadowColor: "#000",
+    shadowOffset: {
+        width: 0,
+        height: 4,
+    },
   },
   headerContentWrapper: {
       paddingBottom: 0,
