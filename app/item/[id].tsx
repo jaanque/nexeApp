@@ -100,7 +100,6 @@ export default function ItemDetailScreen() {
   const hasDiscount = item ? item.discount_percentage > 0 : false;
   const originalPrice = item ? (item.price_euros || 0) : 0;
   const finalPrice = hasDiscount ? originalPrice * (1 - item!.discount_percentage / 100) : originalPrice;
-  const pointsNeeded = Math.round(finalPrice * 10);
 
   const handleRedeem = () => {
       if (!item) return;
@@ -110,7 +109,7 @@ export default function ItemDetailScreen() {
           id: item.id,
           name: item.name,
           quantity: 1,
-          pointsPrice: pointsNeeded
+          price: finalPrice
       }];
 
       router.push({
