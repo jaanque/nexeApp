@@ -64,7 +64,7 @@ export const HomeHeader = memo(({
         <View style={{ opacity: isFiltering ? 0.5 : 1 }}>
           {trendingItems.length > 0 && (
             <HomeSection
-              title="🔥 Últimas unidades (Vuelan)"
+              title="🔥 Últimas unidades"
               items={trendingItems}
               delay={100}
             />

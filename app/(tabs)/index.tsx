@@ -317,7 +317,12 @@ export default function HomeScreen() {
 
   async function fetchFeaturedItems() {
     try {
-      const { data: menuData } = await supabase.from('items').select('*, locales(name)').limit(20);
+      // Optimized query: Select only needed fields, include opening/closing times
+      const { data: menuData } = await supabase
+        .from('items')
+        .select('*, locales(name, opening_time, closing_time)')
+        .limit(20);
+
       if (menuData) {
           const typedMenuData = menuData as unknown as MenuItemResult[];
           setAllRewards(typedMenuData);
