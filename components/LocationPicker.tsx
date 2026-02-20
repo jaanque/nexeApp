@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { StyleSheet, View, Text, TouchableOpacity, Modal, TextInput, Dimensions, ActivityIndicator, Alert, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard } from 'react-native';
+import { StyleSheet, View, Text, TouchableOpacity, Modal, TextInput, Dimensions, ActivityIndicator, Alert, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard, Animated, Easing, FlatList } from 'react-native';
 import MapView, { Marker, PROVIDER_GOOGLE, Region } from 'react-native-maps';
 import * as Location from 'expo-location';
 import { Ionicons } from '@expo/vector-icons';
@@ -16,10 +16,20 @@ interface LocationPickerProps {
 
 type Mode = 'options' | 'map' | 'text';
 
+interface Suggestion {
+    place_id: number;
+    display_name: string;
+    lat: string;
+    lon: string;
+}
+
 export default function LocationPicker({ visible, onClose, onSelectLocation, initialLocation }: LocationPickerProps) {
     const insets = useSafeAreaInsets();
     const [mode, setMode] = useState<Mode>('options');
     const [loading, setLoading] = useState(false);
+
+    // Animation
+    const slideAnim = useRef(new Animated.Value(height)).current;
 
     // Map State
     const mapRef = useRef<MapView>(null);
@@ -29,17 +39,39 @@ export default function LocationPicker({ visible, onClose, onSelectLocation, ini
         latitudeDelta: 0.01,
         longitudeDelta: 0.01,
     });
-    const [selectedAddress, setSelectedAddress] = useState<string>("");
 
     // Text Input State
     const [searchText, setSearchText] = useState("");
+    const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
+    const searchTimeout = useRef<NodeJS.Timeout | null>(null);
 
     useEffect(() => {
         if (visible) {
             setMode('options');
             setSearchText("");
+            setSuggestions([]);
+
+            // Start Animation
+            Animated.timing(slideAnim, {
+                toValue: 0,
+                duration: 300,
+                useNativeDriver: true,
+                easing: Easing.out(Easing.cubic),
+            }).start();
+        } else {
+            slideAnim.setValue(height);
         }
     }, [visible]);
+
+    const handleClose = () => {
+        Animated.timing(slideAnim, {
+            toValue: height,
+            duration: 200,
+            useNativeDriver: true,
+        }).start(() => {
+            onClose();
+        });
+    };
 
     const handleUseCurrentLocation = async () => {
         setLoading(true);
@@ -100,7 +132,40 @@ export default function LocationPicker({ visible, onClose, onSelectLocation, ini
         }
     };
 
+    const handleTextChange = (text: string) => {
+        setSearchText(text);
+        if (searchTimeout.current) clearTimeout(searchTimeout.current);
+
+        if (!text.trim()) {
+            setSuggestions([]);
+            return;
+        }
+
+        searchTimeout.current = setTimeout(async () => {
+            try {
+                // Using OpenStreetMap Nominatim for free autocomplete suggestions
+                const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(text)}&addressdetails=1&limit=5`, {
+                    headers: {
+                        'User-Agent': 'NexeApp/1.0'
+                    }
+                });
+                const data = await response.json();
+                setSuggestions(data);
+            } catch (error) {
+                console.error("Error fetching suggestions:", error);
+            }
+        }, 500); // 500ms debounce
+    };
+
+    const handleSuggestionSelect = (suggestion: Suggestion) => {
+        const lat = parseFloat(suggestion.lat);
+        const lon = parseFloat(suggestion.lon);
+        onSelectLocation({ latitude: lat, longitude: lon }, suggestion.display_name, true);
+        onClose();
+    };
+
     const handleTextSearch = async () => {
+        // Fallback if user hits enter without selecting suggestion
         if (!searchText.trim()) return;
         setLoading(true);
         try {
@@ -120,7 +185,7 @@ export default function LocationPicker({ visible, onClose, onSelectLocation, ini
     };
 
     const renderOptions = () => (
-        <View style={styles.optionsContainer}>
+        <Animated.View style={[styles.bottomSheet, { paddingBottom: insets.bottom + 20, transform: [{ translateY: slideAnim }] }]}>
             <View style={styles.handle} />
             <Text style={styles.title}>¿Dónde quieres recibir tu pedido?</Text>
 
@@ -144,7 +209,7 @@ export default function LocationPicker({ visible, onClose, onSelectLocation, ini
                 </View>
                 <Text style={styles.optionText}>Seleccionar en el mapa</Text>
             </TouchableOpacity>
-        </View>
+        </Animated.View>
     );
 
     const renderMap = () => (
@@ -178,48 +243,56 @@ export default function LocationPicker({ visible, onClose, onSelectLocation, ini
             behavior={Platform.OS === "ios" ? "padding" : "height"}
             style={styles.fullScreenContainer}
         >
-            <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-                <View style={[styles.textContainer, { paddingTop: insets.top + 20 }]}>
-                     <View style={styles.textHeader}>
-                        <TouchableOpacity onPress={() => setMode('options')} style={{ padding: 10 }}>
-                            <Ionicons name="close" size={24} color="black" />
-                        </TouchableOpacity>
-                        <Text style={styles.textTitle}>Ingresa tu dirección</Text>
-                     </View>
+            <View style={[styles.textContainer, { paddingTop: insets.top + 20 }]}>
+                    <View style={styles.textHeader}>
+                    <TouchableOpacity onPress={() => setMode('options')} style={{ padding: 10 }}>
+                        <Ionicons name="close" size={24} color="black" />
+                    </TouchableOpacity>
+                    <Text style={styles.textTitle}>Ingresa tu dirección</Text>
+                    </View>
 
-                     <TextInput
+                    <TextInput
                         style={styles.input}
                         placeholder="Ej: Calle Gran Vía 1, Madrid"
                         value={searchText}
-                        onChangeText={setSearchText}
+                        onChangeText={handleTextChange}
                         autoFocus
                         returnKeyType="search"
                         onSubmitEditing={handleTextSearch}
-                     />
+                    />
 
-                     <TouchableOpacity
-                        style={[styles.searchButton, !searchText && { opacity: 0.5 }]}
-                        onPress={handleTextSearch}
-                        disabled={!searchText || loading}
-                     >
-                         {loading ? <ActivityIndicator color="white" /> : <Text style={styles.searchButtonText}>Buscar</Text>}
-                     </TouchableOpacity>
-                </View>
-            </TouchableWithoutFeedback>
+                    <FlatList
+                        data={suggestions}
+                        keyExtractor={(item) => item.place_id.toString()}
+                        renderItem={({ item }) => (
+                            <TouchableOpacity style={styles.suggestionItem} onPress={() => handleSuggestionSelect(item)}>
+                                <Ionicons name="location-outline" size={20} color="#6B7280" style={{ marginRight: 10 }} />
+                                <Text style={styles.suggestionText}>{item.display_name}</Text>
+                            </TouchableOpacity>
+                        )}
+                        style={styles.suggestionsList}
+                        keyboardShouldPersistTaps="handled"
+                    />
+
+                    {suggestions.length === 0 && searchText.length > 0 && (
+                         <TouchableOpacity
+                            style={[styles.searchButton, !searchText && { opacity: 0.5 }]}
+                            onPress={handleTextSearch}
+                            disabled={!searchText || loading}
+                        >
+                            {loading ? <ActivityIndicator color="white" /> : <Text style={styles.searchButtonText}>Buscar</Text>}
+                        </TouchableOpacity>
+                    )}
+            </View>
         </KeyboardAvoidingView>
     );
 
     return (
-        <Modal visible={visible} animationType="slide" transparent>
+        <Modal visible={visible} animationType="fade" transparent onRequestClose={handleClose}>
             <View style={styles.modalOverlay}>
-                <TouchableOpacity style={styles.backdrop} onPress={onClose} activeOpacity={1} />
+                <TouchableOpacity style={styles.backdrop} onPress={handleClose} activeOpacity={1} />
 
-                {mode === 'options' && (
-                    <View style={[styles.bottomSheet, { paddingBottom: insets.bottom + 20 }]}>
-                        {loading ? <ActivityIndicator size="large" color="#000" style={{ margin: 20 }} /> : renderOptions()}
-                    </View>
-                )}
-
+                {mode === 'options' && renderOptions()}
                 {mode === 'map' && renderMap()}
                 {mode === 'text' && renderText()}
             </View>
@@ -242,6 +315,7 @@ const styles = StyleSheet.create({
         borderTopRightRadius: 20,
         padding: 20,
         minHeight: 300,
+        width: '100%',
     },
     handle: {
         width: 40,
@@ -353,12 +427,28 @@ const styles = StyleSheet.create({
         fontSize: 16,
         marginBottom: 20,
     },
+    suggestionsList: {
+        flex: 1,
+    },
+    suggestionItem: {
+        paddingVertical: 15,
+        borderBottomWidth: 1,
+        borderBottomColor: '#F3F4F6',
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    suggestionText: {
+        fontSize: 14,
+        color: '#374151',
+        flex: 1,
+    },
     searchButton: {
         backgroundColor: '#111827',
         height: 50,
         borderRadius: 25,
         justifyContent: 'center',
         alignItems: 'center',
+        marginTop: 10,
     },
     searchButtonText: {
         color: 'white',
