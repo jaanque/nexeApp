@@ -41,7 +41,7 @@ export function ModernHeader({
                 <View style={styles.locationContainer}>
                     <TouchableOpacity onPress={() => handlePress(onAddressPress)}>
                         <View style={styles.iconCircle}>
-                            <Ionicons name={isPickup ? "basket" : "location"} size={18} color="#000000" />
+                            <Ionicons name={isPickup ? "basket" : "location"} size={20} color="#000000" />
                         </View>
                     </TouchableOpacity>
 
@@ -121,9 +121,9 @@ const styles = StyleSheet.create({
         marginRight: 16,
     },
     iconCircle: {
-        width: 36,
-        height: 36,
-        borderRadius: 18,
+        width: 40,
+        height: 40,
+        borderRadius: 20,
         backgroundColor: '#F3F4F6', // Light gray circle
         justifyContent: 'center',
         alignItems: 'center',
@@ -136,7 +136,7 @@ const styles = StyleSheet.create({
     modeSwitch: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginBottom: 4,
+        marginBottom: 2,
         backgroundColor: '#F3F4F6', // Light gray background
         borderRadius: 20,
         padding: 2,
@@ -146,6 +146,8 @@ const styles = StyleSheet.create({
         paddingHorizontal: 12,
         paddingVertical: 4,
         borderRadius: 16,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     activeToggleButton: {
         backgroundColor: '#FFFFFF',
