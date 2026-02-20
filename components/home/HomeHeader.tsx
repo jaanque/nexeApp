@@ -8,6 +8,7 @@ import { Banner } from '@/components/MarketingSlider';
 
 interface HomeHeaderProps {
   address: string;
+  onAddressPress: () => void;
   isPickup: boolean;
   setIsPickup: (pickup: boolean) => void;
   banners: Banner[];
@@ -23,6 +24,7 @@ interface HomeHeaderProps {
 
 export const HomeHeader = memo(({
   address,
+  onAddressPress,
   isPickup,
   setIsPickup,
   banners,
@@ -43,6 +45,7 @@ export const HomeHeader = memo(({
         address={address}
         onAddressPress={() => {
           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+          onAddressPress();
         }}
         onProfilePress={() => router.push('/(tabs)/profile')}
         isPickup={isPickup}

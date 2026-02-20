@@ -1,6 +1,7 @@
 import { HomeHeader } from '@/components/home/HomeHeader';
 import { Category, MenuItemResult, SortOption } from '@/components/home/HomeSections';
 import { HomeScreenSkeleton } from '@/components/HomeScreenSkeleton';
+import LocationPicker from '@/components/LocationPicker';
 import { Banner } from '@/components/MarketingSlider';
 import { ModernBusinessCard } from '@/components/ModernBusinessCard';
 import { supabase } from '@/lib/supabase';
@@ -62,6 +63,7 @@ export default function HomeScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [isFiltering, setIsFiltering] = useState(false);
   const [address, setAddress] = useState<string>("Seleccionando ubicación...");
+  const [locationPickerVisible, setLocationPickerVisible] = useState(false);
 
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -199,11 +201,16 @@ export default function HomeScreen() {
     try {
       const cachedLocation = await AsyncStorage.getItem('user_location');
       const cachedAddress = await AsyncStorage.getItem('user_address');
+      const locationMode = await AsyncStorage.getItem('user_location_mode');
 
       if (cachedLocation && cachedAddress) {
           const { latitude, longitude } = JSON.parse(cachedLocation);
           setUserLocation({ latitude, longitude });
           setAddress(cachedAddress);
+      }
+
+      if (locationMode === 'manual') {
+          return;
       }
 
       let { status } = await Location.requestForegroundPermissionsAsync();
@@ -267,6 +274,23 @@ export default function HomeScreen() {
       return d < 1000 ? `a ${Math.round(d)}m` : `a ${(d / 1000).toFixed(1)} km`;
   }
 
+  const handleLocationSelect = async (location: { latitude: number, longitude: number }, newAddress: string, isManual: boolean) => {
+      setUserLocation(location);
+      setAddress(newAddress);
+      await AsyncStorage.setItem('user_location', JSON.stringify(location));
+      await AsyncStorage.setItem('user_address', newAddress);
+      await AsyncStorage.setItem('user_location_mode', isManual ? 'manual' : 'gps');
+
+      if (!isManual) {
+          getUserLocation();
+      }
+
+      // Trigger refresh
+      setPage(0);
+      setHasMore(true);
+      fetchRestaurants(0, true);
+  };
+
   async function fetchPoints(userId: string) {
     try {
       const { data } = await supabase.from('profiles').select('points').eq('id', userId).single();
@@ -325,6 +349,7 @@ export default function HomeScreen() {
   const renderHeader = (
       <HomeHeader
           address={address}
+          onAddressPress={() => setLocationPickerVisible(true)}
           isPickup={isPickup}
           setIsPickup={setIsPickup}
           banners={banners}
@@ -409,6 +434,13 @@ export default function HomeScreen() {
             />
         }
         style={{ backgroundColor: '#FFFFFF' }}
+      />
+
+      <LocationPicker
+          visible={locationPickerVisible}
+          onClose={() => setLocationPickerVisible(false)}
+          onSelectLocation={handleLocationSelect}
+          initialLocation={userLocation || undefined}
       />
     </View>
   );
