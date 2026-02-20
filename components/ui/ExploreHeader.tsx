@@ -21,7 +21,6 @@ export function ExploreHeader({
     scrollY
 }: ExploreHeaderProps) {
     const insets = useSafeAreaInsets();
-    const HEADER_HEIGHT = insets.top + 70;
     const SCROLL_DISTANCE = 60; // Distance to collapse
 
     const handleHaptic = () => {
@@ -57,7 +56,7 @@ export function ExploreHeader({
             <View style={styles.headerRow}>
                 {/* Search Bar */}
                 <View style={styles.searchContainer}>
-                    <Ionicons name="search" size={20} color="#9CA3AF" style={{ marginRight: 8 }} />
+                    <Ionicons name="search" size={20} color="#6B7280" style={{ marginRight: 8 }} />
                     <TextInput
                         style={styles.searchInput}
                         placeholder="Buscar restaurantes, comida..."
@@ -90,7 +89,7 @@ export function ExploreHeader({
                     <Ionicons
                         name={isMapMode ? "list" : "map"}
                         size={22}
-                        color={isMapMode ? "#000" : "#FFF"}
+                        color={isMapMode ? "#FFFFFF" : "#1F2937"}
                     />
                 </TouchableOpacity>
             </View>
@@ -100,7 +99,7 @@ export function ExploreHeader({
 
 const styles = StyleSheet.create({
     container: {
-        backgroundColor: '#121212',
+        backgroundColor: '#FFFFFF',
         paddingHorizontal: 20,
         borderBottomLeftRadius: 32,
         borderBottomRightRadius: 32,
@@ -112,11 +111,13 @@ const styles = StyleSheet.create({
         shadowColor: "#000",
         shadowOffset: {
             width: 0,
-            height: 10,
+            height: 2,
         },
-        shadowOpacity: 0.3,
-        shadowRadius: 20,
-        elevation: 10,
+        shadowOpacity: 0.05,
+        shadowRadius: 10,
+        elevation: 4,
+        borderBottomWidth: 1,
+        borderBottomColor: '#F3F4F6',
     },
     headerRow: {
         flexDirection: 'row',
@@ -127,16 +128,14 @@ const styles = StyleSheet.create({
         flex: 1,
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: 'rgba(255, 255, 255, 0.08)',
+        backgroundColor: '#F3F4F6',
         borderRadius: 100,
         paddingHorizontal: 16,
         height: 48,
-        borderWidth: 1,
-        borderColor: 'rgba(255, 255, 255, 0.05)',
     },
     searchInput: {
         flex: 1,
-        color: '#FFFFFF',
+        color: '#1F2937',
         fontSize: 15,
         fontWeight: '500',
     },
@@ -144,13 +143,11 @@ const styles = StyleSheet.create({
         width: 48,
         height: 48,
         borderRadius: 24,
-        backgroundColor: 'rgba(255, 255, 255, 0.08)',
+        backgroundColor: '#F3F4F6',
         justifyContent: 'center',
         alignItems: 'center',
-        borderWidth: 1,
-        borderColor: 'rgba(255, 255, 255, 0.05)',
     },
     activeIconButton: {
-        backgroundColor: '#FFFFFF',
+        backgroundColor: '#111827',
     }
 });

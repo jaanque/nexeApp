@@ -1,11 +1,13 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { StyleSheet, View, Text, TouchableOpacity, Modal, TextInput, Dimensions, ActivityIndicator, Alert, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard, Animated, Easing, FlatList } from 'react-native';
-import MapView, { Marker, PROVIDER_GOOGLE, Region } from 'react-native-maps';
-import * as Location from 'expo-location';
 import { Ionicons } from '@expo/vector-icons';
+import Mapbox from '@rnmapbox/maps';
+import * as Location from 'expo-location';
+import React, { useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, Alert, Animated, Dimensions, Easing, FlatList, KeyboardAvoidingView, Modal, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-const { width, height } = Dimensions.get('window');
+Mapbox.setAccessToken('pk.eyJ1IjoiamFucXVlcmFsdCIsImEiOiJjbWx1cTcyeTgwMDJkM2RzMXg0amsxZHRsIn0.Xwrer82K4qOVBa6OhjwMtw');
+
+const { height } = Dimensions.get('window');
 
 interface LocationPickerProps {
     visible: boolean;
@@ -32,13 +34,25 @@ export default function LocationPicker({ visible, onClose, onSelectLocation, ini
     const slideAnim = useRef(new Animated.Value(height)).current;
 
     // Map State
-    const mapRef = useRef<MapView>(null);
-    const [region, setRegion] = useState<Region>({
-        latitude: initialLocation?.latitude || 40.416775, // Madrid default
-        longitude: initialLocation?.longitude || -3.703790,
-        latitudeDelta: 0.01,
-        longitudeDelta: 0.01,
-    });
+    const cameraRef = useRef<Mapbox.Camera>(null);
+    const [centerCoordinate, setCenterCoordinate] = useState<[number, number] | undefined>(undefined);
+
+    // Initial Location Effect
+    useEffect(() => {
+        if (initialLocation) {
+            const newCenter: [number, number] = [initialLocation.longitude, initialLocation.latitude];
+            setCenterCoordinate(newCenter);
+            cameraRef.current?.setCamera({
+                centerCoordinate: newCenter,
+                zoomLevel: 14,
+                animationDuration: 1000,
+            });
+        } else {
+             // Default Madrid
+            setCenterCoordinate([-3.703790, 40.416775]);
+        }
+    }, [initialLocation]);
+
 
     // Text Input State
     const [searchText, setSearchText] = useState("");
@@ -61,7 +75,7 @@ export default function LocationPicker({ visible, onClose, onSelectLocation, ini
         } else {
             slideAnim.setValue(height);
         }
-    }, [visible]);
+    }, [visible, slideAnim]);
 
     const handleClose = () => {
         Animated.timing(slideAnim, {
@@ -108,14 +122,18 @@ export default function LocationPicker({ visible, onClose, onSelectLocation, ini
     };
 
     const handleMapConfirm = async () => {
+        if (!centerCoordinate) return;
+
         setLoading(true);
         try {
+             const [longitude, latitude] = centerCoordinate;
+
              // Reverse geocode center
              let address = "Ubicación seleccionada";
              try {
                 const reverseGeocode = await Location.reverseGeocodeAsync({
-                    latitude: region.latitude,
-                    longitude: region.longitude
+                    latitude: latitude,
+                    longitude: longitude
                 });
                 if (reverseGeocode.length > 0) {
                      const addr = reverseGeocode[0];
@@ -123,9 +141,9 @@ export default function LocationPicker({ visible, onClose, onSelectLocation, ini
                 }
              } catch (e) { console.log(e); }
 
-             onSelectLocation({ latitude: region.latitude, longitude: region.longitude }, address, true);
+             onSelectLocation({ latitude: latitude, longitude: longitude }, address, true);
              onClose();
-        } catch (error) {
+        } catch (_) {
              Alert.alert('Error', 'No pudimos confirmar la ubicación.');
         } finally {
             setLoading(false);
@@ -177,10 +195,34 @@ export default function LocationPicker({ visible, onClose, onSelectLocation, ini
             } else {
                 Alert.alert('No encontrado', 'No encontramos esa dirección.');
             }
-        } catch (error) {
+        } catch (_) {
             Alert.alert('Error', 'Ocurrió un error al buscar la dirección.');
         } finally {
             setLoading(false);
+        }
+    };
+
+    const onRegionChange = (state: Mapbox.MapState) => {
+         // Mapbox state returns center as [lon, lat]
+         const { center } = state.properties;
+         if (center) {
+            setCenterCoordinate(center as [number, number]);
+         }
+    };
+
+    const handleRecenterMap = async () => {
+        try {
+            let { status } = await Location.requestForegroundPermissionsAsync();
+            if (status !== 'granted') return;
+
+            let location = await Location.getCurrentPositionAsync({});
+            cameraRef.current?.setCamera({
+                centerCoordinate: [location.coords.longitude, location.coords.latitude],
+                zoomLevel: 15,
+                animationDuration: 1000,
+            });
+        } catch (_) {
+            // Ignore
         }
     };
 
@@ -214,18 +256,31 @@ export default function LocationPicker({ visible, onClose, onSelectLocation, ini
 
     const renderMap = () => (
         <View style={styles.fullScreenContainer}>
-             <MapView
-                ref={mapRef}
+             <Mapbox.MapView
                 style={styles.map}
-                provider={PROVIDER_GOOGLE}
-                initialRegion={region}
-                onRegionChangeComplete={setRegion}
-                showsUserLocation
-                showsMyLocationButton={false}
-             />
+                styleURL={Mapbox.StyleURL.Street}
+                onCameraChanged={onRegionChange}
+                scaleBarEnabled={false}
+                logoEnabled={false}
+                attributionEnabled={false}
+             >
+                <Mapbox.Camera
+                    ref={cameraRef}
+                    defaultSettings={{
+                        centerCoordinate: centerCoordinate || [-3.703790, 40.416775],
+                        zoomLevel: 14
+                    }}
+                />
+                <Mapbox.UserLocation visible={true} />
+             </Mapbox.MapView>
+
              <View style={styles.centerMarker}>
                 <Ionicons name="location" size={40} color="#EF4444" />
              </View>
+
+             <TouchableOpacity style={styles.recenterButton} onPress={handleRecenterMap}>
+                 <Ionicons name="locate" size={24} color="#111827" />
+             </TouchableOpacity>
 
              <View style={[styles.mapFooter, { paddingBottom: insets.bottom + 20 }]}>
                  <TouchableOpacity style={styles.backButton} onPress={() => setMode('options')}>
@@ -370,6 +425,22 @@ const styles = StyleSheet.create({
         marginTop: -40,
         marginLeft: -20,
         zIndex: 10,
+    },
+    recenterButton: {
+        position: 'absolute',
+        right: 20,
+        bottom: 120,
+        width: 50,
+        height: 50,
+        borderRadius: 25,
+        backgroundColor: 'white',
+        justifyContent: 'center',
+        alignItems: 'center',
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+        elevation: 5,
     },
     mapFooter: {
         position: 'absolute',

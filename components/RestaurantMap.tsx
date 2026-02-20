@@ -1,10 +1,11 @@
-import React, { useEffect, useRef } from 'react';
-import { StyleSheet, View, TouchableOpacity } from 'react-native';
-import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
-import { customMapStyle } from '@/constants/mapStyle';
 import MapMarker from '@/components/ui/MapMarker';
 import { Ionicons } from '@expo/vector-icons';
+import Mapbox from '@rnmapbox/maps';
+import React, { useEffect, useRef } from 'react';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+Mapbox.setAccessToken('pk.eyJ1IjoiamFucXVlcmFsdCIsImEiOiJjbWx1cTcyeTgwMDJkM2RzMXg0amsxZHRsIn0.Xwrer82K4qOVBa6OhjwMtw');
 
 interface Restaurant {
   id: number;
@@ -32,93 +33,81 @@ export default function RestaurantMap({
     userLocation,
     topOffset = 60 // Default fallback
 }: RestaurantMapProps) {
-  const mapRef = useRef<MapView>(null);
+  const cameraRef = useRef<Mapbox.Camera>(null);
   const insets = useSafeAreaInsets();
   const hasCenteredOnUser = useRef(false);
 
   // If topOffset is provided (e.g. from Explore), use it.
-  // If it's the default 60, add insets.top to be safe for legacy usage (if any).
-  // However, Explore passes HEADER_MAX_HEIGHT which INCLUDES insets.
-  // So we need to be careful. Let's assume topOffset is the total obstruction height.
-  // But default 60 was `insets.top + 60` in original code.
-  // So let's calculate the effective top position.
-
   const effectiveTop = topOffset > 60 ? topOffset : (insets.top + topOffset);
 
   useEffect(() => {
     if (selectedRestaurant && selectedRestaurant.latitude && selectedRestaurant.longitude) {
        // Animate to selected restaurant with offset for the card
-       mapRef.current?.animateToRegion({
-            latitude: selectedRestaurant.latitude - 0.002, // Offset to show marker above card
-            longitude: selectedRestaurant.longitude,
-            latitudeDelta: 0.01,
-            longitudeDelta: 0.01,
-        }, 1000);
-    } else if (userLocation && mapRef.current && !selectedRestaurant && !hasCenteredOnUser.current) {
+       cameraRef.current?.setCamera({
+            centerCoordinate: [selectedRestaurant.longitude, selectedRestaurant.latitude],
+            zoomLevel: 15,
+            padding: { paddingTop: effectiveTop, paddingBottom: 20, paddingLeft: 0, paddingRight: 0 },
+            animationDuration: 1000,
+        });
+    } else if (userLocation && !selectedRestaurant && !hasCenteredOnUser.current) {
         // Initial user location
-        mapRef.current.animateToRegion({
-            latitude: userLocation.latitude,
-            longitude: userLocation.longitude,
-            latitudeDelta: 0.02,
-            longitudeDelta: 0.02,
-        }, 1000);
+        cameraRef.current?.setCamera({
+            centerCoordinate: [userLocation.longitude, userLocation.latitude],
+            zoomLevel: 14,
+            animationDuration: 1000,
+        });
         hasCenteredOnUser.current = true;
     }
-  }, [userLocation, selectedRestaurant]);
-
-  const initialRegion = {
-    latitude: 19.432608,
-    longitude: -99.133209,
-    latitudeDelta: 0.05,
-    longitudeDelta: 0.05,
-  };
+  }, [userLocation, selectedRestaurant, effectiveTop]);
 
   const handleRecenter = () => {
-      if (userLocation && mapRef.current) {
+      if (userLocation) {
           onSelectRestaurant(null);
-          mapRef.current.animateToRegion({
-            latitude: userLocation.latitude,
-            longitude: userLocation.longitude,
-            latitudeDelta: 0.01,
-            longitudeDelta: 0.01,
-        }, 800);
+          cameraRef.current?.setCamera({
+            centerCoordinate: [userLocation.longitude, userLocation.latitude],
+            zoomLevel: 15,
+            animationDuration: 800,
+        });
       }
   };
 
   return (
     <View style={styles.container}>
-        <MapView
-            ref={mapRef}
+        <Mapbox.MapView
             style={styles.map}
-            initialRegion={initialRegion}
-            customMapStyle={customMapStyle}
-            provider={PROVIDER_GOOGLE}
-            showsUserLocation={!!userLocation}
-            showsMyLocationButton={false} // Custom button
-            toolbarEnabled={false}
-            moveOnMarkerPress={false}
+            styleURL={Mapbox.StyleURL.Street}
             onPress={() => onSelectRestaurant(null)}
-            mapPadding={{ top: effectiveTop, right: 0, bottom: 0, left: 0 }}
+            scaleBarEnabled={false}
+            logoEnabled={false}
+            attributionEnabled={false}
         >
-        {restaurants.map((restaurant) => (
-            <Marker
-            key={restaurant.id}
-            coordinate={{
-                latitude: restaurant.latitude || 0,
-                longitude: restaurant.longitude || 0,
-            }}
-            onPress={(e) => {
-                e.stopPropagation();
-                onSelectRestaurant(restaurant);
-            }}
-            >
-                <MapMarker
-                    isSelected={selectedRestaurant?.id === restaurant.id}
-                    category={restaurant.cuisine_type}
-                />
-            </Marker>
-        ))}
-        </MapView>
+            <Mapbox.Camera
+                ref={cameraRef}
+                defaultSettings={{
+                    centerCoordinate: userLocation ? [userLocation.longitude, userLocation.latitude] : [-3.703790, 40.416775],
+                    zoomLevel: 12
+                }}
+            />
+
+            <Mapbox.UserLocation visible={true} />
+
+            {restaurants.map((restaurant) => {
+                if (!restaurant.latitude || !restaurant.longitude) return null;
+                return (
+                    <Mapbox.PointAnnotation
+                        key={restaurant.id}
+                        id={restaurant.id.toString()}
+                        coordinate={[restaurant.longitude, restaurant.latitude]}
+                        onSelected={() => onSelectRestaurant(restaurant)}
+                    >
+                         <MapMarker
+                            isSelected={selectedRestaurant?.id === restaurant.id}
+                            category={restaurant.cuisine_type}
+                        />
+                    </Mapbox.PointAnnotation>
+                );
+            })}
+        </Mapbox.MapView>
 
         {/* Recenter Button */}
         <TouchableOpacity
@@ -137,8 +126,7 @@ const styles = StyleSheet.create({
       flex: 1,
   },
   map: {
-    width: '100%',
-    height: '100%',
+    flex: 1,
   },
   recenterButton: {
       position: 'absolute',
