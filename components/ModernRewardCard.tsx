@@ -16,6 +16,8 @@ interface MenuItemResult {
     restaurant_id: number;
     locales?: {
         name: string;
+        opening_time?: string;
+        closing_time?: string;
     } | null;
     category_id?: number;
 }
@@ -41,6 +43,27 @@ export const ModernRewardCard = React.memo(({ item }: ModernRewardCardProps) => 
 
     const formattedOriginal = originalPrice.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
     const formattedFinal = finalPrice.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
+
+    // Check if venue is closed
+    const isClosed = React.useMemo(() => {
+        if (!item.locales?.opening_time || !item.locales?.closing_time) return false;
+
+        const now = new Date();
+        const currentTime = now.getHours() * 60 + now.getMinutes();
+
+        const [openH, openM] = item.locales.opening_time.split(':').map(Number);
+        const [closeH, closeM] = item.locales.closing_time.split(':').map(Number);
+
+        const openTime = openH * 60 + openM;
+        const closeTime = closeH * 60 + closeM;
+
+        if (closeTime < openTime) {
+            // Crosses midnight
+            return !(currentTime >= openTime || currentTime <= closeTime);
+        }
+        return !(currentTime >= openTime && currentTime <= closeTime);
+    }, [item.locales]);
+
     const handlePress = () => {
         if (process.env.EXPO_OS === 'ios') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         router.push(`/item/${item.id}`);
@@ -48,7 +71,7 @@ export const ModernRewardCard = React.memo(({ item }: ModernRewardCardProps) => 
 
     return (
         <TouchableOpacity
-            style={styles.card}
+            style={[styles.card, isClosed && { opacity: 0.6 }]}
             activeOpacity={0.9}
             onPress={handlePress}
         >
@@ -59,6 +82,11 @@ export const ModernRewardCard = React.memo(({ item }: ModernRewardCardProps) => 
                     contentFit="cover"
                     transition={200}
                 />
+                {isClosed && (
+                    <View style={styles.closedOverlay}>
+                        <Text style={styles.closedText}>Cerrado</Text>
+                    </View>
+                )}
             </View>
 
             <View style={styles.content}>
@@ -66,9 +94,6 @@ export const ModernRewardCard = React.memo(({ item }: ModernRewardCardProps) => 
                     <Text style={styles.itemName} numberOfLines={1}>{item.name}</Text>
                     <View style={styles.restaurantRow}>
                         <Text style={styles.restaurantName} numberOfLines={1}>{item.locales?.name}</Text>
-                        <View style={styles.newBadge}>
-                            <Text style={styles.newBadgeText}>NUEVO</Text>
-                        </View>
                     </View>
 
                     <View style={styles.priceContainer}>
@@ -133,16 +158,18 @@ const styles = StyleSheet.create({
         fontWeight: '500',
         maxWidth: '75%',
     },
-    newBadge: {
-        backgroundColor: '#ECFDF5',
-        paddingHorizontal: 6,
-        paddingVertical: 2,
-        borderRadius: 4,
+    closedOverlay: {
+        ...StyleSheet.absoluteFillObject,
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderRadius: 20,
     },
-    newBadgeText: {
-        color: '#10B981',
-        fontSize: 10,
-        fontWeight: '700',
+    closedText: {
+        color: 'white',
+        fontWeight: 'bold',
+        fontSize: 14,
+        textTransform: 'uppercase',
     },
     priceContainer: {
         marginTop: 8,
