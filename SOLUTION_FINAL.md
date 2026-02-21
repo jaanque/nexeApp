@@ -53,6 +53,8 @@ Si recibes el error `Extracted error message from server: Unauthorized`, signifi
 1.  **Asegúrate de estar logueado** en la app.
 2.  El código actualizado en `hooks/useStripePayment.ts` ahora envía explícitamente el header `Authorization: Bearer <token>`.
 3.  Si estás probando localmente, asegúrate de que tu reloj esté sincronizado, ya que los tokens JWT tienen fecha de expiración.
+4.  La función ahora verifica explícitamente la presencia de `SUPABASE_URL` y `SUPABASE_ANON_KEY` en el entorno de la Edge Function. Si recibes un error sobre esto, es posible que algo esté mal con la configuración interna de Supabase (poco probable en producción, pero posible en self-hosting o setups raros).
+5.  Si el error dice "getUser failed: ... (status: 401)", entonces tu token ha expirado. Cierra sesión y vuelve a entrar en la app.
 
 ## 6. Verificación y Logs
 
