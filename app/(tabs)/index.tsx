@@ -58,7 +58,7 @@ export default function HomeScreen() {
   // Filter & Sort State
   const [activeCategory, setActiveCategory] = useState<number | null>(null);
   const [sortBy, setSortBy] = useState<SortOption>('default');
-  const [isPickup, setIsPickup] = useState(false);
+  const [isPickup, setIsPickup] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [isFiltering, setIsFiltering] = useState(false);
   const [address, setAddress] = useState<string>("Seleccionando ubicación...");
