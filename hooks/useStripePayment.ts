@@ -16,17 +16,22 @@ export function useStripePayment() {
         setLoading(true);
         try {
             const { data: { session } } = await supabase.auth.getSession();
-            if (!session?.user) {
+            if (!session?.user || !session?.access_token) {
                 Alert.alert('Error', 'Debes iniciar sesión para pagar.');
                 return null;
             }
 
             console.log('Invoking create-payment-intent with items:', items);
+            // console.log('Using access token:', session.access_token.substring(0, 10) + '...');
 
             // 1. Fetch PaymentIntent params from Edge Function
             // Note: user_id is inferred from the Auth header automatically sent by supabase.functions.invoke
+            // We explicitly pass the Authorization header just in case, though invoke() does it automatically.
             const { data, error } = await supabase.functions.invoke('create-payment-intent', {
-                body: { items }
+                body: { items },
+                headers: {
+                    Authorization: `Bearer ${session.access_token}`
+                }
             });
 
             if (error) {

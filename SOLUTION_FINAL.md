@@ -1,6 +1,6 @@
 # Solución Final y Correcta para Pagos con Stripe y Supabase
 
-Este documento describe paso a paso cómo configurar correctamente el sistema de pagos para evitar el error `FunctionsHttpError: Edge Function returned a non-2xx status code`.
+Este documento describe paso a paso cómo configurar correctamente el sistema de pagos para evitar el error `FunctionsHttpError: Edge Function returned a non-2xx status code` y errores de autorización.
 
 ## 1. Configuración de Base de Datos (Crucial)
 
@@ -35,7 +35,7 @@ Si has hecho cambios en `supabase/functions/create-payment-intent/index.ts` (com
 ```bash
 supabase functions deploy create-payment-intent --no-verify-jwt
 ```
-*El flag `--no-verify-jwt` es opcional, pero útil si tienes problemas con la validación del token JWT durante el desarrollo.*
+*El flag `--no-verify-jwt` es opcional, pero útil si tienes problemas con la validación del token JWT durante el desarrollo. En producción, deberías quitarlo para mayor seguridad.*
 
 ## 4. Configuración del Cliente (App React Native)
 
@@ -46,17 +46,25 @@ EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_...
 ```
 *(Esta clave empieza con `pk_` y es pública. No uses la `sk_` aquí).*
 
-## 5. Verificación y Logs
+## 5. Solución de Problemas de Autorización ("Unauthorized")
 
-Si sigues recibiendo el error, sigue estos pasos para encontrar la causa exacta:
+Si recibes el error `Extracted error message from server: Unauthorized`, significa que el token de usuario no está llegando correctamente a la función o ha expirado.
+
+1.  **Asegúrate de estar logueado** en la app.
+2.  El código actualizado en `hooks/useStripePayment.ts` ahora envía explícitamente el header `Authorization: Bearer <token>`.
+3.  Si estás probando localmente, asegúrate de que tu reloj esté sincronizado, ya que los tokens JWT tienen fecha de expiración.
+
+## 6. Verificación y Logs
+
+Si sigues recibiendo errores, sigue estos pasos para encontrar la causa exacta:
 
 1.  Ve al **Dashboard de Supabase** -> **Edge Functions**.
 2.  Haz clic en `create-payment-intent`.
 3.  Ve a la pestaña **Logs**.
 4.  Busca la entrada con el error (círculo rojo) y expande los detalles.
+    *   Si dice `Authorization header is missing`, el cliente no está enviando el token.
+    *   Si dice `Unauthorized: ...`, el token es inválido o el usuario no existe.
     *   Si dice `STRIPE_SECRET_KEY is missing`, repite el paso 2.
-    *   Si dice `relation "public.profiles" does not exist`, repite el paso 1.
-    *   Si dice `Error creating order...`, revisa los permisos RLS.
 
 ## Resumen de Cambios Aplicados en el Código
 
@@ -65,10 +73,11 @@ Hemos aplicado los siguientes arreglos en el código para que sea más robusto:
 1.  **`databasePAYMENTS.sql`**: Script SQL completo para crear la estructura necesaria.
 2.  **`supabase/functions/create-payment-intent/index.ts`**:
     *   Se añadió validación de variables de entorno al inicio.
+    *   Se mejoró la validación del header `Authorization`.
     *   Se cambió `.single()` por `.maybeSingle()` para evitar errores si el usuario no tiene perfil.
     *   Se usa `.upsert()` para crear el perfil si no existe.
-    *   Se mejoró el manejo de errores para devolver un mensaje JSON claro en lugar de un error genérico.
 3.  **`hooks/useStripePayment.ts`**:
-    *   Ahora intenta leer el mensaje de error del servidor (JSON) para mostrarte *por qué* falló, en lugar de solo decir "non-2xx status code".
+    *   Ahora envía explícitamente el header `Authorization`.
+    *   Intenta leer el mensaje de error del servidor (JSON) para mostrarte *por qué* falló.
 
 Sigue estos pasos en orden y el sistema de pagos funcionará correctamente.
