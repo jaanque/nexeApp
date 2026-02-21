@@ -25,7 +25,13 @@ serve(async (req) => {
     if (!SUPABASE_SERVICE_ROLE_KEY) throw new Error('SUPABASE_SERVICE_ROLE_KEY is missing');
 
     // Use the Authorization header to get the user context securely
-    const authHeader = req.headers.get('Authorization')!
+    const authHeader = req.headers.get('Authorization')
+
+    if (!authHeader) {
+      console.error('Authorization header is missing');
+      throw new Error('Missing Authorization header');
+    }
+
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '', // Use Anon key to validate JWT
@@ -34,9 +40,17 @@ serve(async (req) => {
 
     // Verify user
     const { data: { user }, error: userError } = await supabase.auth.getUser()
-    if (userError || !user) {
-      throw new Error('Unauthorized')
+
+    if (userError) {
+        console.error('Error fetching user:', userError);
+        throw new Error(`Unauthorized: ${userError.message}`);
     }
+
+    if (!user) {
+        console.error('No user found from getUser()');
+        throw new Error('Unauthorized: No user found');
+    }
+
     const user_id = user.id
 
     // Re-initialize Supabase with Service Role Key for admin tasks (like creating orders/profiles)
