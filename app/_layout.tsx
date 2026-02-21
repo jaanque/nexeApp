@@ -6,6 +6,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import 'react-native-reanimated';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { StripeProvider } from '@stripe/stripe-react-native';
 
 import Ionicons from '@expo/vector-icons/Ionicons';
 
@@ -39,13 +40,17 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <ThemeProvider value={DefaultTheme}>
-        <Stack>
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="checkout" options={{ presentation: 'modal', title: 'Checkout' }} />
-          <Stack.Screen name="restaurant/[id]" options={{ headerShown: false }} />
-          <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
-        </Stack>
-        <StatusBar style="auto" />
+        <StripeProvider
+          publishableKey={process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY!}
+          merchantIdentifier="merchant.com.nexeapp"
+        >
+          <Stack screenOptions={{ animation: 'slide_from_right' }}>
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen name="checkout" options={{ presentation: 'modal', headerShown: false }} />
+            <Stack.Screen name="restaurant/[id]" options={{ headerShown: false }} />
+          </Stack>
+          <StatusBar style="auto" />
+        </StripeProvider>
       </ThemeProvider>
     </GestureHandlerRootView>
   );

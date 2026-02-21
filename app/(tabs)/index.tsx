@@ -1,8 +1,10 @@
 import { HomeHeader } from '@/components/home/HomeHeader';
 import { Category, MenuItemResult, SortOption } from '@/components/home/HomeSections';
 import { HomeScreenSkeleton } from '@/components/HomeScreenSkeleton';
+import LocationPicker from '@/components/LocationPicker';
 import { Banner } from '@/components/MarketingSlider';
 import { ModernBusinessCard } from '@/components/ModernBusinessCard';
+import { ModernHeader } from '@/components/ui/ModernHeader';
 import { supabase } from '@/lib/supabase';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Session } from '@supabase/supabase-js';
@@ -11,7 +13,8 @@ import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, FlatList, ListRenderItem, Platform, RefreshControl, StyleSheet, Text, UIManager, View } from 'react-native';
+import { ActivityIndicator, ListRenderItem, Platform, RefreshControl, StyleSheet, Text, UIManager, View } from 'react-native';
+import Animated, { Extrapolation, interpolate, useAnimatedScrollHandler, useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 // Enable LayoutAnimation on Android
@@ -62,9 +65,41 @@ export default function HomeScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [isFiltering, setIsFiltering] = useState(false);
   const [address, setAddress] = useState<string>("Seleccionando ubicación...");
+  const [locationPickerVisible, setLocationPickerVisible] = useState(false);
 
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const scrollY = useSharedValue(0);
+
+  const scrollHandler = useAnimatedScrollHandler({
+    onScroll: (event) => {
+      scrollY.value = event.contentOffset.y;
+    },
+  });
+
+  const headerAnimatedStyle = useAnimatedStyle(() => {
+    const borderOpacity = interpolate(
+      scrollY.value,
+      [0, 20],
+      [0, 1],
+      Extrapolation.CLAMP
+    );
+
+    const shadowOpacity = interpolate(
+        scrollY.value,
+        [0, 20],
+        [0, 0.05],
+        Extrapolation.CLAMP
+    );
+
+    return {
+      borderBottomWidth: 1,
+      borderColor: `rgba(229, 231, 235, ${borderOpacity})`,
+      shadowOpacity: shadowOpacity,
+      shadowRadius: 10,
+      elevation: scrollY.value > 10 ? 4 : 0,
+    };
+  });
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -133,13 +168,13 @@ export default function HomeScreen() {
       }
   }, [sortBy, activeCategory]); // Also refetch when category changes
 
-  async function fetchRestaurants(pageNumber: number, reset = false) {
+  async function fetchRestaurants(pageNumber: number, reset = false, locationOverride?: { latitude: number, longitude: number }) {
     if (pageNumber > 0 && !hasMore) return;
 
     try {
         if (!reset) setLoadingMore(true);
 
-        let query = supabase.from('locales').select('*', { count: 'exact' });
+        let query = supabase.from('locales').select('id, name, image_url, rating, cuisine_type, address, latitude, longitude, category_id, opening_time, closing_time', { count: 'exact' });
 
         // Apply Category Filter
         if (activeCategory !== null) {
@@ -147,13 +182,14 @@ export default function HomeScreen() {
         }
 
         // Apply Sorting
-        if (sortBy === 'distance' && userLocation) {
+        const loc = locationOverride || userLocation;
+        if (sortBy === 'distance' && loc) {
              if (pageNumber === 0) {
                  const { data, count } = await query.limit(50);
                  if (data) {
                      const sorted = [...data].sort((a, b) => {
-                        const distA = (a.latitude && a.longitude) ? getDistanceInMeters(userLocation.latitude, userLocation.longitude, a.latitude, a.longitude) : Infinity;
-                        const distB = (b.latitude && b.longitude) ? getDistanceInMeters(userLocation.latitude, userLocation.longitude, b.latitude, b.longitude) : Infinity;
+                        const distA = (a.latitude && a.longitude) ? getDistanceInMeters(loc.latitude, loc.longitude, a.latitude, a.longitude) : Infinity;
+                        const distB = (b.latitude && b.longitude) ? getDistanceInMeters(loc.latitude, loc.longitude, b.latitude, b.longitude) : Infinity;
                         return distA - distB;
                      });
                      setRestaurants(sorted);
@@ -199,11 +235,16 @@ export default function HomeScreen() {
     try {
       const cachedLocation = await AsyncStorage.getItem('user_location');
       const cachedAddress = await AsyncStorage.getItem('user_address');
+      const locationMode = await AsyncStorage.getItem('user_location_mode');
 
       if (cachedLocation && cachedAddress) {
           const { latitude, longitude } = JSON.parse(cachedLocation);
           setUserLocation({ latitude, longitude });
           setAddress(cachedAddress);
+      }
+
+      if (locationMode === 'manual') {
+          return;
       }
 
       let { status } = await Location.requestForegroundPermissionsAsync();
@@ -267,6 +308,23 @@ export default function HomeScreen() {
       return d < 1000 ? `a ${Math.round(d)}m` : `a ${(d / 1000).toFixed(1)} km`;
   }
 
+  const handleLocationSelect = async (location: { latitude: number, longitude: number }, newAddress: string, isManual: boolean) => {
+      setUserLocation(location);
+      setAddress(newAddress);
+      await AsyncStorage.setItem('user_location', JSON.stringify(location));
+      await AsyncStorage.setItem('user_address', newAddress);
+      await AsyncStorage.setItem('user_location_mode', isManual ? 'manual' : 'gps');
+
+      if (!isManual) {
+          getUserLocation();
+      }
+
+      // Trigger refresh
+      setPage(0);
+      setHasMore(true);
+      fetchRestaurants(0, true, location);
+  };
+
   async function fetchPoints(userId: string) {
     try {
       const { data } = await supabase.from('profiles').select('points').eq('id', userId).single();
@@ -292,7 +350,12 @@ export default function HomeScreen() {
 
   async function fetchFeaturedItems() {
     try {
-      const { data: menuData } = await supabase.from('items').select('*, locales(name)').limit(20);
+      // Optimized query: Select only needed fields, include opening/closing times
+      const { data: menuData } = await supabase
+        .from('items')
+        .select('id, name, description, price_euros, discount_percentage, image_url, restaurant_id, category_id, locales(name, opening_time, closing_time)')
+        .limit(20);
+
       if (menuData) {
           const typedMenuData = menuData as unknown as MenuItemResult[];
           setAllRewards(typedMenuData);
@@ -324,9 +387,6 @@ export default function HomeScreen() {
 
   const renderHeader = (
       <HomeHeader
-          address={address}
-          isPickup={isPickup}
-          setIsPickup={setIsPickup}
           banners={banners}
           categories={categories}
           activeCategory={activeCategory}
@@ -362,20 +422,39 @@ export default function HomeScreen() {
       }
   };
 
+  const HEADER_HEIGHT = 80; // Approximate height for ModernHeader + safe area
+
   if (loading) return <HomeScreenSkeleton />;
 
   return (
     <View style={styles.container}>
       <StatusBar style="dark" />
 
-      <FlatList
+      {/* Sticky Header */}
+      <Animated.View style={[styles.stickyHeader, headerAnimatedStyle]}>
+          <ModernHeader
+            address={address}
+            onAddressPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              setLocationPickerVisible(true);
+            }}
+            onProfilePress={() => router.push('/(tabs)/profile')}
+            isPickup={isPickup}
+            onTogglePickup={setIsPickup}
+          />
+      </Animated.View>
+
+      <Animated.FlatList
         data={restaurants}
         renderItem={renderRestaurantItem}
         keyExtractor={(item) => item.id.toString()}
         ListHeaderComponent={renderHeader}
         ListFooterComponent={renderFooter}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 100 }}
+        contentContainerStyle={{
+             paddingBottom: 100,
+             paddingTop: insets.top + 70 // Push content down below fixed header
+        }}
         columnWrapperStyle={{ paddingHorizontal: 14 }}
         keyboardDismissMode="on-drag"
         scrollEnabled={true}
@@ -387,6 +466,8 @@ export default function HomeScreen() {
         removeClippedSubviews={true}
         onEndReached={handleLoadMore}
         onEndReachedThreshold={0.5}
+        onScroll={scrollHandler}
+        scrollEventThrottle={16}
         ListEmptyComponent={
             !loading ? (
                 <View style={{ padding: 40, alignItems: 'center' }}>
@@ -405,10 +486,17 @@ export default function HomeScreen() {
                 titleColor="#111827"
                 colors={['#111827']}
                 progressBackgroundColor="#FFFFFF"
-                progressViewOffset={Platform.OS === 'android' ? insets.top + 20 : 0}
+                progressViewOffset={Platform.OS === 'android' ? insets.top + 80 : insets.top + 60}
             />
         }
         style={{ backgroundColor: '#FFFFFF' }}
+      />
+
+      <LocationPicker
+          visible={locationPickerVisible}
+          onClose={() => setLocationPickerVisible(false)}
+          onSelectLocation={handleLocationSelect}
+          initialLocation={userLocation || undefined}
       />
     </View>
   );
@@ -418,6 +506,19 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#FFFFFF',
+  },
+  stickyHeader: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 100,
+    backgroundColor: '#FFFFFF',
+    shadowColor: "#000",
+    shadowOffset: {
+        width: 0,
+        height: 4,
+    },
   },
   headerContentWrapper: {
       paddingBottom: 0,

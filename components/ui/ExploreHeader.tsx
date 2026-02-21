@@ -21,43 +21,53 @@ export function ExploreHeader({
     scrollY
 }: ExploreHeaderProps) {
     const insets = useSafeAreaInsets();
-    const HEADER_HEIGHT = insets.top + 70;
-    const SCROLL_DISTANCE = 60; // Distance to collapse
+    const SCROLL_DISTANCE = 60;
 
     const handleHaptic = () => {
         if (process.env.EXPO_OS === 'ios') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     };
 
     const animatedContainerStyle = useAnimatedStyle(() => {
-        // If map mode, don't collapse
+        // If map mode, don't collapse fully
         if (isMapMode) {
              return {
                 transform: [{ translateY: 0 }],
-                paddingTop: insets.top + 10,
+                paddingTop: insets.top + 6,
                 paddingBottom: 16,
+                borderBottomWidth: 1,
+                borderColor: '#E5E7EB',
             };
         }
 
         const translateY = interpolate(
             scrollY.value,
             [0, SCROLL_DISTANCE],
-            [0, -10], // Slight move up
+            [0, -8], // Subtle movement
             Extrapolation.CLAMP
+        );
+
+        const borderOpacity = interpolate(
+             scrollY.value,
+             [0, SCROLL_DISTANCE],
+             [0, 1],
+             Extrapolation.CLAMP
         );
 
         return {
             transform: [{ translateY }],
-            paddingTop: insets.top + 10,
+            paddingTop: insets.top + 6,
             paddingBottom: 16,
+            borderBottomWidth: 1,
+            borderColor: `rgba(229, 231, 235, ${borderOpacity})`, // Fade in border
         };
     });
 
     return (
         <Animated.View style={[styles.container, animatedContainerStyle]}>
             <View style={styles.headerRow}>
-                {/* Search Bar */}
+                {/* Search Bar - Matching ModernHeader Aesthetic */}
                 <View style={styles.searchContainer}>
-                    <Ionicons name="search" size={20} color="#9CA3AF" style={{ marginRight: 8 }} />
+                    <Ionicons name="search" size={20} color="#6B7280" style={{ marginRight: 8 }} />
                     <TextInput
                         style={styles.searchInput}
                         placeholder="Buscar restaurantes, comida..."
@@ -65,6 +75,7 @@ export function ExploreHeader({
                         value={searchQuery}
                         onChangeText={onSearchChange}
                         returnKeyType="search"
+                        selectionColor="#111827"
                     />
                     {searchQuery.length > 0 && (
                         <TouchableOpacity
@@ -72,25 +83,26 @@ export function ExploreHeader({
                                 handleHaptic();
                                 onSearchChange('');
                             }}
+                            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                         >
                             <Ionicons name="close-circle" size={18} color="#9CA3AF" />
                         </TouchableOpacity>
                     )}
                 </View>
 
-                {/* Map Toggle Button */}
+                {/* Map Toggle Button - Matching ModernHeader Aesthetic */}
                 <TouchableOpacity
                     onPress={() => {
                         handleHaptic();
                         onToggleMap();
                     }}
                     style={[styles.iconButton, isMapMode && styles.activeIconButton]}
-                    activeOpacity={0.7}
+                    activeOpacity={0.8}
                 >
                     <Ionicons
                         name={isMapMode ? "list" : "map"}
-                        size={22}
-                        color={isMapMode ? "#000" : "#FFF"}
+                        size={20}
+                        color={isMapMode ? "#FFFFFF" : "#111827"}
                     />
                 </TouchableOpacity>
             </View>
@@ -100,23 +112,14 @@ export function ExploreHeader({
 
 const styles = StyleSheet.create({
     container: {
-        backgroundColor: '#121212',
-        paddingHorizontal: 20,
-        borderBottomLeftRadius: 32,
-        borderBottomRightRadius: 32,
+        backgroundColor: '#FFFFFF',
+        paddingHorizontal: 16, // Matched Home Header Padding
         position: 'absolute',
         top: 0,
         left: 0,
         right: 0,
         zIndex: 100,
-        shadowColor: "#000",
-        shadowOffset: {
-            width: 0,
-            height: 10,
-        },
-        shadowOpacity: 0.3,
-        shadowRadius: 20,
-        elevation: 10,
+        // Removed heavy radius and shadow for flatter look
     },
     headerRow: {
         flexDirection: 'row',
@@ -127,30 +130,29 @@ const styles = StyleSheet.create({
         flex: 1,
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: 'rgba(255, 255, 255, 0.08)',
-        borderRadius: 100,
-        paddingHorizontal: 16,
-        height: 48,
-        borderWidth: 1,
-        borderColor: 'rgba(255, 255, 255, 0.05)',
+        backgroundColor: '#F3F4F6', // Light gray background
+        borderRadius: 12, // Slightly more square than full pill
+        paddingHorizontal: 12,
+        height: 44, // Standard height
     },
     searchInput: {
         flex: 1,
-        color: '#FFFFFF',
+        color: '#111827',
         fontSize: 15,
         fontWeight: '500',
     },
     iconButton: {
-        width: 48,
-        height: 48,
-        borderRadius: 24,
-        backgroundColor: 'rgba(255, 255, 255, 0.08)',
+        width: 44,
+        height: 44,
+        borderRadius: 22, // Circular
+        backgroundColor: '#F3F4F6',
         justifyContent: 'center',
         alignItems: 'center',
         borderWidth: 1,
-        borderColor: 'rgba(255, 255, 255, 0.05)',
+        borderColor: 'transparent',
     },
     activeIconButton: {
-        backgroundColor: '#FFFFFF',
+        backgroundColor: '#111827',
+        borderColor: '#111827',
     }
 });

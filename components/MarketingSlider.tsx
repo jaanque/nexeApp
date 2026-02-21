@@ -5,7 +5,6 @@ import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
 import { getOptimizedImageSource } from '@/lib/imageOptimization';
-import { MarketingPopup } from './MarketingPopup';
 import Animated, {
   useAnimatedScrollHandler,
   useSharedValue,
@@ -54,7 +53,6 @@ export function MarketingSlider({ banners }: MarketingSliderProps) {
   const { width: windowWidth } = useWindowDimensions();
   const flatListRef = useRef<FlatList<Banner>>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [selectedBanner, setSelectedBanner] = useState<Banner | null>(null);
   const scrollX = useSharedValue(0);
   const isAutoScrolling = useRef(false);
   const isInteracting = useRef(false);
@@ -120,20 +118,13 @@ export function MarketingSlider({ banners }: MarketingSliderProps) {
   });
 
   const handlePress = (banner: Banner) => {
-    Haptics.selectionAsync();
-    setSelectedBanner(banner);
+    // Interaction removed as requested
   };
 
   if (!banners || banners.length === 0) return null;
 
   return (
     <View style={styles.container}>
-      <MarketingPopup
-        visible={!!selectedBanner}
-        banner={selectedBanner}
-        onClose={() => setSelectedBanner(null)}
-      />
-
       <AnimatedFlatList
         ref={flatListRef}
         data={banners}

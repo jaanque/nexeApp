@@ -1,23 +1,24 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
-import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useStripePayment } from '@/hooks/useStripePayment';
 
 interface CartItem {
   id: number;
   name: string;
   quantity: number;
-  pointsPrice: number;
+  price: number;
 }
 
 export default function CheckoutScreen() {
   const { cartData, restaurantName } = useLocalSearchParams();
   const router = useRouter();
   const [items, setItems] = useState<CartItem[]>([]);
-  const [userPoints, setUserPoints] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
+  const { initializePaymentSheet, openPaymentSheet } = useStripePayment();
 
   useEffect(() => {
     if (typeof cartData === 'string') {
@@ -27,64 +28,54 @@ export default function CheckoutScreen() {
         console.error("Error parsing cart data", e);
       }
     }
-    fetchUserPoints();
   }, [cartData]);
 
-  async function fetchUserPoints() {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session?.user) {
-      const { data } = await supabase
-        .from('profiles')
-        .select('points')
-        .eq('id', session.user.id)
-        .single();
-      if (data) {
-        setUserPoints(data.points);
-      }
-    }
-  }
-
-  const totalCost = items.reduce((sum, item) => sum + (item.pointsPrice * item.quantity), 0);
-  const canPay = userPoints !== null && userPoints >= totalCost;
+  const totalCost = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
   const handlePayment = async () => {
-    if (!canPay) {
-      Alert.alert("Saldo insuficiente", "No tienes suficientes puntos para realizar este pedido.");
-      return;
-    }
-
     setLoading(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user) return;
-
-      const newPoints = (userPoints || 0) - totalCost;
-
-      const { error } = await supabase
-        .from('profiles')
-        .update({ points: newPoints })
-        .eq('id', session.user.id);
-
-      if (error) throw error;
-
-      // Insert movement record
-      const restName = Array.isArray(restaurantName) ? restaurantName[0] : restaurantName;
-      const { error: movementError } = await supabase.from('movements').insert({
-        user_id: session.user.id,
-        amount: -totalCost,
-        description: `Pedido en ${restName || 'Restaurante'}`,
-        type: 'spend'
-      });
-
-      if (movementError) {
-        console.error("Error saving movement:", movementError);
-        // We don't throw here to avoid failing the whole transaction from user perspective if points were already deducted
+      if (!session?.user) {
+         Alert.alert("Error", "Debes iniciar sesión para realizar un pedido.");
+         setLoading(false);
+         return;
       }
 
-      // Optimistically update local state or just finish
-      Alert.alert("¡Pedido Confirmado!", "Tus puntos han sido canjeados correctamente.", [
-        { text: "OK", onPress: () => router.dismissAll() } // Go back to root/home
-      ]);
+      // 1. Initialize Stripe Payment
+      const orderId = await initializePaymentSheet(items);
+      if (!orderId) {
+          setLoading(false);
+          return;
+      }
+
+      // 2. Present Payment Sheet
+      const { success, canceled } = await openPaymentSheet();
+
+      if (canceled) {
+          setLoading(false);
+          return;
+      }
+
+      if (success) {
+          // Insert movement record (optional, as webhook handles orders)
+          const restName = Array.isArray(restaurantName) ? restaurantName[0] : restaurantName;
+          const { error: movementError } = await supabase.from('movements').insert({
+            user_id: session.user.id,
+            amount: -totalCost,
+            description: `Pedido #${orderId} en ${restName || 'Restaurante'}`,
+            type: 'spend'
+          });
+
+          if (movementError) {
+            console.error("Error saving movement:", movementError);
+          }
+
+          // Finish
+          Alert.alert("¡Pedido Confirmado!", "Tu pedido ha sido realizado correctamente.", [
+            { text: "OK", onPress: () => router.dismissAll() }
+          ]);
+      }
 
     } catch (error) {
       console.error("Payment error:", error);
@@ -96,8 +87,6 @@ export default function CheckoutScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <Stack.Screen options={{ headerShown: false }} />
-
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <Ionicons name="close" size={24} color="#000" />
@@ -116,7 +105,7 @@ export default function CheckoutScreen() {
                 <Text style={styles.qtyText}>{item.quantity}x</Text>
               </View>
               <Text style={styles.itemName}>{item.name}</Text>
-              <Text style={styles.itemPrice}>{item.pointsPrice * item.quantity} pts</Text>
+              <Text style={styles.itemPrice}>{(item.price * item.quantity).toFixed(2)}€</Text>
             </View>
           ))}
         </View>
@@ -125,34 +114,21 @@ export default function CheckoutScreen() {
 
         <View style={styles.summaryRow}>
           <Text style={styles.summaryLabel}>Total a pagar</Text>
-          <Text style={styles.summaryValue}>{totalCost} pts</Text>
-        </View>
-
-        <View style={styles.walletInfo}>
-          <View style={styles.walletRow}>
-             <Ionicons name="wallet-outline" size={20} color="#666" />
-             <Text style={styles.walletLabel}>Tus puntos disponibles:</Text>
-             <Text style={[styles.walletValue, !canPay && styles.insufficientFunds]}>
-                {userPoints !== null ? userPoints : '...'} pts
-             </Text>
-          </View>
-          {!canPay && userPoints !== null && (
-              <Text style={styles.errorText}>Te faltan {totalCost - userPoints} puntos</Text>
-          )}
+          <Text style={styles.summaryValue}>{totalCost.toFixed(2)}€</Text>
         </View>
 
       </ScrollView>
 
       <View style={styles.footer}>
         <TouchableOpacity
-            style={[styles.payButton, (!canPay || loading) && styles.disabledButton]}
+            style={[styles.payButton, loading && styles.disabledButton]}
             onPress={handlePayment}
-            disabled={!canPay || loading}
+            disabled={loading}
         >
             {loading ? (
                 <ActivityIndicator color="#fff" />
             ) : (
-                <Text style={styles.payButtonText}>Pagar {totalCost} pts</Text>
+                <Text style={styles.payButtonText}>Pagar {totalCost.toFixed(2)}€</Text>
             )}
         </TouchableOpacity>
       </View>
@@ -237,34 +213,6 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     color: '#0a7ea4',
-  },
-  walletInfo: {
-    backgroundColor: '#f9f9f9',
-    padding: 16,
-    borderRadius: 12,
-  },
-  walletRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  walletLabel: {
-    marginLeft: 8,
-    fontSize: 14,
-    color: '#666',
-    flex: 1,
-  },
-  walletValue: {
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
-  insufficientFunds: {
-    color: 'red',
-  },
-  errorText: {
-    color: 'red',
-    fontSize: 12,
-    marginTop: 8,
-    textAlign: 'right',
   },
   footer: {
     padding: 20,

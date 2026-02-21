@@ -55,6 +55,25 @@ export const ModernBusinessCard = React.memo(({ restaurant, distance, isLast, is
         return currentTime >= openTime && currentTime < closeTime;
     }, [restaurant.opening_time, restaurant.closing_time]);
 
+    const openingTimeDisplay = React.useMemo(() => {
+        if (!restaurant.opening_time) return null;
+        const [h, m] = restaurant.opening_time.split(':');
+        const openingTime = `${h}:${m}`;
+
+        // Simple heuristic: If closed, and current time > opening time, it probably opens tomorrow.
+        const now = new Date();
+        const currentH = now.getHours();
+        const currentM = now.getMinutes();
+
+        const [openH, openM] = restaurant.opening_time.split(':').map(Number);
+
+        if (currentH > openH || (currentH === openH && currentM >= openM)) {
+            return `Mañana ${openingTime}`;
+        }
+
+        return openingTime;
+    }, [restaurant.opening_time]);
+
     return (
         <TouchableOpacity
             style={[styles.container, isGrid && styles.gridContainer, isLast && { marginBottom: 100 }]}
@@ -81,6 +100,9 @@ export const ModernBusinessCard = React.memo(({ restaurant, distance, isLast, is
                 {!isOpen && (
                     <View style={[styles.closedBadge, isGrid && styles.gridClosedBadge]}>
                         <Text style={[styles.closedText, isGrid && styles.gridClosedText]}>Cerrado</Text>
+                        {!isGrid && openingTimeDisplay && (
+                            <Text style={styles.openingTimeSubText}>Abre {openingTimeDisplay}</Text>
+                        )}
                     </View>
                 )}
             </View>
@@ -190,6 +212,12 @@ const styles = StyleSheet.create({
         fontSize: 11,
         textTransform: 'uppercase',
         letterSpacing: 0.5,
+    },
+    openingTimeSubText: {
+        color: '#FFFFFF',
+        fontWeight: '500',
+        fontSize: 10,
+        marginTop: 1,
     },
     // Grid Modifications
     gridContainer: {

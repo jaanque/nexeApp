@@ -264,10 +264,10 @@ export default function RestaurantDetailScreen() {
     });
   };
 
-  const totalPoints = useMemo(() => {
+  const totalPrice = useMemo(() => {
       let total = 0;
       menuItems.forEach((item) => {
-        if (cart[item.id]) total += Math.round(item.price_euros * 10) * cart[item.id];
+        if (cart[item.id]) total += item.price_euros * cart[item.id];
       });
       return total;
   }, [cart, menuItems]);
@@ -276,7 +276,7 @@ export default function RestaurantDetailScreen() {
     const cartItems = menuItems.filter(item => cart[item.id]).map(item => ({
         ...item,
         quantity: cart[item.id],
-        pointsPrice: Math.round(item.price_euros * 10)
+        price: item.price_euros
     }));
     router.push({
         pathname: "/checkout",
@@ -397,7 +397,6 @@ export default function RestaurantDetailScreen() {
                     <Text style={styles.sectionTitle}>{section.title}</Text>
                     {section.data.map((item) => {
                         const quantity = cart[item.id] || 0;
-                        const pointsPrice = Math.round(item.price_euros * 10);
                         return (
                             <View key={item.id} style={styles.menuItem}>
                                 <TouchableOpacity style={styles.menuItemContent} activeOpacity={0.7} onPress={() => router.push(`/item/${item.id}`)}>
@@ -442,14 +441,14 @@ export default function RestaurantDetailScreen() {
       </Animated.ScrollView>
 
       {/* Floating Cart Bar */}
-      {totalPoints > 0 && (
+      {totalPrice > 0 && (
           <Animated.View entering={Animated.SlideInDown} exiting={Animated.SlideOutDown} style={[styles.cartBarContainer, { paddingBottom: insets.bottom + 10 }]}>
               <TouchableOpacity style={styles.cartBar} activeOpacity={0.9} onPress={handleCheckout}>
                   <View style={styles.cartCountBadge}>
                       <Text style={styles.cartCountVal}>{Object.values(cart).reduce((a, b) => a + b, 0)}</Text>
                   </View>
                   <Text style={styles.cartBarLabel}>Ver Pedido</Text>
-                  <Text style={styles.cartBarTotal}>{totalPoints} pts</Text>
+                  <Text style={styles.cartBarTotal}>{totalPrice.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}€</Text>
               </TouchableOpacity>
           </Animated.View>
       )}

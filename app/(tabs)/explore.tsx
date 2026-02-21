@@ -1,18 +1,17 @@
 import { ModernBusinessCard } from '@/components/ModernBusinessCard';
+import RestaurantMap from '@/components/RestaurantMap';
+import RestaurantMapCard from '@/components/RestaurantMapCard';
 import { ExploreHeader } from '@/components/ui/ExploreHeader';
 import { supabase } from '@/lib/supabase';
-import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Haptics from 'expo-haptics';
 import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Dimensions, ListRenderItem, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Animated, { FadeInDown, useAnimatedScrollHandler, useSharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import RestaurantMap from '@/components/RestaurantMap';
-import RestaurantMapCard from '@/components/RestaurantMapCard';
 
 // Shared Types
 interface Restaurant {
@@ -74,7 +73,7 @@ export default function ExploreScreen() {
   };
 
   const fetchRestaurants = async () => {
-    const { data } = await supabase.from('locales').select('*').order('id');
+    const { data } = await supabase.from('locales').select('id, name, image_url, rating, cuisine_type, address, latitude, longitude, category_id, opening_time, closing_time').order('id');
     if (data) {
       setRestaurants(data);
       setFilteredRestaurants(data);
@@ -141,9 +140,9 @@ export default function ExploreScreen() {
 
   const renderCategoryItem = ({ item }: { item: Category }) => (
     <TouchableOpacity
-      style={[styles.categoryCard, { backgroundColor: item.color || '#333' }]}
+      style={[styles.categoryCard, { backgroundColor: item.color || '#F3F4F6' }]}
       onPress={() => handleCategoryPress(item)}
-      activeOpacity={0.8}
+      activeOpacity={0.7}
     >
       <Text style={styles.categoryEmoji}>{item.emoji}</Text>
       <Text style={styles.categoryName} numberOfLines={2}>{item.name}</Text>
@@ -155,6 +154,7 @@ export default function ExploreScreen() {
           ? formatDistance(userLocation.latitude, userLocation.longitude, item.latitude, item.longitude)
           : undefined;
 
+      // Use a consistent card style for the list
       return (
           <View style={{ marginBottom: 16 }}>
              <ModernBusinessCard
@@ -170,7 +170,7 @@ export default function ExploreScreen() {
     if (searchQuery.length > 0) {
       return (
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Resultados para "{searchQuery}"</Text>
+          <Text style={styles.sectionTitle}>Resultados para &quot;{searchQuery}&quot;</Text>
           <Text style={styles.resultCount}>{filteredRestaurants.length} encontrados</Text>
         </View>
       );
@@ -200,12 +200,12 @@ export default function ExploreScreen() {
     );
   };
 
-  // HEADER OFFSET
-  const HEADER_MAX_HEIGHT = insets.top + 80;
+  // HEADER OFFSET - Adjusted to match Home header height roughly or just enough for search bar
+  const HEADER_MAX_HEIGHT = insets.top + 70;
 
   return (
     <View style={styles.container}>
-      <StatusBar style="light" />
+      <StatusBar style="dark" />
 
       {/* Header */}
       <ExploreHeader
@@ -220,7 +220,7 @@ export default function ExploreScreen() {
       {isMapMode ? (
          <View style={StyleSheet.absoluteFill}>
             <RestaurantMap
-                restaurants={filteredRestaurants} // Show filtered logic on map too!
+                restaurants={filteredRestaurants}
                 selectedRestaurant={selectedRestaurant}
                 onSelectRestaurant={setSelectedRestaurant}
                 userLocation={userLocation}
@@ -243,7 +243,7 @@ export default function ExploreScreen() {
           ListHeaderComponent={renderListHeader()}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{
-            paddingHorizontal: 20,
+            paddingHorizontal: 16, // Adjusted to match Home padding (usually 16 or 20)
             paddingTop: HEADER_MAX_HEIGHT + 20,
             paddingBottom: 100
           }}
@@ -259,23 +259,24 @@ export default function ExploreScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#121212',
+    backgroundColor: '#FFFFFF', // Flat light background
   },
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'baseline',
     marginBottom: 16,
+    paddingHorizontal: 4, // Slight inner padding
   },
   sectionTitle: {
-    fontSize: 22,
-    fontWeight: '800',
-    color: '#FFFFFF',
+    fontSize: 20, // Slightly smaller to match Home section titles often around 20-22
+    fontWeight: '700',
+    color: '#111827',
     letterSpacing: -0.5,
   },
   resultCount: {
     fontSize: 14,
-    color: '#9CA3AF',
+    color: '#6B7280',
     fontWeight: '500',
   },
   // Grid Styles
@@ -283,9 +284,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 12,
+    justifyContent: 'space-between', // Ensure they span efficiently
   },
   gridItemWrapper: {
-    width: COLUMN_WIDTH,
+    width: '48%', // Fluid width instead of fixed calculation
     marginBottom: 12,
   },
   categoryCard: {
@@ -293,18 +295,16 @@ const styles = StyleSheet.create({
     padding: 16,
     height: 100,
     justifyContent: 'space-between',
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 4,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    // No shadow for flat design
   },
   categoryEmoji: {
     fontSize: 28,
   },
   categoryName: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#121212', // Dark text for better contrast on light pastel backgrounds
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#111827',
   },
 });

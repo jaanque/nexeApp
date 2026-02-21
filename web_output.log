@@ -1,0 +1,56 @@
+Starting project at /app
+⚠️ WARNING: RNMapboxMapsDownloadToken is deprecated. Use RNMAPBOX_MAPS_DOWNLOAD_TOKEN environment variable instead.
+⚠️ WARNING: This token will be part of your gradle.properties. Be careful about committing it to source control.
+⚠️ WARNING: RNMapboxMapsDownloadToken is deprecated. Use RNMAPBOX_MAPS_DOWNLOAD_TOKEN environment variable instead.
+⚠️ WARNING: This token will be part of your gradle.properties. Be careful about committing it to source control.
+⚠️ WARNING: RNMapboxMapsDownloadToken is deprecated. Use RNMAPBOX_MAPS_DOWNLOAD_TOKEN environment variable instead.
+⚠️ WARNING: This token will be part of your gradle.properties. Be careful about committing it to source control.
+⚠️ WARNING: RNMapboxMapsDownloadToken is deprecated. Use RNMAPBOX_MAPS_DOWNLOAD_TOKEN environment variable instead.
+⚠️ WARNING: This token will be part of your gradle.properties. Be careful about committing it to source control.
+React Compiler enabled
+Starting Metro Bundler
+⚠️ WARNING: RNMapboxMapsDownloadToken is deprecated. Use RNMAPBOX_MAPS_DOWNLOAD_TOKEN environment variable instead.
+⚠️ WARNING: This token will be part of your gradle.properties. Be careful about committing it to source control.
+⚠️ WARNING: RNMapboxMapsDownloadToken is deprecated. Use RNMAPBOX_MAPS_DOWNLOAD_TOKEN environment variable instead.
+⚠️ WARNING: This token will be part of your gradle.properties. Be careful about committing it to source control.
+⚠️ WARNING: RNMapboxMapsDownloadToken is deprecated. Use RNMAPBOX_MAPS_DOWNLOAD_TOKEN environment variable instead.
+⚠️ WARNING: This token will be part of your gradle.properties. Be careful about committing it to source control.
+⚠️ WARNING: RNMapboxMapsDownloadToken is deprecated. Use RNMAPBOX_MAPS_DOWNLOAD_TOKEN environment variable instead.
+⚠️ WARNING: This token will be part of your gradle.properties. Be careful about committing it to source control.
+Waiting on http://localhost:8081
+Logs for your project will appear below.
+Web node_modules/expo-router/entry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+Web node_modules/expo-router/entry.js ▓▓▓▓░░░░░░░░░░░░ 25.0% ( 63/158)
+λ node_modules/expo-router/node/render.js ▓▓░░░░░░░░░░░░░░ 16.1% (121/302)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓░░░░░░░░ 50.8% (199/317)
+λ node_modules/expo-router/node/render.js ▓▓▓▓▓▓▓▓░░░░░░░░ 53.9% (398/608)
+| ⚠️ WARNING: RNMapboxMapsDownloadToken is deprecated. Use RNMAPBOX_MAPS_DOWNLOAD_TOKEN environment variable instead.
+| ⚠️ WARNING: This token will be part of your gradle.properties. Be careful about committing it to source control.
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓░░░░░░░░ 50.8% (321/452)
+λ node_modules/expo-router/node/render.js ▓▓▓▓▓▓▓▓▓░░░░░░░ 58.6% (553/725)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓░░░░░░░░ 55.0% (448/664)
+λ node_modules/expo-router/node/render.js ▓▓▓▓▓▓▓▓▓▓░░░░░░ 67.8% (756/918)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓░░░░░░░ 57.5% (654/893)
+λ node_modules/expo-router/node/render.js ▓▓▓▓▓▓▓▓▓▓▓▓░░░░ 75.4% ( 923/1063)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓▓▓░░░░░ 70.7% ( 902/1073)
+λ node_modules/expo-router/node/render.js ▓▓▓▓▓▓▓▓▓▓▓▓▓░░░ 86.1% (1079/1163)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░ 90.2% (1227/1292)
+λ node_modules/expo-router/node/render.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░ 93.7% (1265/1313)
+λ Bundled 26038ms node_modules/expo-router/node/render.js (1372 modules)
+"shadow*" style props are deprecated. Use "boxShadow".
+"textShadow*" style props are deprecated. Use "textShadow".
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░ 99.7% (1420/1422)
+Web Bundled 29829ms node_modules/expo-router/entry.js (1422 modules)
+λ Bundled 86ms node_modules/expo-router/node/render.js (1 module)
+"shadow*" style props are deprecated. Use "boxShadow".
+"textShadow*" style props are deprecated. Use "textShadow".
+Web Bundled 1224ms node_modules/expo-router/entry.js (1 module)
+Web node_modules/expo-router/entry.js ▓▓▓▓░░░░░░░░░░░░ 29.0% (156/333)
+Web node_modules/expo-router/entry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓░░░░░░░░░ 47.6% (541/798)
+Web node_modules/expo-router/entry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓▓▓▓▓░░░ 82.8% (1017/1142)
+Web node_modules/expo-router/entry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+Web Bundled 12527ms node_modules/expo-router/entry.js (1423 modules)
+Web Bundled 10423ms node_modules/expo-router/entry.js (1 module)
+ LOG  [web] Logs will appear in the browser console
