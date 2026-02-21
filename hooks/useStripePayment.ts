@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Alert } from 'react-native';
 import { useStripe } from '@stripe/stripe-react-native';
@@ -32,7 +31,27 @@ export function useStripePayment() {
 
             if (error) {
                 console.error('Supabase function error:', error);
-                throw new Error(error.message || 'Error communicating with server');
+                let errorMessage = error.message;
+
+                // Attempt to extract detailed error message from response body
+                if (error && typeof error === 'object' && 'context' in error) {
+                    const httpError = error as any;
+                    // Check if context looks like a Response object (has json method)
+                    if (httpError.context && typeof httpError.context.json === 'function') {
+                        try {
+                            const errorBody = await httpError.context.json();
+                            if (errorBody && errorBody.error) {
+                                errorMessage = errorBody.error;
+                                console.error('Extracted error message from server:', errorMessage);
+                            }
+                        } catch (jsonError) {
+                            // If JSON parsing fails, we fallback to error.message
+                            console.warn('Could not parse error response JSON:', jsonError);
+                        }
+                    }
+                }
+
+                throw new Error(errorMessage || 'Error communicating with server');
             }
 
             if (!data) {

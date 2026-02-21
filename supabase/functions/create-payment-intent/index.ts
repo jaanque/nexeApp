@@ -1,9 +1,11 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import Stripe from 'https://esm.sh/stripe@14.10.0'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.0'
 
-const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') ?? '', {
+const STRIPE_SECRET_KEY = Deno.env.get('STRIPE_SECRET_KEY');
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+
+const stripe = new Stripe(STRIPE_SECRET_KEY ?? '', {
   apiVersion: '2023-10-16',
   httpClient: Stripe.createFetchHttpClient(),
 })
@@ -19,6 +21,9 @@ serve(async (req) => {
   }
 
   try {
+    if (!STRIPE_SECRET_KEY) throw new Error('STRIPE_SECRET_KEY is missing');
+    if (!SUPABASE_SERVICE_ROLE_KEY) throw new Error('SUPABASE_SERVICE_ROLE_KEY is missing');
+
     // Use the Authorization header to get the user context securely
     const authHeader = req.headers.get('Authorization')!
     const supabase = createClient(
@@ -37,10 +42,17 @@ serve(async (req) => {
     // Re-initialize Supabase with Service Role Key for admin tasks (like creating orders/profiles)
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+      SUPABASE_SERVICE_ROLE_KEY
     )
 
-    const { items } = await req.json()
+    let body;
+    try {
+        body = await req.json();
+    } catch (e) {
+        throw new Error('Invalid JSON body');
+    }
+
+    const { items } = body;
 
     if (!items || !items.length) {
       throw new Error('No items provided')
@@ -73,7 +85,7 @@ serve(async (req) => {
         .from('profiles')
         .select('stripe_customer_id')
         .eq('id', user_id)
-        .single()
+        .maybeSingle() // Use maybeSingle to avoid error if 0 rows
 
     if (profile?.stripe_customer_id) {
         customerId = profile.stripe_customer_id
@@ -88,11 +100,15 @@ serve(async (req) => {
         })
         customerId = customer.id
 
-        // Update profile
-        await supabaseAdmin
+        // Update or Insert profile (upsert) to handle missing rows
+        const { error: upsertError } = await supabaseAdmin
             .from('profiles')
-            .update({ stripe_customer_id: customerId })
-            .eq('id', user_id)
+            .upsert({ id: user_id, stripe_customer_id: customerId })
+
+        if (upsertError) {
+             console.error('Error updating profile with stripe_customer_id:', upsertError);
+             // Proceed anyway, payment can still happen, but next time we might create a new customer
+        }
     }
 
     // 3. Create Order Record
@@ -106,7 +122,10 @@ serve(async (req) => {
         .select()
         .single()
 
-    if (orderError) throw orderError
+    if (orderError) {
+        console.error('Error creating order:', orderError);
+        throw new Error(`Error creating order: ${orderError.message}`);
+    }
 
     // 4. Create Ephemeral Key
     const ephemeralKey = await stripe.ephemeralKeys.create(
@@ -148,8 +167,9 @@ serve(async (req) => {
     )
 
   } catch (error) {
+    console.error('An error occurred:', error); // Log full error to Supabase logs
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: error.message || 'Unknown error occurred' }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 400,
