@@ -25,12 +25,29 @@ export function useStripePayment() {
             console.log('Using access token:', session.access_token ? 'Present' : 'Missing');
 
             // 1. Fetch PaymentIntent params from Edge Function
-            // Note: user_id is inferred from the Auth header automatically sent by supabase.functions.invoke
-            // We explicitly pass the Authorization header just in case, though invoke() does it automatically.
+            // Note: We explicitly pass the Authorization header AND the apikey header.
+            // Supabase functions require the `apikey` header (the Anon Key) to verify the project,
+            // and the `Authorization` header to verify the user.
+            // While the SDK usually handles this, we force it here to be absolutely sure.
+
+            // Get the anon key from the supabase client (it's public property usually, but let's access via internal or env if possible,
+            // but since we imported `supabase` from lib/supabase which hardcodes it, we can't easily get it dynamically if not exported.
+            // However, the supabase instance *has* the key.
+            // The supabase-js client attaches 'apikey' automatically.
+            // If it's failing, maybe the automatic attachment is buggy in this version or conflicting with our custom headers?
+            // Let's rely on standard behavior first, but if that failed (which it did), let's try WITHOUT explicit Authorization first?
+            // No, the user needs to be authenticated.
+
+            // Let's try adding `apikey` explicitly if we can get it.
+            // Since `lib/supabase.ts` has it hardcoded, let's grab it from the supabase instance headers if possible or just hardcode/env var it.
+            // `supabase.supabaseKey` is the property.
+
             const { data, error } = await supabase.functions.invoke('create-payment-intent', {
                 body: { items },
                 headers: {
-                    Authorization: `Bearer ${session.access_token}`
+                    Authorization: `Bearer ${session.access_token}`,
+                    // Explicitly add apikey if it was missing in the logs
+                    apikey: (supabase as any).supabaseKey || process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || ''
                 }
             });
 
