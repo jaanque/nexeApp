@@ -4,6 +4,8 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.0'
 
 const STRIPE_SECRET_KEY = Deno.env.get('STRIPE_SECRET_KEY');
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
+const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY');
 
 const stripe = new Stripe(STRIPE_SECRET_KEY ?? '', {
   apiVersion: '2023-10-16',
@@ -23,18 +25,20 @@ serve(async (req) => {
   try {
     if (!STRIPE_SECRET_KEY) throw new Error('STRIPE_SECRET_KEY is missing');
     if (!SUPABASE_SERVICE_ROLE_KEY) throw new Error('SUPABASE_SERVICE_ROLE_KEY is missing');
+    if (!SUPABASE_URL) throw new Error('SUPABASE_URL is missing');
+    if (!SUPABASE_ANON_KEY) throw new Error('SUPABASE_ANON_KEY is missing');
 
     // Use the Authorization header to get the user context securely
     const authHeader = req.headers.get('Authorization')
 
     if (!authHeader) {
       console.error('Authorization header is missing');
-      throw new Error('Missing Authorization header');
+      throw new Error('Authorization header is missing');
     }
 
     const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '', // Use Anon key to validate JWT
+      SUPABASE_URL,
+      SUPABASE_ANON_KEY,
       { global: { headers: { Authorization: authHeader } } }
     )
 
@@ -43,7 +47,7 @@ serve(async (req) => {
 
     if (userError) {
         console.error('Error fetching user:', userError);
-        throw new Error(`Unauthorized: ${userError.message}`);
+        throw new Error(`Unauthorized (getUser failed): ${userError.message} (status: ${userError.status})`);
     }
 
     if (!user) {
@@ -55,7 +59,7 @@ serve(async (req) => {
 
     // Re-initialize Supabase with Service Role Key for admin tasks (like creating orders/profiles)
     const supabaseAdmin = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
+      SUPABASE_URL,
       SUPABASE_SERVICE_ROLE_KEY
     )
 

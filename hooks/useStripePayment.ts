@@ -22,7 +22,7 @@ export function useStripePayment() {
             }
 
             console.log('Invoking create-payment-intent with items:', items);
-            // console.log('Using access token:', session.access_token.substring(0, 10) + '...');
+            console.log('Using access token:', session.access_token ? 'Present' : 'Missing');
 
             // 1. Fetch PaymentIntent params from Edge Function
             // Note: user_id is inferred from the Auth header automatically sent by supabase.functions.invoke
