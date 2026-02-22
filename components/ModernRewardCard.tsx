@@ -1,10 +1,10 @@
 import { getOptimizedImageSource } from '@/lib/imageOptimization';
-import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import React from 'react';
 import { Dimensions, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 
 interface MenuItemResult {
     id: number;
@@ -29,8 +29,15 @@ interface ModernRewardCardProps {
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = width * 0.7; // Wider
 
+const AnimatedTouchableOpacity = Animated.createAnimatedComponent(TouchableOpacity);
+
 export const ModernRewardCard = React.memo(({ item }: ModernRewardCardProps) => {
     const router = useRouter();
+    const scale = useSharedValue(1);
+
+    const animatedStyle = useAnimatedStyle(() => ({
+        transform: [{ scale: scale.value }]
+    }));
 
     // Price Calculations
     const originalPrice = item.price_euros || 0;
@@ -69,9 +76,6 @@ export const ModernRewardCard = React.memo(({ item }: ModernRewardCardProps) => 
         const [h, m] = item.locales.opening_time.split(':');
         const openingTime = `${h}:${m}`;
 
-        // If it's closed and the current time is after the closing time (which is usually true if it's closed late),
-        // we might want to say "Mañana".
-        // Simple heuristic: If closed, and current time > opening time, it probably opens tomorrow.
         const now = new Date();
         const currentH = now.getHours();
         const currentM = now.getMinutes();
@@ -91,10 +95,12 @@ export const ModernRewardCard = React.memo(({ item }: ModernRewardCardProps) => 
     };
 
     return (
-        <TouchableOpacity
-            style={[styles.card, isClosed && { opacity: 0.6 }]}
-            activeOpacity={0.9}
+        <AnimatedTouchableOpacity
+            style={[styles.card, isClosed && { opacity: 0.6 }, animatedStyle]}
+            activeOpacity={1}
             onPress={handlePress}
+            onPressIn={() => scale.value = withSpring(0.95)}
+            onPressOut={() => scale.value = withSpring(1)}
         >
             <View style={styles.imageContainer}>
                 <Image
@@ -134,7 +140,7 @@ export const ModernRewardCard = React.memo(({ item }: ModernRewardCardProps) => 
                     </View>
                 </View>
             </View>
-        </TouchableOpacity>
+        </AnimatedTouchableOpacity>
     );
 });
 
@@ -143,13 +149,12 @@ const styles = StyleSheet.create({
         width: CARD_WIDTH,
         backgroundColor: 'transparent',
         marginRight: 16,
-        // Removed overflow hidden from container to allow potential future effects, but image has radius
     },
     imageContainer: {
         width: '100%',
-        height: CARD_WIDTH * 0.6, // Less tall (0.6 aspect ratio instead of 0.75)
+        height: CARD_WIDTH * 0.6,
         backgroundColor: '#F3F4F6',
-        borderRadius: 20, // Radius on image only
+        borderRadius: 20,
         overflow: 'hidden',
     },
     image: {
@@ -158,7 +163,7 @@ const styles = StyleSheet.create({
     },
     content: {
         paddingVertical: 8,
-        paddingHorizontal: 4, // Slight padding alignment
+        paddingHorizontal: 4,
     },
     textContainer: {
         gap: 4,
@@ -205,8 +210,8 @@ const styles = StyleSheet.create({
     discountRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'flex-start', // Pack items together
-        gap: 8, // Space between items
+        justifyContent: 'flex-start',
+        gap: 8,
     },
     originalPriceText: {
         color: '#9CA3AF', // Gray 400
@@ -216,12 +221,12 @@ const styles = StyleSheet.create({
     },
     finalPriceText: {
         color: '#111827',
-        fontSize: 15,
+        fontSize: 16, // Increased
         fontWeight: '800',
         letterSpacing: -0.5,
     },
     discountBadge: {
-        backgroundColor: '#EF4444', // Red
+        backgroundColor: '#EF4444',
         paddingHorizontal: 6,
         paddingVertical: 2,
         borderRadius: 6,

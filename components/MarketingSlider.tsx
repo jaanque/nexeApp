@@ -59,7 +59,7 @@ export function MarketingSlider({ banners }: MarketingSliderProps) {
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   const cardWidth = windowWidth - (CARD_MARGIN * 2);
-  const cardHeight = 120; // Thinner card as requested
+  const cardHeight = 140; // Increased height
 
   // Auto-scroll logic
   const startAutoScroll = useCallback(() => {
@@ -230,7 +230,7 @@ const BannerItem = ({ item, index, scrollX, windowWidth, cardHeight, onPress }: 
 
         <LinearGradient
             colors={['transparent', 'rgba(0,0,0,0.4)', 'rgba(0,0,0,0.8)']}
-            locations={[0, 0.5, 1]}
+            locations={[0, 0.6, 1]}
             style={styles.gradient}
         >
             <Animated.View style={[styles.textContainer, animatedContentStyle]}>
