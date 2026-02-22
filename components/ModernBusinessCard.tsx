@@ -5,6 +5,7 @@ import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 
 interface Restaurant {
     id: number;
@@ -24,8 +25,15 @@ interface ModernBusinessCardProps {
     isGrid?: boolean;
 }
 
+const AnimatedTouchableOpacity = Animated.createAnimatedComponent(TouchableOpacity);
+
 export const ModernBusinessCard = React.memo(({ restaurant, distance, isLast, isGrid }: ModernBusinessCardProps) => {
     const router = useRouter();
+    const scale = useSharedValue(1);
+
+    const animatedStyle = useAnimatedStyle(() => ({
+        transform: [{ scale: scale.value }]
+    }));
 
     const handlePress = () => {
         if (process.env.EXPO_OS === 'ios') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -75,10 +83,12 @@ export const ModernBusinessCard = React.memo(({ restaurant, distance, isLast, is
     }, [restaurant.opening_time]);
 
     return (
-        <TouchableOpacity
-            style={[styles.container, isGrid && styles.gridContainer, isLast && { marginBottom: 100 }]}
-            activeOpacity={0.95}
+        <AnimatedTouchableOpacity
+            style={[styles.container, isGrid && styles.gridContainer, isLast && { marginBottom: 100 }, animatedStyle]}
+            activeOpacity={1}
             onPress={handlePress}
+            onPressIn={() => scale.value = withSpring(0.95)}
+            onPressOut={() => scale.value = withSpring(1)}
         >
             <View style={[styles.imageWrapper, isGrid && styles.gridImageWrapper]}>
                 <Image
@@ -119,7 +129,7 @@ export const ModernBusinessCard = React.memo(({ restaurant, distance, isLast, is
                     </Text>
                 </View>
             </View>
-        </TouchableOpacity>
+        </AnimatedTouchableOpacity>
     );
 });
 
@@ -128,16 +138,21 @@ const styles = StyleSheet.create({
         marginBottom: 24,
         borderRadius: 16,
         backgroundColor: '#FFFFFF', // White background
-        borderWidth: 1,
-        borderColor: '#E5E7EB', // Light border
-        overflow: 'hidden',
-        // No shadows
+        // Removed border, added shadow
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.1,
+        shadowRadius: 12,
+        elevation: 5,
     },
     imageWrapper: {
         height: 180, // Standard height
         width: '100%',
         backgroundColor: '#F3F4F6',
         position: 'relative',
+        borderTopLeftRadius: 16,
+        borderTopRightRadius: 16,
+        overflow: 'hidden', // Clip image
     },
     image: {
         width: '100%',
@@ -152,15 +167,15 @@ const styles = StyleSheet.create({
         right: 12,
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#FFFFFF',
+        backgroundColor: 'rgba(255, 255, 255, 0.95)', // More opaque
         paddingHorizontal: 8,
         paddingVertical: 4,
         borderRadius: 12,
         gap: 4,
         shadowColor: "#000",
-        shadowOffset: { width: 0, height: 1 },
+        shadowOffset: { width: 0, height: 2 }, // Subtle shadow
         shadowOpacity: 0.1,
-        shadowRadius: 2,
+        shadowRadius: 4,
         elevation: 2,
     },
     ratingText: {
@@ -170,8 +185,8 @@ const styles = StyleSheet.create({
     },
     name: {
         fontSize: 18,
-        fontWeight: '700', // Bold but not heavy
-        color: '#111827', // Dark text
+        fontWeight: '700',
+        color: '#111827',
         letterSpacing: -0.5,
         marginBottom: 4,
     },
@@ -182,25 +197,25 @@ const styles = StyleSheet.create({
     },
     cuisine: {
         fontSize: 14,
-        color: '#6B7280', // Gray 500
+        color: '#6B7280',
         fontWeight: '500',
     },
     dot: {
         width: 3,
         height: 3,
         borderRadius: 1.5,
-        backgroundColor: '#D1D5DB', // Gray 300
+        backgroundColor: '#D1D5DB',
     },
     distance: {
         fontSize: 13,
-        color: '#6B7280', // Gray 500
+        color: '#6B7280',
         fontWeight: '500',
     },
     closedBadge: {
         position: 'absolute',
         top: 12,
         left: 12,
-        backgroundColor: '#EF4444', // Red 500
+        backgroundColor: '#EF4444',
         paddingHorizontal: 10,
         paddingVertical: 4,
         borderRadius: 8,
@@ -223,9 +238,10 @@ const styles = StyleSheet.create({
     gridContainer: {
         marginBottom: 0,
         borderRadius: 16,
+        // Ensure shadow persists but clipping respects grid sizing logic if needed
     },
     gridImageWrapper: {
-        height: 140, // Shorter for grid
+        height: 140,
     },
     gridName: {
         fontSize: 15,

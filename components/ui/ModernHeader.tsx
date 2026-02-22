@@ -1,8 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import React, { useState } from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View, LayoutAnimation, Platform, UIManager } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+    UIManager.setLayoutAnimationEnabledExperimental(true);
+}
 
 interface ModernHeaderProps {
     address: string;
@@ -20,7 +24,7 @@ export function ModernHeader({
     onTogglePickup,
 }: ModernHeaderProps) {
     const insets = useSafeAreaInsets();
-    const [trackWidth, setTrackWidth] = useState(0);
+    // const [trackWidth, setTrackWidth] = useState(0); // Unused
 
     const handlePress = (action: () => void) => {
         if (process.env.EXPO_OS === 'ios') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -29,6 +33,7 @@ export function ModernHeader({
 
     const handleToggle = (value: boolean) => {
         if (onTogglePickup && isPickup !== value) {
+            LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
             if (process.env.EXPO_OS === 'ios') Haptics.selectionAsync();
             onTogglePickup(value);
         }
@@ -106,8 +111,8 @@ export function ModernHeader({
 const styles = StyleSheet.create({
     container: {
         backgroundColor: '#FFFFFF', // Clean white background
-        paddingHorizontal: 20,
-        paddingBottom: 16,
+        paddingHorizontal: 24,
+        paddingBottom: 12,
     },
     headerRow: {
         flexDirection: 'row',
@@ -136,7 +141,7 @@ const styles = StyleSheet.create({
     modeSwitch: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginBottom: 2,
+        marginBottom: 4,
         backgroundColor: '#F3F4F6', // Light gray background
         borderRadius: 20,
         padding: 2,
@@ -152,9 +157,9 @@ const styles = StyleSheet.create({
     activeToggleButton: {
         backgroundColor: '#FFFFFF',
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.1,
-        shadowRadius: 2,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.05,
+        shadowRadius: 8,
         elevation: 2,
     },
     modeText: {
@@ -173,8 +178,8 @@ const styles = StyleSheet.create({
         gap: 4,
     },
     addressText: {
-        fontSize: 14,
-        fontWeight: '700',
+        fontSize: 15,
+        fontWeight: '600',
         color: '#111827', // Gray 900 (almost black)
         letterSpacing: -0.3,
         maxWidth: '90%',

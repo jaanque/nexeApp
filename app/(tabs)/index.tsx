@@ -14,7 +14,7 @@ import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, ListRenderItem, Platform, RefreshControl, StyleSheet, Text, UIManager, View } from 'react-native';
-import Animated, { Extrapolation, interpolate, useAnimatedScrollHandler, useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
+import Animated, { Extrapolation, interpolate, useAnimatedScrollHandler, useAnimatedStyle, useSharedValue, FadeInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 // Enable LayoutAnimation on Android
@@ -405,14 +405,17 @@ export default function HomeScreen() {
           : undefined;
 
       return (
-          <View style={[styles.gridItemContainer, { opacity: isFiltering ? 0.5 : 1 }]}>
+          <Animated.View
+              entering={FadeInDown.delay((index % 10) * 100).springify()}
+              style={[styles.gridItemContainer, { opacity: isFiltering ? 0.5 : 1 }]}
+          >
               <ModernBusinessCard
                   restaurant={item}
                   isLast={false}
                   distance={distance}
                   isGrid={true}
               />
-          </View>
+          </Animated.View>
       );
   }, [userLocation, isFiltering]);
 
@@ -455,7 +458,7 @@ export default function HomeScreen() {
              paddingBottom: 100,
              paddingTop: insets.top + 70 // Push content down below fixed header
         }}
-        columnWrapperStyle={{ paddingHorizontal: 14 }}
+        columnWrapperStyle={{ paddingHorizontal: 20 }}
         keyboardDismissMode="on-drag"
         scrollEnabled={true}
         numColumns={2}
@@ -481,10 +484,10 @@ export default function HomeScreen() {
             <RefreshControl
                 refreshing={refreshing}
                 onRefresh={onRefresh}
-                tintColor="#111827"
+                tintColor="#000000"
                 title="Actualizando catálogo..."
-                titleColor="#111827"
-                colors={['#111827']}
+                titleColor="#000000"
+                colors={['#000000']}
                 progressBackgroundColor="#FFFFFF"
                 progressViewOffset={Platform.OS === 'android' ? insets.top + 80 : insets.top + 60}
             />
