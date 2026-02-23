@@ -1,0 +1,52 @@
+env: load .env
+env: export EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY
+Starting project at /app
+React Compiler enabled
+Starting Metro Bundler
+Waiting on http://localhost:8081
+Logs for your project will appear below.
+Web node_modules/expo-router/entry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓░░░░░░░░░░░ 34.5% (135/230)
+λ node_modules/expo-router/node/render.js ▓▓░░░░░░░░░░░░░░ 17.8% (119/291)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓░░░░░░░░ 50.5% (261/391)
+λ node_modules/expo-router/node/render.js ▓▓▓▓▓▓▓▓▓░░░░░░░ 57.3% (392/518)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓░░░░░░░░ 50.5% (381/540)
+λ node_modules/expo-router/node/render.js ▓▓▓▓▓▓▓▓▓░░░░░░░ 62.5% (590/764)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓░░░░░░░ 57.2% (536/709)
+λ node_modules/expo-router/node/render.js ▓▓▓▓▓▓▓▓▓▓▓░░░░░ 70.2% (825/985)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓▓▓░░░░░ 69.8% (811/971)
+λ node_modules/expo-router/node/render.js ▓▓▓▓▓▓▓▓▓▓▓▓▓░░░ 83.1% (1009/1126)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓▓▓▓▓░░░ 85.1% (1070/1160)
+λ node_modules/expo-router/node/render.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░ 89.0% (1172/1242)
+λ Bundled 23622ms node_modules/expo-router/node/render.js (1368 modules)
+"shadow*" style props are deprecated. Use "boxShadow".
+"textShadow*" style props are deprecated. Use "textShadow".
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░ 99.3% (1406/1411)
+Web Bundled 27403ms node_modules/expo-router/entry.js (1418 modules)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓░░░░░░░░░░ 41.2% (383/597)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓▓░░░░░░ 68.2% ( 873/1057)
+Web node_modules/expo-router/entry.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░ 96.9% (1388/1410)
+Web Bundled 10395ms node_modules/expo-router/entry.js (1419 modules)
+ LOG  [web] Logs will appear in the browser console
+Web node_modules/expo-router/entry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+λ Bundled 87ms node_modules/expo-router/node/render.js (1 module)
+"shadow*" style props are deprecated. Use "boxShadow".
+"textShadow*" style props are deprecated. Use "textShadow".
+Web Bundled 908ms node_modules/expo-router/entry.js (1 module)
+Web Bundled 99ms node_modules/expo-router/entry.js (1 module)
+ LOG  [web] Logs will appear in the browser console
+Web node_modules/expo-router/entry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+λ Bundled 2625ms node_modules/expo-router/node/render.js (1 module)
+"shadow*" style props are deprecated. Use "boxShadow".
+"textShadow*" style props are deprecated. Use "textShadow".
+Web node_modules/expo-router/entry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+Web Bundled 3959ms node_modules/expo-router/entry.js (1 module)
+Web Bundled 1473ms node_modules/expo-router/entry.js (1 module)
+ LOG  [web] Logs will appear in the browser console
+Web node_modules/expo-router/entry.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
+λ Bundled 86ms node_modules/expo-router/node/render.js (1 module)
+"shadow*" style props are deprecated. Use "boxShadow".
+"textShadow*" style props are deprecated. Use "textShadow".
+Web Bundled 683ms node_modules/expo-router/entry.js (1 module)
+Web Bundled 70ms node_modules/expo-router/entry.js (1 module)
+ LOG  [web] Logs will appear in the browser console

@@ -1,42 +1,25 @@
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import React, { useState } from 'react';
-import { StyleSheet, Text, TouchableOpacity, View, LayoutAnimation, Platform, UIManager } from 'react-native';
+import React from 'react';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-
-if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
-    UIManager.setLayoutAnimationEnabledExperimental(true);
-}
 
 interface ModernHeaderProps {
     address: string;
     onAddressPress: () => void;
     onProfilePress: () => void;
-    isPickup?: boolean;
-    onTogglePickup?: (value: boolean) => void;
 }
 
 export function ModernHeader({
     address,
     onAddressPress,
     onProfilePress,
-    isPickup = false,
-    onTogglePickup,
 }: ModernHeaderProps) {
     const insets = useSafeAreaInsets();
-    // const [trackWidth, setTrackWidth] = useState(0); // Unused
 
     const handlePress = (action: () => void) => {
         if (process.env.EXPO_OS === 'ios') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         action();
-    };
-
-    const handleToggle = (value: boolean) => {
-        if (onTogglePickup && isPickup !== value) {
-            LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-            if (process.env.EXPO_OS === 'ios') Haptics.selectionAsync();
-            onTogglePickup(value);
-        }
     };
 
     return (
@@ -46,48 +29,24 @@ export function ModernHeader({
                 <View style={styles.locationContainer}>
                     <TouchableOpacity onPress={() => handlePress(onAddressPress)}>
                         <View style={styles.iconCircle}>
-                            <Ionicons name={isPickup ? "basket" : "location"} size={20} color="#000000" />
+                            <Ionicons name="location" size={20} color="#000000" />
                         </View>
                     </TouchableOpacity>
 
                     <View style={styles.addressWrapper}>
-                        {/* Mode Toggle (Segmented Control) */}
-                        <View style={styles.modeSwitch}>
-                            <TouchableOpacity
-                                onPress={() => handleToggle(false)}
-                                style={[styles.toggleButton, !isPickup && styles.activeToggleButton]}
-                                activeOpacity={0.9}
-                            >
-                                <Text style={[styles.modeText, !isPickup && styles.activeModeText]}>
-                                    Entrega
-                                </Text>
-                            </TouchableOpacity>
-
-                            <TouchableOpacity
-                                onPress={() => handleToggle(true)}
-                                style={[styles.toggleButton, isPickup && styles.activeToggleButton]}
-                                activeOpacity={0.9}
-                            >
-                                <Text style={[styles.modeText, isPickup && styles.activeModeText]}>
-                                    Recogida
-                                </Text>
-                            </TouchableOpacity>
-                        </View>
-
-                        {/* Address Display */}
                         <TouchableOpacity
                             style={styles.addressRow}
-                            onPress={() => !isPickup && handlePress(onAddressPress)}
-                            activeOpacity={!isPickup ? 0.7 : 1}
+                            onPress={() => handlePress(onAddressPress)}
+                            activeOpacity={0.7}
                         >
                              <Text
                                 style={styles.addressText}
                                 numberOfLines={1}
                                 ellipsizeMode="tail"
                             >
-                                {isPickup ? "Recogida en tienda" : address}
+                                {address}
                             </Text>
-                            {!isPickup && <Ionicons name="chevron-down" size={12} color="#000000" />}
+                            <Ionicons name="chevron-down" size={12} color="#000000" />
                         </TouchableOpacity>
                     </View>
                 </View>
@@ -112,7 +71,7 @@ const styles = StyleSheet.create({
     container: {
         backgroundColor: '#FFFFFF', // Clean white background
         paddingHorizontal: 24,
-        paddingBottom: 12,
+        paddingBottom: 16, // Increased padding
     },
     headerRow: {
         flexDirection: 'row',
@@ -138,49 +97,15 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
     },
-    modeSwitch: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: 4,
-        backgroundColor: '#F3F4F6', // Light gray background
-        borderRadius: 20,
-        padding: 2,
-        alignSelf: 'flex-start', // Fit to content
-    },
-    toggleButton: {
-        paddingHorizontal: 12,
-        paddingVertical: 4,
-        borderRadius: 16,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    activeToggleButton: {
-        backgroundColor: '#FFFFFF',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.05,
-        shadowRadius: 8,
-        elevation: 2,
-    },
-    modeText: {
-        fontSize: 12,
-        color: '#6B7280', // Gray 500
-        fontWeight: '600',
-        letterSpacing: 0.2,
-    },
-    activeModeText: {
-        color: '#111827', // Dark/Black
-        fontWeight: '700',
-    },
     addressRow: {
         flexDirection: 'row',
         alignItems: 'center',
         gap: 4,
     },
     addressText: {
-        fontSize: 15,
-        fontWeight: '600',
-        color: '#111827', // Gray 900 (almost black)
+        fontSize: 16, // Slightly larger
+        fontWeight: '700', // Bolder
+        color: '#111827',
         letterSpacing: -0.3,
         maxWidth: '90%',
     },

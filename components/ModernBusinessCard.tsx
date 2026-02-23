@@ -100,12 +100,6 @@ export const ModernBusinessCard = React.memo(({ restaurant, distance, isLast, is
                     cachePolicy="memory-disk"
                 />
 
-                {/* Rating Badge - Top Right */}
-                <View style={styles.ratingBadge}>
-                    <Ionicons name="star" size={10} color="#F59E0B" />
-                    <Text style={styles.ratingText}>{(restaurant.rating || 0).toFixed(1)}</Text>
-                </View>
-
                 {/* Open/Closed Badge - Top Left */}
                 {!isOpen && (
                     <View style={[styles.closedBadge, isGrid && styles.gridClosedBadge]}>
@@ -120,13 +114,16 @@ export const ModernBusinessCard = React.memo(({ restaurant, distance, isLast, is
             {/* Content Section (Below Image) */}
             <View style={styles.content}>
                 <Text style={[styles.name, isGrid && styles.gridName]} numberOfLines={1}>{restaurant.name}</Text>
+
                 <View style={styles.metaRow}>
-                    {!isGrid && <Text style={styles.cuisine}>{restaurant.cuisine_type}</Text>}
-                    {!isGrid && <View style={styles.dot} />}
-                    <Ionicons name="location-outline" size={12} color="#6B7280" />
-                    <Text style={styles.distance} numberOfLines={1}>
-                        {distance || '...'}
-                    </Text>
+                    <Text style={styles.cuisine} numberOfLines={1}>{restaurant.cuisine_type}</Text>
+
+                    <View style={styles.distanceWrapper}>
+                         <Ionicons name="location-outline" size={12} color="#6B7280" />
+                        <Text style={styles.distance} numberOfLines={1}>
+                            {distance || '...'}
+                        </Text>
+                    </View>
                 </View>
             </View>
         </AnimatedTouchableOpacity>
@@ -138,12 +135,12 @@ const styles = StyleSheet.create({
         marginBottom: 24,
         borderRadius: 16,
         backgroundColor: '#FFFFFF', // White background
-        // Removed border, added shadow
+        // Reduced shadow for cleaner look
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.1,
-        shadowRadius: 12,
-        elevation: 5,
+        shadowOpacity: 0.05,
+        shadowRadius: 8,
+        elevation: 2,
     },
     imageWrapper: {
         height: 180, // Standard height
@@ -161,50 +158,30 @@ const styles = StyleSheet.create({
     content: {
         padding: 12,
     },
-    ratingBadge: {
-        position: 'absolute',
-        top: 12,
-        right: 12,
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: 'rgba(255, 255, 255, 0.95)', // More opaque
-        paddingHorizontal: 8,
-        paddingVertical: 4,
-        borderRadius: 12,
-        gap: 4,
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 2 }, // Subtle shadow
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-        elevation: 2,
-    },
-    ratingText: {
-        fontSize: 12,
-        fontWeight: '700',
-        color: '#111827',
-    },
+    // Removed ratingBadge styles
     name: {
         fontSize: 18,
         fontWeight: '700',
         color: '#111827',
         letterSpacing: -0.5,
-        marginBottom: 4,
+        marginBottom: 8, // Increased spacing
     },
     metaRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 6,
+        justifyContent: 'space-between', // Category left, Distance right
+        width: '100%',
+    },
+    distanceWrapper: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
     },
     cuisine: {
-        fontSize: 14,
+        fontSize: 13,
         color: '#6B7280',
         fontWeight: '500',
-    },
-    dot: {
-        width: 3,
-        height: 3,
-        borderRadius: 1.5,
-        backgroundColor: '#D1D5DB',
+        maxWidth: '60%', // Prevent overlap
     },
     distance: {
         fontSize: 13,
@@ -238,14 +215,13 @@ const styles = StyleSheet.create({
     gridContainer: {
         marginBottom: 0,
         borderRadius: 16,
-        // Ensure shadow persists but clipping respects grid sizing logic if needed
     },
     gridImageWrapper: {
         height: 140,
     },
     gridName: {
         fontSize: 15,
-        marginBottom: 2,
+        marginBottom: 4, // Slightly less for grid
     },
     gridClosedBadge: {
         top: 8,

@@ -61,7 +61,6 @@ export default function HomeScreen() {
   // Filter & Sort State
   const [activeCategory, setActiveCategory] = useState<number | null>(null);
   const [sortBy, setSortBy] = useState<SortOption>('default');
-  const [isPickup, setIsPickup] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [isFiltering, setIsFiltering] = useState(false);
   const [address, setAddress] = useState<string>("Seleccionando ubicación...");
@@ -442,8 +441,6 @@ export default function HomeScreen() {
               setLocationPickerVisible(true);
             }}
             onProfilePress={() => router.push('/(tabs)/profile')}
-            isPickup={isPickup}
-            onTogglePickup={setIsPickup}
           />
       </Animated.View>
 
@@ -455,7 +452,7 @@ export default function HomeScreen() {
         ListFooterComponent={renderFooter}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{
-             paddingBottom: 100,
+             paddingBottom: 120, // Increased
              paddingTop: insets.top + 70 // Push content down below fixed header
         }}
         columnWrapperStyle={{ paddingHorizontal: 20 }}
