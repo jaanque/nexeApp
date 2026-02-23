@@ -249,7 +249,8 @@ export default function HomeScreen() {
       // Check permission status without requesting it
       let { status } = await Location.getForegroundPermissionsAsync();
       if (status !== 'granted') {
-          // If no permission, we default to "Recogida en tienda" (already set in state)
+          // If no permission, we default to "Recogida en tienda"
+          if (!cachedAddress) setAddress("Recogida en tienda");
           return;
       }
 
