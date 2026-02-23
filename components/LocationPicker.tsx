@@ -88,6 +88,27 @@ export default function LocationPicker({ visible, onClose, onSelectLocation, ini
         });
     };
 
+    const handlePickup = async () => {
+        setLoading(true);
+        try {
+            let { status } = await Location.requestForegroundPermissionsAsync();
+            if (status !== 'granted') {
+                Alert.alert('Permiso denegado', 'Necesitamos tu ubicación para mostrarte tiendas cercanas.');
+                setLoading(false);
+                return;
+            }
+
+            let location = await Location.getCurrentPositionAsync({});
+            onSelectLocation(location.coords, "Recogida en tienda", true);
+            onClose();
+        } catch (error) {
+            console.error(error);
+            Alert.alert('Error', 'No pudimos obtener tu ubicación.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const handleUseCurrentLocation = async () => {
         setLoading(true);
         try {
@@ -226,7 +247,17 @@ export default function LocationPicker({ visible, onClose, onSelectLocation, ini
     const renderOptions = () => (
         <Animated.View style={[styles.bottomSheet, { paddingBottom: insets.bottom + 20, transform: [{ translateY: slideAnim }] }]}>
             <View style={styles.handle} />
-            <Text style={styles.title}>¿Dónde quieres recibir tu pedido?</Text>
+            <Text style={styles.title}>Selecciona una opción</Text>
+
+            <TouchableOpacity style={styles.optionButton} onPress={handlePickup}>
+                <View style={[styles.iconContainer, { backgroundColor: '#DCFCE7' }]}>
+                    <Ionicons name="storefront-outline" size={24} color="#166534" />
+                </View>
+                <View>
+                    <Text style={styles.optionText}>Recogida en tienda</Text>
+                    <Text style={{ fontSize: 12, color: '#6B7280' }}>Ver tiendas cercanas</Text>
+                </View>
+            </TouchableOpacity>
 
             <TouchableOpacity style={styles.optionButton} onPress={handleUseCurrentLocation}>
                 <View style={[styles.iconContainer, { backgroundColor: '#E0F2FE' }]}>

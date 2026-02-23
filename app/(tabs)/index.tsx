@@ -63,7 +63,7 @@ export default function HomeScreen() {
   const [sortBy, setSortBy] = useState<SortOption>('default');
   const [refreshing, setRefreshing] = useState(false);
   const [isFiltering, setIsFiltering] = useState(false);
-  const [address, setAddress] = useState<string>("Seleccionando ubicación...");
+  const [address, setAddress] = useState<string>("Recogida en tienda");
   const [locationPickerVisible, setLocationPickerVisible] = useState(false);
 
   const router = useRouter();
@@ -246,9 +246,10 @@ export default function HomeScreen() {
           return;
       }
 
-      let { status } = await Location.requestForegroundPermissionsAsync();
+      // Check permission status without requesting it
+      let { status } = await Location.getForegroundPermissionsAsync();
       if (status !== 'granted') {
-          if (!cachedAddress) setAddress("Ubicación denegada");
+          // If no permission, we default to "Recogida en tienda" (already set in state)
           return;
       }
 
