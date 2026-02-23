@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
 import React, { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Alert, Animated, Dimensions, Easing, FlatList, KeyboardAvoidingView, Modal, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, Animated, Dimensions, Easing, KeyboardAvoidingView, Modal, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import MapView, { Region } from 'react-native-maps';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -176,7 +176,7 @@ export default function LocationPicker({ visible, onClose, onSelectLocation, ini
     const renderOptions = () => (
         <Animated.View style={[styles.bottomSheet, { paddingBottom: insets.bottom + 20, transform: [{ translateY: slideAnim }] }]}>
             <View style={styles.handle} />
-            <Text style={styles.title}>Selecciona una opción</Text>
+            <Text style={styles.title}>Selecciona una opción de entrega</Text>
 
             <TouchableOpacity style={styles.optionButton} onPress={handlePickup}>
                 <View style={[styles.iconContainer, { backgroundColor: '#DCFCE7' }]}>
