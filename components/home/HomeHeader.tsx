@@ -43,7 +43,7 @@ export const HomeHeader = memo(({
         <View style={{ opacity: isFiltering ? 0.5 : 1 }}>
           {trendingItems.length > 0 && (
             <HomeSection
-              title="🔥 Últimas unidades"
+              title="Rescate Flash 🔥"
               items={trendingItems}
               delay={100}
             />
@@ -51,7 +51,7 @@ export const HomeHeader = memo(({
 
           {rewardItems.length > 0 && (
             <HomeSection
-              title="Liquidación Total"
+              title="Segunda Vida"
               items={rewardItems}
               delay={100}
             />

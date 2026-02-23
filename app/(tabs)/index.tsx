@@ -474,7 +474,7 @@ export default function HomeScreen() {
             !loading ? (
                 <View style={{ padding: 40, alignItems: 'center' }}>
                     <Text style={{ fontSize: 16, color: '#6B7280', textAlign: 'center' }}>
-                        No se encontraron tiendas en esta categoría.
+                        No hay comercios con stock para rescatar en esta categoría.
                     </Text>
                 </View>
             ) : null
@@ -484,7 +484,7 @@ export default function HomeScreen() {
                 refreshing={refreshing}
                 onRefresh={onRefresh}
                 tintColor="#000000"
-                title="Actualizando catálogo..."
+                title="Actualizando catálogo sostenible..."
                 titleColor="#000000"
                 colors={['#000000']}
                 progressBackgroundColor="#FFFFFF"

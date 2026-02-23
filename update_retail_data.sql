@@ -11,13 +11,13 @@ UPDATE marketing_banners
 SET
     title = '50% OFF en tu primer pedido',
     image_url = 'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?q=80&w=1000&auto=format&fit=crop',
-    subtitle = 'Liquidación Total',
-    description = 'Aprovecha descuentos de hasta el 50% en toda la tienda. ¡Solo por tiempo limitado!'
+    subtitle = 'Economía Circular',
+    description = 'Salva productos del desperdicio y apoya al comercio local.'
 WHERE active = true;
 
 -- If no active banner exists, insert one.
 INSERT INTO marketing_banners (image_url, title, subtitle, description, active, display_order)
-SELECT 'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?q=80&w=1000&auto=format&fit=crop', '50% OFF en tu primer pedido', 'Liquidación Total', 'Aprovecha descuentos de hasta el 50% en toda la tienda.', true, 1
+SELECT 'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?q=80&w=1000&auto=format&fit=crop', '50% OFF en tu primer pedido', 'Economía Circular', 'Salva productos del desperdicio y apoya al comercio local.', true, 1
 WHERE NOT EXISTS (SELECT 1 FROM marketing_banners WHERE active = true);
 
 -- 3. Update Locales Images (Stores)
