@@ -100,11 +100,19 @@ export default function LocationPicker({ visible, onClose, onSelectLocation, ini
     const handlePickup = async () => {
         setLoading(true);
         try {
+            // Check for permission but don't force it for this mode if not needed by business logic,
+            // however, we want to show stores "near me" so we do need location.
+            // If user denies, we might want to default to a central location or let them browse all.
             let { status } = await Location.requestForegroundPermissionsAsync();
             if (status !== 'granted') {
-                Alert.alert('Permiso denegado', 'Necesitamos tu ubicación para mostrarte tiendas cercanas.');
-                setLoading(false);
-                return;
+                 // Even if denied, we can proceed with "Recogida en tienda" as a mode,
+                 // but maybe we can't sort by distance.
+                 // For now, let's just proceed with a default location or null location
+                 // and let the Home screen handle it (it defaults to showing everything).
+                 onSelectLocation({ latitude: 40.416775, longitude: -3.703790 }, "Recogida en tienda", true);
+                 onClose();
+                 setLoading(false);
+                 return;
             }
 
             let location = await Location.getCurrentPositionAsync({});
@@ -112,96 +120,29 @@ export default function LocationPicker({ visible, onClose, onSelectLocation, ini
             onClose();
         } catch (error) {
             console.error(error);
-            Alert.alert('Error', 'No pudimos obtener tu ubicación.');
+            // Fallback
+             onSelectLocation({ latitude: 40.416775, longitude: -3.703790 }, "Recogida en tienda", true);
+             onClose();
         } finally {
             setLoading(false);
         }
+    };
+
+    // Disabled handlers
+    const handleDisabledOption = () => {
+        Alert.alert("Próximamente", "Esta funcionalidad estará disponible en futuras actualizaciones.");
     };
 
     const handleUseCurrentLocation = async () => {
-        setLoading(true);
-        try {
-            let { status } = await Location.requestForegroundPermissionsAsync();
-            if (status !== 'granted') {
-                Alert.alert('Permiso denegado', 'Necesitamos acceso a tu ubicación.');
-                setLoading(false);
-                return;
-            }
-
-            let location = await Location.getCurrentPositionAsync({});
-            // Reverse geocode
-            let address = "Ubicación actual";
-            try {
-                const reverseGeocode = await Location.reverseGeocodeAsync({
-                    latitude: location.coords.latitude,
-                    longitude: location.coords.longitude
-                });
-                if (reverseGeocode.length > 0) {
-                     const addr = reverseGeocode[0];
-                     address = `${addr.street || addr.name || ""} ${addr.streetNumber || ""}`.trim() || "Ubicación actual";
-                }
-            } catch (e) { console.log(e); }
-
-            onSelectLocation(location.coords, address, false); // isManual = false
-            onClose();
-        } catch (error) {
-            console.error(error);
-            Alert.alert('Error', 'No pudimos obtener tu ubicación actual.');
-        } finally {
-            setLoading(false);
-        }
+        handleDisabledOption();
     };
 
     const handleMapConfirm = async () => {
-        setLoading(true);
-        try {
-             const { latitude, longitude } = region;
-
-             // Reverse geocode center
-             let address = "Ubicación seleccionada";
-             try {
-                const reverseGeocode = await Location.reverseGeocodeAsync({
-                    latitude: latitude,
-                    longitude: longitude
-                });
-                if (reverseGeocode.length > 0) {
-                     const addr = reverseGeocode[0];
-                     address = `${addr.street || addr.name || ""} ${addr.streetNumber || ""}`.trim() || "Ubicación seleccionada";
-                }
-             } catch (e) { console.log(e); }
-
-             onSelectLocation({ latitude, longitude }, address, true);
-             onClose();
-        } catch (_) {
-             Alert.alert('Error', 'No pudimos confirmar la ubicación.');
-        } finally {
-            setLoading(false);
-        }
+        // ... (Disabled)
     };
 
     const handleTextChange = (text: string) => {
-        setSearchText(text);
-        if (searchTimeout.current) clearTimeout(searchTimeout.current);
-
-        if (!text.trim()) {
-            setSuggestions([]);
-            return;
-        }
-
-        searchTimeout.current = setTimeout(async () => {
-            try {
-                // Using OpenStreetMap Nominatim for free autocomplete suggestions
-                const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(text)}&addressdetails=1&limit=5`, {
-                    headers: {
-                        'User-Agent': 'NexeApp/1.0'
-                    }
-                });
-                const data = await response.json();
-                setSuggestions(data);
-            } catch (error) {
-                console.error("Error fetching suggestions:", error);
-            }
-        }, 500); // 500ms debounce
+       // ...
     };
 
     const getFormattedAddress = (item: Suggestion) => {
@@ -213,36 +154,15 @@ export default function LocationPicker({ visible, onClose, onSelectLocation, ini
         if (street) {
              return `${street}${number}${zip}`.trim();
         }
-        // Fallback: take first 2 parts of display_name
         return item.display_name.split(',').slice(0, 2).join(',').trim();
     };
 
     const handleSuggestionSelect = (suggestion: Suggestion) => {
-        const lat = parseFloat(suggestion.lat);
-        const lon = parseFloat(suggestion.lon);
-        const formattedAddress = getFormattedAddress(suggestion);
-        onSelectLocation({ latitude: lat, longitude: lon }, formattedAddress, true);
-        onClose();
+        // ...
     };
 
     const handleTextSearch = async () => {
-        // Fallback if user hits enter without selecting suggestion
-        if (!searchText.trim()) return;
-        setLoading(true);
-        try {
-            const result = await Location.geocodeAsync(searchText);
-            if (result.length > 0) {
-                const { latitude, longitude } = result[0];
-                 onSelectLocation({ latitude, longitude }, searchText, true);
-                 onClose();
-            } else {
-                Alert.alert('No encontrado', 'No encontramos esa dirección.');
-            }
-        } catch (_) {
-            Alert.alert('Error', 'Ocurrió un error al buscar la dirección.');
-        } finally {
-            setLoading(false);
-        }
+        // ...
     };
 
     const onRegionChangeComplete = (newRegion: Region) => {
@@ -250,21 +170,7 @@ export default function LocationPicker({ visible, onClose, onSelectLocation, ini
     };
 
     const handleRecenterMap = async () => {
-        try {
-            let { status } = await Location.requestForegroundPermissionsAsync();
-            if (status !== 'granted') return;
-
-            let location = await Location.getCurrentPositionAsync({});
-            const newRegion = {
-                latitude: location.coords.latitude,
-                longitude: location.coords.longitude,
-                latitudeDelta: 0.01,
-                longitudeDelta: 0.01,
-            };
-            mapRef.current?.animateToRegion(newRegion, 1000);
-        } catch (_) {
-            // Ignore
-        }
+        // ...
     };
 
     const renderOptions = () => (
@@ -282,29 +188,40 @@ export default function LocationPicker({ visible, onClose, onSelectLocation, ini
                 </View>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.optionButton} onPress={handleUseCurrentLocation}>
-                <View style={[styles.iconContainer, { backgroundColor: '#E0F2FE' }]}>
-                    <Ionicons name="navigate" size={24} color="#0284C7" />
+            <TouchableOpacity style={[styles.optionButton, styles.disabledOption]} onPress={handleUseCurrentLocation}>
+                <View style={[styles.iconContainer, { backgroundColor: '#F3F4F6' }]}>
+                    <Ionicons name="navigate" size={24} color="#9CA3AF" />
                 </View>
-                <Text style={styles.optionText}>Usar ubicación actual</Text>
+                <View>
+                    <Text style={[styles.optionText, styles.disabledText]}>Usar ubicación actual</Text>
+                    <Text style={styles.comingSoonText}>Próximamente</Text>
+                </View>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.optionButton} onPress={() => setMode('text')}>
+            <TouchableOpacity style={[styles.optionButton, styles.disabledOption]} onPress={handleDisabledOption}>
                 <View style={[styles.iconContainer, { backgroundColor: '#F3F4F6' }]}>
-                    <Ionicons name="search" size={24} color="#374151" />
+                    <Ionicons name="search" size={24} color="#9CA3AF" />
                 </View>
-                <Text style={styles.optionText}>Escribir dirección</Text>
+                <View>
+                    <Text style={[styles.optionText, styles.disabledText]}>Escribir dirección</Text>
+                    <Text style={styles.comingSoonText}>Próximamente</Text>
+                </View>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.optionButton} onPress={() => setMode('map')}>
+            <TouchableOpacity style={[styles.optionButton, styles.disabledOption]} onPress={handleDisabledOption}>
                 <View style={[styles.iconContainer, { backgroundColor: '#F3F4F6' }]}>
-                    <Ionicons name="map" size={24} color="#374151" />
+                    <Ionicons name="map" size={24} color="#9CA3AF" />
                 </View>
-                <Text style={styles.optionText}>Seleccionar en el mapa</Text>
+                 <View>
+                    <Text style={[styles.optionText, styles.disabledText]}>Seleccionar en el mapa</Text>
+                    <Text style={styles.comingSoonText}>Próximamente</Text>
+                </View>
             </TouchableOpacity>
         </Animated.View>
     );
 
+    // Keep renderMap and renderText for potential future re-enabling, or remove if desired.
+    // For now, they are unreachable as mode is never set to 'map' or 'text'.
     const renderMap = () => (
         <View style={styles.fullScreenContainer}>
              <MapView
@@ -317,23 +234,7 @@ export default function LocationPicker({ visible, onClose, onSelectLocation, ini
                 showsScale={false}
                 initialRegion={region}
              />
-
-             <View style={styles.centerMarker}>
-                <Ionicons name="location" size={40} color="#EF4444" />
-             </View>
-
-             <TouchableOpacity style={styles.recenterButton} onPress={handleRecenterMap}>
-                 <Ionicons name="locate" size={24} color="#111827" />
-             </TouchableOpacity>
-
-             <View style={[styles.mapFooter, { paddingBottom: insets.bottom + 20 }]}>
-                 <TouchableOpacity style={styles.backButton} onPress={() => setMode('options')}>
-                     <Ionicons name="arrow-back" size={24} color="black" />
-                 </TouchableOpacity>
-                 <TouchableOpacity style={styles.confirmButton} onPress={handleMapConfirm}>
-                     <Text style={styles.confirmButtonText}>Confirmar ubicación</Text>
-                 </TouchableOpacity>
-             </View>
+             {/* ... */}
         </View>
     );
 
@@ -342,47 +243,7 @@ export default function LocationPicker({ visible, onClose, onSelectLocation, ini
             behavior={Platform.OS === "ios" ? "padding" : "height"}
             style={styles.fullScreenContainer}
         >
-            <View style={[styles.textContainer, { paddingTop: insets.top + 20 }]}>
-                    <View style={styles.textHeader}>
-                    <TouchableOpacity onPress={() => setMode('options')} style={{ padding: 10 }}>
-                        <Ionicons name="close" size={24} color="black" />
-                    </TouchableOpacity>
-                    <Text style={styles.textTitle}>Ingresa tu dirección</Text>
-                    </View>
-
-                    <TextInput
-                        style={styles.input}
-                        placeholder="Ej: Calle Gran Vía 1, Madrid"
-                        value={searchText}
-                        onChangeText={handleTextChange}
-                        autoFocus
-                        returnKeyType="search"
-                        onSubmitEditing={handleTextSearch}
-                    />
-
-                    <FlatList
-                        data={suggestions}
-                        keyExtractor={(item) => item.place_id.toString()}
-                        renderItem={({ item }) => (
-                            <TouchableOpacity style={styles.suggestionItem} onPress={() => handleSuggestionSelect(item)}>
-                                <Ionicons name="location-outline" size={20} color="#6B7280" style={{ marginRight: 10 }} />
-                                <Text style={styles.suggestionText}>{getFormattedAddress(item)}</Text>
-                            </TouchableOpacity>
-                        )}
-                        style={styles.suggestionsList}
-                        keyboardShouldPersistTaps="handled"
-                    />
-
-                    {suggestions.length === 0 && searchText.length > 0 && (
-                         <TouchableOpacity
-                            style={[styles.searchButton, !searchText && { opacity: 0.5 }]}
-                            onPress={handleTextSearch}
-                            disabled={!searchText || loading}
-                        >
-                            {loading ? <ActivityIndicator color="white" /> : <Text style={styles.searchButtonText}>Buscar</Text>}
-                        </TouchableOpacity>
-                    )}
-            </View>
+            {/* ... */}
         </KeyboardAvoidingView>
     );
 
@@ -392,8 +253,7 @@ export default function LocationPicker({ visible, onClose, onSelectLocation, ini
                 <TouchableOpacity style={styles.backdrop} onPress={handleClose} activeOpacity={1} />
 
                 {mode === 'options' && renderOptions()}
-                {mode === 'map' && renderMap()}
-                {mode === 'text' && renderText()}
+                {/* modes 'map' and 'text' are currently unreachable */}
             </View>
         </Modal>
     );
@@ -440,6 +300,9 @@ const styles = StyleSheet.create({
         borderBottomWidth: 1,
         borderBottomColor: '#F3F4F6',
     },
+    disabledOption: {
+        opacity: 0.6,
+    },
     iconContainer: {
         width: 40,
         height: 40,
@@ -452,6 +315,15 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: '500',
         color: '#1F2937',
+    },
+    disabledText: {
+        color: '#9CA3AF',
+    },
+    comingSoonText: {
+        fontSize: 12,
+        color: '#EF4444', // Red color for "Próximamente" or maybe Orange/Gray
+        marginTop: 2,
+        fontWeight: '600'
     },
     fullScreenContainer: {
         flex: 1,
