@@ -184,7 +184,6 @@ export default function LocationPicker({ visible, onClose, onSelectLocation, ini
                 </View>
                 <View>
                     <Text style={styles.optionText}>Recogida en tienda</Text>
-                    <Text style={{ fontSize: 12, color: '#6B7280' }}>Ver tiendas cercanas</Text>
                 </View>
             </TouchableOpacity>
 
