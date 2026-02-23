@@ -21,6 +21,15 @@ interface Suggestion {
     display_name: string;
     lat: string;
     lon: string;
+    address?: {
+        road?: string;
+        pedestrian?: string;
+        house_number?: string;
+        postcode?: string;
+        city?: string;
+        town?: string;
+        village?: string;
+    };
 }
 
 export default function LocationPicker({ visible, onClose, onSelectLocation, initialLocation }: LocationPickerProps) {
@@ -195,10 +204,24 @@ export default function LocationPicker({ visible, onClose, onSelectLocation, ini
         }, 500); // 500ms debounce
     };
 
+    const getFormattedAddress = (item: Suggestion) => {
+        if (!item.address) return item.display_name;
+        const street = item.address.road || item.address.pedestrian || "";
+        const number = item.address.house_number ? ` ${item.address.house_number}` : "";
+        const zip = item.address.postcode ? `, ${item.address.postcode}` : "";
+
+        if (street) {
+             return `${street}${number}${zip}`.trim();
+        }
+        // Fallback: take first 2 parts of display_name
+        return item.display_name.split(',').slice(0, 2).join(',').trim();
+    };
+
     const handleSuggestionSelect = (suggestion: Suggestion) => {
         const lat = parseFloat(suggestion.lat);
         const lon = parseFloat(suggestion.lon);
-        onSelectLocation({ latitude: lat, longitude: lon }, suggestion.display_name, true);
+        const formattedAddress = getFormattedAddress(suggestion);
+        onSelectLocation({ latitude: lat, longitude: lon }, formattedAddress, true);
         onClose();
     };
 
@@ -343,7 +366,7 @@ export default function LocationPicker({ visible, onClose, onSelectLocation, ini
                         renderItem={({ item }) => (
                             <TouchableOpacity style={styles.suggestionItem} onPress={() => handleSuggestionSelect(item)}>
                                 <Ionicons name="location-outline" size={20} color="#6B7280" style={{ marginRight: 10 }} />
-                                <Text style={styles.suggestionText}>{item.display_name}</Text>
+                                <Text style={styles.suggestionText}>{getFormattedAddress(item)}</Text>
                             </TouchableOpacity>
                         )}
                         style={styles.suggestionsList}
