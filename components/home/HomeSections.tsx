@@ -130,7 +130,7 @@ export const HomeSortChips = memo(({ sortBy, setSortBy }: HomeSortChipsProps) =>
     return (
         <Animated.View entering={FadeInDown.delay(200).springify()}>
             <View style={[styles.sectionHeader, { marginBottom: 12 }]}>
-                <Text style={styles.sectionTitle}>Tiendas en Liquidación</Text>
+                <Text style={styles.sectionTitle}>Comercios Sostenibles</Text>
             </View>
 
             <ScrollView
