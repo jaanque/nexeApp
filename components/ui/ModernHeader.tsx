@@ -41,7 +41,7 @@ export function ModernHeader({
                         >
                              <Text
                                 style={styles.addressText}
-                                numberOfLines={1}
+                                numberOfLines={2}
                                 ellipsizeMode="tail"
                             >
                                 {address}
